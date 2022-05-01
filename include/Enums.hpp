@@ -8,13 +8,13 @@ namespace LidDrivenCavity {
 const int moving_wall_id = 8;
 const int fixed_wall_id = 4;
 const double wall_velocity = 1.0;
-} // namespace LidDrivenCavity
+}  // namespace LidDrivenCavity
 
 enum class border_position {
-    TOP,
-    BOTTOM,
-    LEFT,
-    RIGHT,
+  TOP,
+  BOTTOM,
+  LEFT,
+  RIGHT,
 };
 
 namespace border {
@@ -22,12 +22,12 @@ const int TOP = 0;
 const int BOTTOM = 1;
 const int LEFT = 2;
 const int RIGHT = 3;
-} // namespace border
+}  // namespace border
 
 enum class cell_type {
 
-    FLUID,
-    FIXED_WALL,
-    MOVING_WALL,
-    DEFAULT
+  FLUID,
+  FIXED_WALL,
+  MOVING_WALL,
+  DEFAULT
 };

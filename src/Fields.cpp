@@ -3,22 +3,48 @@
 #include <algorithm>
 #include <iostream>
 
-Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI, double VI, double PI)
+Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
+               double VI, double PI)
     : _nu(nu), _dt(dt), _tau(tau) {
-    _U = Matrix<double>(imax + 2, jmax + 2, UI);
-    _V = Matrix<double>(imax + 2, jmax + 2, VI);
-    _P = Matrix<double>(imax + 2, jmax + 2, PI);
+  _U = Matrix<double>(imax + 2, jmax + 2, UI);
+  _V = Matrix<double>(imax + 2, jmax + 2, VI);
+  _P = Matrix<double>(imax + 2, jmax + 2, PI);
 
-    _F = Matrix<double>(imax + 2, jmax + 2, 0.0);
-    _G = Matrix<double>(imax + 2, jmax + 2, 0.0);
-    _RS = Matrix<double>(imax + 2, jmax + 2, 0.0);
+  _F = Matrix<double>(imax + 2, jmax + 2, 0.0);
+  _G = Matrix<double>(imax + 2, jmax + 2, 0.0);
+  _RS = Matrix<double>(imax + 2, jmax + 2, 0.0);
+}
+//_F(i,j) = Discretization::convection_u(U,i,j)
+void Fields::calculate_fluxes(Grid &grid) {
+  for (int j{0}; j < grid.jmax(); j++) {
+    for (int i{0}; i < grid.imax(); i++) {
+      _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
+                                   Discretization::convection_u(_U, _V, i, j));
+
+      _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
+                                   Discretization::convection_u(_U, _V, i, j));
+    }
+  }
 }
 
-void Fields::calculate_fluxes(Grid &grid) {}
+void Fields::calculate_rs(Grid &grid) {
+  for (int j{0}; j < grid.jmax(); j++) {
+    for (int i{0}; i < grid.imax(); i++) {
+      double term1 = _F(i, j) - _F(i - 1, j) / grid.dx();
+      double term2 = _G(i, j) - _G(i, j - 1) / grid.dy();
+      _RS(i, j) = (term1 + term2) / _dt;
+    }
+  }
+}
 
-void Fields::calculate_rs(Grid &grid) {}
-
-void Fields::calculate_velocities(Grid &grid) {}
+void Fields::calculate_velocities(Grid &grid) {
+  for (int j{0}; j < grid.jmax(); j++) {
+    for (int i{0}; i < grid.imax(); i++) {
+      _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
+      _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
+    }
+  }
+}
 
 double Fields::calculate_dt(Grid &grid) { return _dt; }
 
