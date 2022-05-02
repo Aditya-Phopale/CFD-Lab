@@ -62,8 +62,9 @@ double Discretization::convection_v(const Matrix<double> &U,
 }
 
 double Discretization::diffusion(const Matrix<double> &A, int i, int j) {
-  double term1 = (A(i + 1, j) - A(i, j) + A(i - 1, j)) / (_dx * _dx);
-  double term2 = (A(i, j + 1) - A(i, j) + A(i, j - 1)) / (_dy * _dy);
+  // std::cout << A(i - 1, j) << "\n";
+  double term1 = (A(i + 1, j) - 2 * A(i, j) + A(i - 1, j)) / (_dx * _dx);
+  double term2 = (A(i, j + 1) - 2 * A(i, j) + A(i, j - 1)) / (_dy * _dy);
 
   return term1 + term2;
 }

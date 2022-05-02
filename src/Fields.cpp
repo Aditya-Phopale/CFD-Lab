@@ -16,8 +16,10 @@ Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
 }
 //_F(i,j) = Discretization::convection_u(U,i,j)
 void Fields::calculate_fluxes(Grid &grid) {
-  for (int j{0}; j < grid.jmax(); j++) {
-    for (int i{0}; i < grid.imax(); i++) {
+  for (int j{1}; j < grid.jmax() - 1; j++) {
+    for (int i{1}; i < grid.imax() - 1; i++) {
+      // std::cout << i << j << "\n";
+      // std::cout << Discretization::diffusion(_U, i, j) << "\n";
       _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
                                    Discretization::convection_u(_U, _V, i, j));
 
@@ -28,8 +30,8 @@ void Fields::calculate_fluxes(Grid &grid) {
 }
 
 void Fields::calculate_rs(Grid &grid) {
-  for (int j{0}; j < grid.jmax(); j++) {
-    for (int i{0}; i < grid.imax(); i++) {
+  for (int j{1}; j < grid.jmax() - 1; j++) {
+    for (int i{1}; i < grid.imax() - 1; i++) {
       double term1 = _F(i, j) - _F(i - 1, j) / grid.dx();
       double term2 = _G(i, j) - _G(i, j - 1) / grid.dy();
       _RS(i, j) = (term1 + term2) / _dt;
@@ -38,8 +40,8 @@ void Fields::calculate_rs(Grid &grid) {
 }
 
 void Fields::calculate_velocities(Grid &grid) {
-  for (int j{0}; j < grid.jmax(); j++) {
-    for (int i{0}; i < grid.imax(); i++) {
+  for (int j{1}; j < grid.jmax() - 1; j++) {
+    for (int i{1}; i < grid.imax() - 1; i++) {
       _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
       _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
     }
