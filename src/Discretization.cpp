@@ -23,7 +23,6 @@ double Discretization::convection_u(const Matrix<double> &U,
           (0.5 * abs(U(i, j) + U(i + 1, j)) * 0.5 * (U(i, j) - U(i + 1, j)) -
            0.5 * abs(U(i - 1, j) + U(i, j)) * 0.5 * (U(i - 1, j) - U(i, j))) /
           _dx;
-
   double term2 =
       (0.5 * (U(i, j) + U(i, j + 1) * 0.5 * (V(i, j) + V(i + 1, j))) -
        0.5 * (U(i, j - 1) + U(i, j)) * 0.5 * (V(i, j - 1) + V(i + 1, j - 1))) /
@@ -33,7 +32,6 @@ double Discretization::convection_u(const Matrix<double> &U,
            0.5 * abs(V(i, j - 1) + V(i + 1, j - 1)) * 0.5 *
                (U(i, j - 1) - U(i, j))) /
           _dy;
-
   return term1 + term2;
 }
 

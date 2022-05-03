@@ -186,14 +186,13 @@ void Case::set_file_names(std::string file_name) {
 void Case::simulate() {
   double t = 0.0;
   double dt = _field.dt();
-  std::cout << dt;
   int timestep = 0;
   double output_counter = 0.0;
   //   double res = 10000.0;
   int iter = 0;
   int flag = 0;
   int rank = 1;
-
+  _t_end = 0.2;
   while (t <= _t_end) {
     // Applying Boundary Conditions
     for (int i = 0; i < _boundaries.size(); i++) {
@@ -202,10 +201,6 @@ void Case::simulate() {
 
     // Calculating Fluxes (_F and _G)
     _field.calculate_fluxes(_grid);
-    for (int j{0}; j < 51; j++) {
-      std::cout << _field.f(j, 50) << " ";
-    }
-    std::cout << "\n";
 
     // Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
@@ -213,8 +208,6 @@ void Case::simulate() {
     double res = 10;
     while (res > _tolerance) {
       res = _pressure_solver->solve(_field, _grid, _boundaries);
-      //   std::cout << "Iteration = " << iter << "  "
-      //             << "Time = " << t << "\n";
       iter++;
       if (iter >= _max_iter) {
         flag++;
@@ -236,10 +229,8 @@ void Case::simulate() {
 
     // Update dt
     t += dt;
-    for (int j{0}; j < 51; j++) {
-      std::cout << _field.u(j, 50);
-    }
-    std::cout << "\n";
+    output_vtk(dt, rank);
+    rank++;
   }
 }
 
