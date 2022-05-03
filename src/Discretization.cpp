@@ -20,16 +20,16 @@ double Discretization::convection_u(const Matrix<double> &U,
        pow(0.5 * (U(i - 1, j) + U(i, j)), 2)) /
           _dx +
       _gamma *
-          (0.5 * abs(U(i, j) + U(i + 1, j)) * 0.5 * (U(i, j) - U(i + 1, j)) -
-           0.5 * abs(U(i - 1, j) + U(i, j)) * 0.5 * (U(i - 1, j) - U(i, j))) /
+          (0.5 * fabs(U(i, j) + U(i + 1, j)) * 0.5 * (U(i, j) - U(i + 1, j)) -
+           0.5 * fabs(U(i - 1, j) + U(i, j)) * 0.5 * (U(i - 1, j) - U(i, j))) /
           _dx;
   double term2 =
       (0.5 * (U(i, j) + U(i, j + 1) * 0.5 * (V(i, j) + V(i + 1, j))) -
        0.5 * (U(i, j - 1) + U(i, j)) * 0.5 * (V(i, j - 1) + V(i + 1, j - 1))) /
           _dy +
       _gamma *
-          (0.5 * abs(V(i, j) + V(i + 1, j)) * 0.5 * (U(i, j) - U(i, j + 1)) -
-           0.5 * abs(V(i, j - 1) + V(i + 1, j - 1)) * 0.5 *
+          (0.5 * fabs(V(i, j) + V(i + 1, j)) * 0.5 * (U(i, j) - U(i, j + 1)) -
+           0.5 * fabs(V(i, j - 1) + V(i + 1, j - 1)) * 0.5 *
                (U(i, j - 1) - U(i, j))) /
           _dy;
   return term1 + term2;
@@ -42,8 +42,8 @@ double Discretization::convection_v(const Matrix<double> &U,
        pow(0.5 * (V(i, j - 1) + V(i, j)), 2)) /
           _dy +
       _gamma *
-          (0.5 * abs(V(i, j) + V(i, j + 1)) * 0.5 * (V(i, j) - V(i, j + 1)) -
-           0.5 * abs(V(i, j - 1) + V(i, j)) * 0.5 * (V(i, j - 1) - V(i, j))) /
+          (0.5 * fabs(V(i, j) + V(i, j + 1)) * 0.5 * (V(i, j) - V(i, j + 1)) -
+           0.5 * fabs(V(i, j - 1) + V(i, j)) * 0.5 * (V(i, j - 1) - V(i, j))) /
           _dy;
 
   double term2 =
@@ -51,8 +51,8 @@ double Discretization::convection_v(const Matrix<double> &U,
        0.5 * (U(i - 1, j) + U(i - 1, j + 1)) * 0.5 * (V(i - 1, j) + V(i, j))) /
           _dy +
       _gamma *
-          (0.5 * abs(U(i, j) + U(i, j + 1)) * 0.5 * (V(i, j) - V(i + 1, j)) -
-           0.5 * abs(U(i - 1, j - 1) + U(i - 1, j + 1)) * 0.5 *
+          (0.5 * fabs(U(i, j) + U(i, j + 1)) * 0.5 * (V(i, j) - V(i + 1, j)) -
+           0.5 * fabs(U(i - 1, j - 1) + U(i - 1, j + 1)) * 0.5 *
                (U(i - 1, j) - U(i, j))) /
           _dy;
 
