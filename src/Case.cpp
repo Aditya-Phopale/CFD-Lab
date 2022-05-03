@@ -225,7 +225,7 @@ void Case::simulate() {
     _field.calculate_velocities(_grid);
 
     // Calculating next timestep
-    // dt = _field.calculate_dt(_grid);
+    dt = _field.calculate_dt(_grid);
 
     // Update dt
     t += dt;

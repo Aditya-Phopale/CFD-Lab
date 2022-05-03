@@ -1,6 +1,7 @@
 #include "Fields.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
@@ -46,7 +47,30 @@ void Fields::calculate_velocities(Grid &grid) {
   }
 }
 
-double Fields::calculate_dt(Grid &grid) { return _dt; }
+double Fields::calculate_dt(Grid &grid) { 
+  double CFLu = 0.0;
+  double CFLv = 0.0;
+  double CFLnu = 0.0;
+
+  double dx2 = grid.dx()*grid.dx();
+  double dy2 = grid.dy()*grid.dy();
+  
+  double u_max = 0.0;
+  double v_max = 0.0;
+
+  for (int j{1}; j < grid.jmax() + 1; j++) {
+    for (int i{1}; i < grid.imax() + 1; i++) {
+      u_max = std::max(u_max,fabs(_U(i,j)));
+      v_max = std::max(v_max,fabs(_V(i,j)));            
+      }
+  }
+  
+  CFLu = grid.dx()/u_max;
+  CFLv = grid.dy()/v_max;
+  CFLnu = 0.5/_nu*(1.0/(1/dx2 + 1/dy2));
+
+  return _tau*(std::min({CFLnu,CFLu,CFLv}));  
+}
 
 double &Fields::p(int i, int j) { return _P(i, j); }
 double &Fields::u(int i, int j) { return _U(i, j); }
