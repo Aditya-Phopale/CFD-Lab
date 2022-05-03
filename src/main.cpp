@@ -6,10 +6,7 @@
 int main(int argn, char **args) {
   argn = 2;
   if (argn > 1) {
-    // std::string file_name{args[1]};
-    std::string file_name{
-        "/home/gaurav/Desktop/CFDLAB/worksheet1/group-gap-cfd-lab/"
-        "example_cases/LidDrivenCavity/LidDrivenCavity.dat"};
+    std::string file_name{args[1]};
     Case problem(file_name, argn, args);
     problem.simulate();
   } else {
