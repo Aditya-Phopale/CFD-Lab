@@ -188,11 +188,10 @@ void Case::simulate() {
   double dt = _field.dt();
   int timestep = 0;
   double output_counter = 0.0;
-  //   double res = 10000.0;
-  int iter = 0;
+  int iter;
   int flag = 0;
   int rank = 1;
-  _t_end = 0.2;
+  double res;
   while (t <= _t_end) {
     // Applying Boundary Conditions
     for (int i = 0; i < _boundaries.size(); i++) {
@@ -204,20 +203,22 @@ void Case::simulate() {
 
     // Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
-
-    double res = 10;
+    
+    iter = 0;
+    res = 10;
+    
     while (res > _tolerance) {
-      res = _pressure_solver->solve(_field, _grid, _boundaries);
-      iter++;
       if (iter >= _max_iter) {
         flag++;
         break;
       }
+      res = _pressure_solver->solve(_field, _grid, _boundaries);      
+      iter++;
     }
 
     if (flag > 0) {
       std::cout << "Pressure poisson solver did not converge to the given "
-                   "tolerance...";
+                   "tolerance...\n";
     }
 
     // Calculating updated velocities using pressure calculated in the pressure
@@ -225,11 +226,14 @@ void Case::simulate() {
     _field.calculate_velocities(_grid);
 
     // Calculating next timestep
-    dt = _field.calculate_dt(_grid);
+    //dt = _field.calculate_dt(_grid);
+
+    //Printing Data
+    std::cout<<"Timestep: "<<t<<" Residual: "<<res<<'\n'; 
 
     // Update dt
     t += dt;
-    output_vtk(dt, rank);
+    output_vtk(t, rank);
     rank++;
   }
 }

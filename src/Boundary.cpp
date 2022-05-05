@@ -33,7 +33,7 @@ void FixedWallBoundary::apply(Fields &field) {
       field.u(posx - 1, posy) = 0.0;
       field.v(posx, posy) = -field.v(posx - 1, posy);
       field.p(posx, posy) = field.p(posx - 1, posy);
-      field.f(posx, posy) = field.u(posx, posy);
+      field.f(posx - 1, posy) = field.u(posx - 1, posy);
       continue;
     }
     if (_cells[i]->is_border(border_position::BOTTOM)) {
@@ -71,7 +71,7 @@ void MovingWallBoundary::apply(Fields &field) {
           field.u(posx, posy - 1);
       field.v(posx, posy - 1) = 0.0;
       field.p(posx, posy) = field.p(posx, posy - 1);
-      field.g(posx, posy) = field.v(posx, posy);
+      field.g(posx, posy - 1) = field.v(posx, posy - 1);
       continue;
     }
     // TO check
