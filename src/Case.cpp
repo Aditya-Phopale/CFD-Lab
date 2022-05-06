@@ -1,7 +1,8 @@
 #include "Case.hpp"
-#include "Enums.hpp"
 
 #include <algorithm>
+
+#include "Enums.hpp"
 #ifdef GCC_VERSION_9_OR_HIGHER
 #include <filesystem>
 #else
@@ -28,57 +29,55 @@ namespace filesystem = std::experimental::filesystem;
 #include <vtkTuple.h>
 
 Case::Case(std::string file_name, int argn, char **args) {
-    // Read input parameters
-    const int MAX_LINE_LENGTH = 1024;
-    std::ifstream file(file_name);
-    double nu;      /* viscosity   */
-    double UI;      /* velocity x-direction */
-    double VI;      /* velocity y-direction */
-    double PI;      /* pressure */
-    double GX;      /* gravitation x-direction */
-    double GY;      /* gravitation y-direction */
-    double xlength; /* length of the domain x-dir.*/
-    double ylength; /* length of the domain y-dir.*/
-    double dt;      /* time step */
-    int imax;       /* number of cells x-direction*/
-    int jmax;       /* number of cells y-direction*/
-    double gamma;   /* uppwind differencing factor*/
-    double omg;     /* relaxation factor */
-    double tau;     /* safety factor for time step*/
-    int itermax;    /* max. number of iterations for pressure per time step */
-    double eps;     /* accuracy bound for pressure*/
+  // Read input parameters
+  const int MAX_LINE_LENGTH = 1024;
+  std::ifstream file(file_name);
+  double nu;      /* viscosity   */
+  double UI;      /* velocity x-direction */
+  double VI;      /* velocity y-direction */
+  double PI;      /* pressure */
+  double GX;      /* gravitation x-direction */
+  double GY;      /* gravitation y-direction */
+  double xlength; /* length of the domain x-dir.*/
+  double ylength; /* length of the domain y-dir.*/
+  double dt;      /* time step */
+  int imax;       /* number of cells x-direction*/
+  int jmax;       /* number of cells y-direction*/
+  double gamma;   /* uppwind differencing factor*/
+  double omg;     /* relaxation factor */
+  double tau;     /* safety factor for time step*/
+  int itermax;    /* max. number of iterations for pressure per time step */
+  double eps;     /* accuracy bound for pressure*/
 
-    if (file.is_open()) {
-
-        std::string var;
-        while (!file.eof() && file.good()) {
-            file >> var;
-            if (var[0] == '#') { /* ignore comment line*/
-                file.ignore(MAX_LINE_LENGTH, '\n');
-            } else {
-                if (var == "xlength") file >> xlength;
-                if (var == "ylength") file >> ylength;
-                if (var == "nu") file >> nu;
-                if (var == "t_end") file >> _t_end;
-                if (var == "dt") file >> dt;
-                if (var == "omg") file >> omg;
-                if (var == "eps") file >> eps;
-                if (var == "tau") file >> tau;
-                if (var == "gamma") file >> gamma;
-                if (var == "dt_value") file >> _output_freq;
-                if (var == "UI") file >> UI;
-                if (var == "VI") file >> VI;
-                if (var == "GX") file >> GX;
-                if (var == "GY") file >> GY;
-                if (var == "PI") file >> PI;
-                if (var == "itermax") file >> itermax;
-                if (var == "imax") file >> imax;
-                if (var == "jmax") file >> jmax;
-            }
-        }
+  if (file.is_open()) {
+    std::string var;
+    while (!file.eof() && file.good()) {
+      file >> var;
+      if (var[0] == '#') { /* ignore comment line*/
+        file.ignore(MAX_LINE_LENGTH, '\n');
+      } else {
+        if (var == "xlength") file >> xlength;
+        if (var == "ylength") file >> ylength;
+        if (var == "nu") file >> nu;
+        if (var == "t_end") file >> _t_end;
+        if (var == "dt") file >> dt;
+        if (var == "omg") file >> omg;
+        if (var == "eps") file >> eps;
+        if (var == "tau") file >> tau;
+        if (var == "gamma") file >> gamma;
+        if (var == "dt_value") file >> _output_freq;
+        if (var == "UI") file >> UI;
+        if (var == "VI") file >> VI;
+        if (var == "GX") file >> GX;
+        if (var == "GY") file >> GY;
+        if (var == "PI") file >> PI;
+        if (var == "itermax") file >> itermax;
+        if (var == "imax") file >> imax;
+        if (var == "jmax") file >> jmax;
+      }
     }
-    file.close();
-
+  }
+  file.close();
 
   std::map<int, double> wall_vel;
   if (_geom_name.compare("NONE") == 0) {
@@ -198,17 +197,15 @@ void Case::simulate() {
   int timestep = 0;
   double output_counter = 0.0;
   int iter;
-  int flag;
-  int rank = 1;
+  int outer_iter = 1;
   double res;
 
   // Applying Boundary Conditions
   for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
+    _boundaries[i]->apply(_field);
   }
 
   while (t <= _t_end) {
-    
     // Calculating timestep
     dt = _field.calculate_dt(_grid);
 
@@ -217,23 +214,18 @@ void Case::simulate() {
 
     // Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
-    
-    iter = 0;    //Pressure poisson solver iteration initialization
-    res = 1000;  //Any value greatrer than tolerance.
-    flag = 0;
+
+    iter = 0;    // Pressure poisson solver iteration initialization
+    res = 1000;  // Any value greatrer than tolerance.
 
     while (res > _tolerance) {
       if (iter >= _max_iter) {
-        flag++;
+        std::cout << "Pressure poisson solver did not converge to the given "
+                     "tolerance...\n";
         break;
       }
-      res = _pressure_solver->solve(_field, _grid, _boundaries);      
+      res = _pressure_solver->solve(_field, _grid, _boundaries);
       iter++;
-    }
-
-    if (flag > 0) {
-      std::cout << "Pressure poisson solver did not converge to the given "
-                   "tolerance...\n";
     }
 
     // Calculating updated velocities using pressure calculated in the pressure
@@ -245,15 +237,16 @@ void Case::simulate() {
       _boundaries[i]->apply(_field);
     }
 
-    //Printing Data
-    std::cout<<"Timestep: "<<t<<" Residual: "<<res<<'\n'; 
+    // Printing Data
+    std::cout << "Time: " << t << " Residual: " << res << '\n';
 
-    output_vtk(t, rank);
+    if (outer_iter % 10 == 0) {
+      output_vtk(outer_iter);
+    }
 
     // Update dt
     t += dt;
-    
-    rank++;
+    outer_iter++;
   }
 }
 
@@ -332,9 +325,8 @@ void Case::output_vtk(int timestep, int my_rank) {
       vtkSmartPointer<vtkStructuredGridWriter>::New();
 
   // Create Filename
-  std::string outputname = _dict_name + '/' + _case_name + "_" +
-                           std::to_string(my_rank) + "." +
-                           std::to_string(timestep) + ".vtk";
+  std::string outputname =
+      _dict_name + '/' + _case_name + "_" + std::to_string(timestep) + ".vtk";
 
   writer->SetFileName(outputname.c_str());
   writer->SetInputData(structuredGrid);
