@@ -198,6 +198,7 @@ void Case::simulate() {
   double output_counter = 0.0;
   int iter;
   int outer_iter = 1;
+  int total_iter = 0;
   double res;
 
   // Applying Boundary Conditions
@@ -215,6 +216,7 @@ void Case::simulate() {
     // Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
 
+    double res_init = _pressure_solver->solve(_field, _grid, _boundaries);
     iter = 0;    // Pressure poisson solver iteration initialization
     res = 1000;  // Any value greatrer than tolerance.
 
@@ -226,6 +228,8 @@ void Case::simulate() {
       }
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       iter++;
+      total_iter++;
+      std::cout << "Residual: " << res << " Iteration: " << total_iter << '\n';
     }
 
     // Calculating updated velocities using pressure calculated in the pressure
@@ -238,7 +242,7 @@ void Case::simulate() {
     }
 
     // Printing Data
-    std::cout << "Time: " << t << " Residual: " << res << '\n';
+    // std::cout << "Time: " << t << " Residual: " << res << '\n';
 
     if (outer_iter % 10 == 0) {
       output_vtk(outer_iter);
