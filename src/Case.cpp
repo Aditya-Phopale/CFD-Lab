@@ -12,6 +12,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <iomanip>
 
 #ifdef GCC_VERSION_9_OR_HIGHER
 namespace filesystem = std::filesystem;
@@ -192,12 +193,13 @@ void Case::set_file_names(std::string file_name) {
  * files.
  */
 void Case::simulate() {
+  
+
   double t = 0.0;
   double dt = _field.dt();
   int timestep = 0;
   double output_counter = 0.0;
   int iter;
-  int outer_iter = 1;
   double res;
   int total_iter = 1;
   std::ofstream logfile;
@@ -243,21 +245,23 @@ void Case::simulate() {
       _boundaries[i]->apply(_field);
     }
 
-    // Printing Data
-    std::cout << "Time: " << t << " Residual: " << res << '\n';
-
-    if (outer_iter % 10 == 0) {
-      output_vtk(outer_iter);
-    }
-
     // Update dt
     t += dt;
-    outer_iter++;
+    timestep++;
+
+    // Printing Data
+    std::cout<<"Timestep: "<<setw(4)<<timestep<<" | "<<"Time: "<<setw(6)<<t<<setw(3)<<" | "<<"Residual: "<<setw(11)<<res<<setw(3)<<" | "<<"Pressure Poisson Iterations: "<<setw(3)<<iter<<'\n';
+
+    if ((timestep%20) == 0) {
+      output_vtk(timestep);
+    }
+
+    
   }
   logfile.close();
 }
 
-void Case::output_vtk(int timestep, int my_rank) {
+void Case::output_vtk(int timestep, int rank) {
   // Create a new structured grid
   vtkSmartPointer<vtkStructuredGrid> structuredGrid =
       vtkSmartPointer<vtkStructuredGrid>::New();
