@@ -105,16 +105,24 @@ double Fields::calculate_dt(Grid &grid) {
   double u_max = 0.0;
   double v_max = 0.0;
 
-  for (int i{1}; i < grid.imax(); i++) {
-    for (int j{1}; j < grid.jmax() + 1; j++) {
-      u_max = std::max(u_max, fabs(_U(i, j)));
-    }
+  int i,j;
+  for(auto cell : grid.fluid_cells()){
+    i = cell->i();
+    j = cell->j();
+    u_max = std::max(u_max, fabs(_U(i, j)));
+    v_max = std::max(v_max, fabs(_V(i, j)));
   }
-  for (int i{1}; i < grid.imax() + 1; i++) {
-    for (int j{1}; j < grid.jmax(); j++) {
-      v_max = std::max(v_max, fabs(_V(i, j)));
-    }
-  }
+
+  // for (int i{1}; i < grid.imax(); i++) {
+  //   for (int j{1}; j < grid.jmax() + 1; j++) {
+  //     u_max = std::max(u_max, fabs(_U(i, j)));
+  //   }
+  // }
+  // for (int i{1}; i < grid.imax() + 1; i++) {
+  //   for (int j{1}; j < grid.jmax(); j++) {
+  //     v_max = std::max(v_max, fabs(_V(i, j)));
+  //   }
+  // }
 
   CFLu = grid.dx() / u_max;
   CFLv = grid.dy() / v_max;
