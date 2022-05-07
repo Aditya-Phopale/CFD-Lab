@@ -198,8 +198,10 @@ void Case::simulate() {
   double output_counter = 0.0;
   int iter;
   int outer_iter = 1;
-  int total_iter = 0;
   double res;
+  int total_iter = 1;
+  std::ofstream logfile;
+  logfile.open("log.txt");
 
   // Applying Boundary Conditions
   for (int i = 0; i < _boundaries.size(); i++) {
@@ -229,7 +231,7 @@ void Case::simulate() {
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       iter++;
       total_iter++;
-      std::cout << "Residual: " << res << " Iteration: " << total_iter << '\n';
+      logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
     }
 
     // Calculating updated velocities using pressure calculated in the pressure
@@ -242,7 +244,7 @@ void Case::simulate() {
     }
 
     // Printing Data
-    // std::cout << "Time: " << t << " Residual: " << res << '\n';
+    std::cout << "Time: " << t << " Residual: " << res << '\n';
 
     if (outer_iter % 10 == 0) {
       output_vtk(outer_iter);
@@ -252,6 +254,7 @@ void Case::simulate() {
     t += dt;
     outer_iter++;
   }
+  logfile.close();
 }
 
 void Case::output_vtk(int timestep, int my_rank) {
