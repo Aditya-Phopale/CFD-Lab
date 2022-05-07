@@ -220,7 +220,6 @@ void Case::simulate() {
     // Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
 
-    double res_init = _pressure_solver->solve(_field, _grid, _boundaries);
     iter = 0;    // Pressure poisson solver iteration initialization
     res = 1000;  // Any value greatrer than tolerance.
 
