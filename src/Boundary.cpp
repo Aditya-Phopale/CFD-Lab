@@ -11,9 +11,10 @@ FixedWallBoundary::FixedWallBoundary(std::vector<Cell *> cells,
     : _cells(cells), _wall_temperature(wall_temperature) {}
 
 void FixedWallBoundary::apply(Fields &field) {
+  int i,j;
   for (auto cells : _cells) {
-    int i = cells->i();
-    int j = cells->j();
+    i = cells->i();
+    j = cells->j();
     if (cells->is_border(border_position::TOP)) {
       field.u(i, j) = -field.u(i, j + 1);
       field.v(i, j) = 0.0;
@@ -60,9 +61,10 @@ MovingWallBoundary::MovingWallBoundary(std::vector<Cell *> cells,
       _wall_temperature(wall_temperature) {}
 
 void MovingWallBoundary::apply(Fields &field) {
+  int i,j;
   for (auto cells : _cells) {
-    int i = cells->i();
-    int j = cells->j();
+    i = cells->i();
+    j = cells->j();
     if (cells->is_border(border_position::BOTTOM)) {
       field.u(i, j) =
           (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
