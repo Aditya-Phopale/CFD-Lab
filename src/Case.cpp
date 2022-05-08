@@ -249,14 +249,15 @@ void Case::simulate() {
     timestep++;
 
     // Printing Data
-    std::cout<<"Timestep: "<<setw(4)<<timestep<<" | "<<"Time: "<<setw(6)<<t<<setw(3)<<" | "<<"Residual: "<<setw(11)<<res<<setw(3)<<" | "<<"Pressure Poisson Iterations: "<<setw(3)<<iter<<'\n';
+    std::cout<<"Timestep: "<<setw(4)<<timestep<<" | "<<"Time: "<<setw(8)<<t<<setw(3)<<" | "<<"Residual: "<<setw(11)<<res<<setw(3)<<" | "<<"Pressure Poisson Iterations: "<<setw(3)<<iter<<'\n';
 
-    if ((timestep%20) == 0) {
+    if (fmod(t,_output_freq) < 0.001) {
       output_vtk(timestep);
     }
 
     
   }
+  //std::cout<<_field.u(16,28)<<"\n";
   logfile.close();
 }
 

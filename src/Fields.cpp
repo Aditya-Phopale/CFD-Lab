@@ -26,6 +26,9 @@ void Fields::calculate_fluxes(Grid &grid) {
   //                                  Discretization::convection_u(_U, _V, i, j));
   //   _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
   //                                  Discretization::convection_u(_U, _V, i, j));
+
+
+    
   // }
 
 
@@ -41,14 +44,13 @@ void Fields::calculate_fluxes(Grid &grid) {
   for (int i{1}; i < grid.imax() + 1; i++) {
     for (int j{1}; j < grid.jmax(); j++) {
       _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
-                                   Discretization::convection_u(_U, _V, i, j));
+                                   Discretization::convection_v(_U, _V, i, j));
     }
   }
 }
 
 void Fields::calculate_rs(Grid &grid) {
-  int i;
-  int j;
+  int i, j;
   for(auto cell : grid.fluid_cells()){
     i = cell->i();
     j = cell->j();
@@ -126,7 +128,7 @@ double Fields::calculate_dt(Grid &grid) {
 
   CFLu = grid.dx() / u_max;
   CFLv = grid.dy() / v_max;
-  CFLnu = (0.5 / _nu) * (1.0 / (1 / dx2 + 1 / dy2));
+  CFLnu = (0.5 / _nu) * (1.0 / (1.0 / dx2 + 1.0 / dy2));
 
   _dt = _tau * (std::min({CFLnu, CFLu, CFLv}));
 
