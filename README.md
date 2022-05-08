@@ -73,76 +73,7 @@ This will run the case file and create the output folder `../example_cases/LidDr
 
 If the input file does not contain a geometry file (added later in the course), fluidchen will run the lid-driven cavity case with the given parameters.
 
-## Special systems
-
-### macOS
-
-Students have previously successfully ran **Fluidchen** on macOS. However, this is not a system we regularly test. Your contribution here is, therefore, essential in improving this documentation.
-
-In macOS, you can use the default `clang` compiler. Do not install `gcc`, since it might cause problems with the standard library and VTK. Other dependencies can be installed by using `homebrew` package manager as
-
-```shell
-brew install cmake
-brew install open-mpi
-brew install vtk
-```
-
-#### macOS Troubleshooting
-
-- In macOS, the default `g++` command is linked to `clang++` command, which means, `g++` command does not run the GCC compiler but the Clang compiler.
-- Setup of GCC compiler is expected to be cumbersome and clashes with lots of other dependencies, therefore please do not use GCC compiler on this project.
-- If CMake cannot find the correct C++ binary, you can set it by
-
-  ```shell
-  export CXX=`which clang++``
-  export CMAKE_CXX_COMPILER=`which clang++``
-  ```
-
-which is going to set the corresponding environment variables to the path of Clang compiler. Please note that if you run these commands on a terminal session, they are only going to be valid on that terminal session. In order to make these changes permanent, you can add these lines to your `~/.zshrc` file.
-
-- Although installation of VTK looks simple, sometimes it is possible that CMake cannot find some necessary libraries for VTK, most famous one being Qt5. If you face an error something like:
-
-```shell
-CMake Error at /usr/local/lib/cmake/vtk-9.0/VTK-vtk-module-find-packages.cmake:115 (find_package):
- By not providing "FindQt5.cmake" in CMAKE_MODULE_PATH this project has
- asked CMake to find a package configuration file provided by "Qt5", but
- CMake did not find one.
-
- Could not find a package configuration file provided by "Qt5" (requested
- version 5.15) with any of the following names:
-
-   Qt5Config.cmake
-   qt5-config.cmake
-
- Add the installation prefix of "Qt5" to CMAKE_PREFIX_PATH or set "Qt5_DIR"
- to a directory containing one of the above files.  If "Qt5" provides a
- separate development package or SDK, be sure it has been installed.
-```
-
-which means that CMake could not find Qt5. Solution is simple fortunately. First, make sure that you have Qt5 installed:
-
-```shell
-brew install qt5
-```
-
-Then extend `CMAKE_PREFIX_PATH`, which are the locations where CMake tries to find packages, by adding following lines to your `.zshrc` file
-
-```shell
-export CMAKE_PREFIX_PATH="/usr/local/opt/qt5:$CMAKE_PREFIX_PATH"
-```
-
-Please not that your installation might be in another location. The most possible another location is `/usr/local/Cellar/qt@5/5.**.*/`, which depends on the Qt5 version.
-
-## Troubleshooting
-### VTK not found
-
-You might run into a problem where the VTK library is not found. To fix this, you can try the following steps:
-
-1. Find the installation path of your VTK library
-2. Define this path as an environment variable, as e.g. `export VTK_DIR=".../lib/cmake/vtk-8.2"`
-3. Start in a clean build folder
-4. Run `cmake ..` again
-
+## 
 ### No rule to make target '/usr/lib/x86_64-linux-gnu/libdl.so'
 
 We are investigating an [issue](https://gitlab.lrz.de/tum-i05/public/fluidchen-skeleton/-/issues/3) that appears on specific systems and combinations of dependencies.
