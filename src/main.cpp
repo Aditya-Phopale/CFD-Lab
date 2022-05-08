@@ -1,3 +1,7 @@
+/*
+In this file, we define our main function and ensure that a valid input 
+date file is provided.
+*/
 #include <iostream>
 #include <string>
 

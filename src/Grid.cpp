@@ -1,3 +1,7 @@
+/*
+In this pre-defined file, we define the describe the actual Lid Driven Cavity grid
+based on where the fluid lies relative to the cell.
+*/
 #include "Grid.hpp"
 #include "Enums.hpp"
 
