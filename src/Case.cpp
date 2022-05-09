@@ -1,3 +1,10 @@
+/*
+In this file, in the first part, we read and assign values from the input file
+present in Examples folder, construct boundaries, create file system for our
+outputs and create our output directory. In the next part, based on the
+parameters from the file, we simulate our case and generate results. They are
+saved in the defined output folder.
+*/
 #include "Case.hpp"
 
 #include <algorithm>
@@ -8,11 +15,12 @@
 #else
 #include <experimental/filesystem>
 #endif
+#include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <vector>
-#include <iomanip>
 
 #ifdef GCC_VERSION_9_OR_HIGHER
 namespace filesystem = std::filesystem;
@@ -29,8 +37,9 @@ namespace filesystem = std::experimental::filesystem;
 #include <vtkStructuredGridWriter.h>
 #include <vtkTuple.h>
 
+// Read input parameters.
+
 Case::Case(std::string file_name, int argn, char **args) {
-  // Read input parameters
   const int MAX_LINE_LENGTH = 1024;
   std::ifstream file(file_name);
   double nu;      /* viscosity   */
@@ -50,11 +59,13 @@ Case::Case(std::string file_name, int argn, char **args) {
   int itermax;    /* max. number of iterations for pressure per time step */
   double eps;     /* accuracy bound for pressure*/
 
+  // Assigning parameters from the file to variables.
+
   if (file.is_open()) {
     std::string var;
     while (!file.eof() && file.good()) {
       file >> var;
-      if (var[0] == '#') { /* ignore comment line*/
+      if (var[0] == '#') {
         file.ignore(MAX_LINE_LENGTH, '\n');
       } else {
         if (var == "xlength") file >> xlength;
@@ -86,10 +97,12 @@ Case::Case(std::string file_name, int argn, char **args) {
                                            LidDrivenCavity::wall_velocity));
   }
 
-  // Set file names for geometry file and output directory
+  // Setting file names for geometry file and output directory
+
   set_file_names(file_name);
 
-  // Build up the domain
+  // Building up our domain
+
   Domain domain;
   domain.dx = xlength / static_cast<double>(imax);
   domain.dy = ylength / static_cast<double>(jmax);
@@ -107,7 +120,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   _max_iter = itermax;
   _tolerance = eps;
 
-  // Construct boundaries
+  // Constructing boundaries
+
   if (not _grid.moving_wall_cells().empty()) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
@@ -153,7 +167,8 @@ void Case::set_file_names(std::string file_name) {
     _geom_name = _prefix + _geom_name;
   }
 
-  // Create output directory
+  // Creating output directory to store the results.
+
   filesystem::path folder(_dict_name);
   try {
     filesystem::create_directory(folder);
@@ -193,7 +208,7 @@ void Case::set_file_names(std::string file_name) {
  * files.
  */
 void Case::simulate() {
-  
+  // Defining parameters for running of the loop
 
   double t = 0.0;
   double dt = _field.dt();
@@ -205,16 +220,20 @@ void Case::simulate() {
   std::ofstream logfile;
   logfile.open("log.txt");
 
-  // Applying Boundary Conditions
+  // Applying Boundary Conditions based on their position
+
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
 
+  // Following is the actual loop that runs till the defined time limit.
+
   while (t <= _t_end) {
-    // Calculating timestep
+    // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
-    // Calculating Fluxes (_F and _G)
+    // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+    // respectively.
     _field.calculate_fluxes(_grid);
 
     // Calculating RHS for pressure poisson equation
@@ -244,29 +263,32 @@ void Case::simulate() {
       _boundaries[i]->apply(_field);
     }
 
-    // Update dt
+    // Updating t for the next step
     t += dt;
     timestep++;
 
-    // Printing Data
-    std::cout<<"Timestep: "<<setw(4)<<timestep<<" | "<<"Time: "<<setw(8)<<t<<setw(3)<<" | "<<"Residual: "<<setw(11)<<res<<setw(3)<<" | "<<"Pressure Poisson Iterations: "<<setw(3)<<iter<<'\n';
-
-    if (fmod(t,_output_freq) < 0.001) {
+    // Printing Data in the terminal
+    std::cout << "Timestep size: " << setw(4) << dt << " | "
+              << "Time: " << setw(8) << t << setw(3) << " | "
+              << "Residual: " << setw(11) << res << setw(3) << " | "
+              << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+    if (fmod(t, _output_freq) < 0.0001 ||
+        _output_freq - fmod(t, _output_freq) < 0.0001) {
       output_vtk(timestep);
     }
-
-    
   }
   //std::cout<<_field.u(16,28)<<"\n";
   logfile.close();
 }
 
+// Following is the pre-defined function for writing the output files.
+
 void Case::output_vtk(int timestep, int rank) {
-  // Create a new structured grid
+  // Creating a new structured grid
   vtkSmartPointer<vtkStructuredGrid> structuredGrid =
       vtkSmartPointer<vtkStructuredGrid>::New();
 
-  // Create grid
+  // Creating grid
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
   double dx = _grid.dx();
@@ -289,7 +311,8 @@ void Case::output_vtk(int timestep, int rank) {
     y += dy;
   }
 
-  // Specify the dimensions of the grid
+  // Specify the dimensions of the grid, addition of 1 to accomodate neighboring
+  // cells
   structuredGrid->SetDimensions(_grid.domain().size_x + 1,
                                 _grid.domain().size_y + 1, 1);
   structuredGrid->SetPoints(points);

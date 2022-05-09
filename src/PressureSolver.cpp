@@ -1,3 +1,7 @@
+/*
+In this file, we solve for pressure and calculate the residual to check whether
+the solution is converging or not.
+*/
 #include "PressureSolver.hpp"
 
 #include <cmath>
@@ -27,6 +31,8 @@ double SOR::solve(Fields &field, Grid &grid,
 
   double res = 0.0;
   double rloc = 0.0;
+
+  // Using squared value of difference to calculate residual
 
   for (auto currentCell : grid.fluid_cells()) {
     int i = currentCell->i();

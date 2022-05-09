@@ -1,3 +1,7 @@
+/*
+In this file, we calculate the velocity, and the time by which
+the current timestep will be advanced to the next one
+*/
 #include "Fields.hpp"
 
 #include <algorithm>
@@ -7,15 +11,24 @@
 Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
                double VI, double PI)
     : _nu(nu), _dt(dt), _tau(tau) {
-  _U = Matrix<double>(imax + 2, jmax + 2, UI);
-  _V = Matrix<double>(imax + 2, jmax + 2, VI);
-  _P = Matrix<double>(imax + 2, jmax + 2, PI);
+  _U = Matrix<double>(imax + 2, jmax + 2,
+                      UI);  // Matrix for velocity along the X-direction
+  _V = Matrix<double>(imax + 2, jmax + 2,
+                      VI);  // Matrix for velocity along the Y-direction
+  _P =
+      Matrix<double>(imax + 2, jmax + 2,
+                     PI);  // Matrix for the pressure values in the cell centers
 
-  _F = Matrix<double>(imax + 2, jmax + 2, 0.0);
-  _G = Matrix<double>(imax + 2, jmax + 2, 0.0);
+  _F = Matrix<double>(imax + 2, jmax + 2,
+                      0.0);  // Matrix containing discretized differential data
+  _G =
+      Matrix<double>(imax + 2, jmax + 2,
+                     0.0);  // of the momentum equation for U and V respectively
   _RS = Matrix<double>(imax + 2, jmax + 2, 0.0);
 }
-//_F(i,j) = Discretization::convection_u(U,i,j)
+
+// Calculating differential data for Explicit Euler Scheme
+
 void Fields::calculate_fluxes(Grid &grid) {
   // int i;
   // int j;
@@ -70,6 +83,8 @@ void Fields::calculate_rs(Grid &grid) {
 //   }
 }
 
+// Applying explicit Euler method
+
 void Fields::calculate_velocities(Grid &grid) {
   // int i;
   // int j;
@@ -95,6 +110,8 @@ void Fields::calculate_velocities(Grid &grid) {
     }
   }
 }
+
+// Calculating dt based on CFL conditions
 
 double Fields::calculate_dt(Grid &grid) {
   double CFLu = 0.0;
@@ -134,6 +151,8 @@ double Fields::calculate_dt(Grid &grid) {
 
   return _dt;
 }
+
+// Functions to return the corresponding values
 
 double &Fields::p(int i, int j) { return _P(i, j); }
 double &Fields::u(int i, int j) { return _U(i, j); }

@@ -1,8 +1,21 @@
+/*
+In this file, we will apply boundary conditions for the walls of our domain. Our
+domain has 4 walls - 1 infinitely long lid at the top moving with a fixed
+velocity and 3 other stationary walls. Based on their position they will each be
+described a specific boundary condition.
+*/
 #include "Boundary.hpp"
 
 #include <cmath>
 #include <iostream>
 
+/*
+In the following code section, you will see 2 constructors for each boundary
+type. For this worksheet, we will use the first one as we do not need wall
+temperature.
+*/
+
+//   For the 3 fixed walls
 FixedWallBoundary::FixedWallBoundary(std::vector<Cell *> cells)
     : _cells(cells) {}
 
@@ -10,6 +23,12 @@ FixedWallBoundary::FixedWallBoundary(std::vector<Cell *> cells,
                                      std::map<int, double> wall_temperature)
     : _cells(cells), _wall_temperature(wall_temperature) {}
 
+/*
+In the following code section, we will apply boundary conditions to the fixed
+walls of our domain based on where the fluid lies with respect to that wall. For
+instance, for the bottom wall; the fluid lies to the top of it. Similarly, we
+implement the same for the two other fixed walls
+*/
 void FixedWallBoundary::apply(Fields &field) {
   int i,j;
   for (auto cells : _cells) {
@@ -45,13 +64,17 @@ void FixedWallBoundary::apply(Fields &field) {
     }
   }
 }
-
+//  For the moving wall
 MovingWallBoundary::MovingWallBoundary(std::vector<Cell *> cells,
                                        double wall_velocity)
     : _cells(cells) {
   _wall_velocity.insert(
       std::pair(LidDrivenCavity::moving_wall_id, wall_velocity));
 }
+
+/*
+For the moving wall, i.e., the lid the fluid will always be below it
+*/
 
 MovingWallBoundary::MovingWallBoundary(std::vector<Cell *> cells,
                                        std::map<int, double> wall_velocity,
