@@ -269,12 +269,12 @@ void Case::simulate() {
     timestep++;
 
     // Printing Data in the terminal
-    std::cout << "Timestep: " << setw(4) << timestep << " | "
+    std::cout << "Timestep size: " << setw(4) << dt << " | "
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
     if (fmod(t, _output_freq) < 0.0001 ||
-        _output_freq - fmod(t, _output_freq) < 0.00001) {
+        _output_freq - fmod(t, _output_freq) < 0.0001) {
       output_vtk(timestep);
     }
   }
