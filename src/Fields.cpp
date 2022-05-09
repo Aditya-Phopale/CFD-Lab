@@ -11,12 +11,19 @@ the current timestep will be advanced to the next one
 Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
                double VI, double PI)
     : _nu(nu), _dt(dt), _tau(tau) {
-  _U = Matrix<double>(imax + 2, jmax + 2, UI);            // Matrix for velocity along the X-direction
-  _V = Matrix<double>(imax + 2, jmax + 2, VI);            // Matrix for velocity along the Y-direction
-  _P = Matrix<double>(imax + 2, jmax + 2, PI);            // Matrix for the pressure values in the cell centers
+  _U = Matrix<double>(imax + 2, jmax + 2,
+                      UI);  // Matrix for velocity along the X-direction
+  _V = Matrix<double>(imax + 2, jmax + 2,
+                      VI);  // Matrix for velocity along the Y-direction
+  _P =
+      Matrix<double>(imax + 2, jmax + 2,
+                     PI);  // Matrix for the pressure values in the cell centers
 
-  _F = Matrix<double>(imax + 2, jmax + 2, 0.0);           //Matrix containing discretized differential data
-  _G = Matrix<double>(imax + 2, jmax + 2, 0.0);           //of the momentum equation for U and V respectively
+  _F = Matrix<double>(imax + 2, jmax + 2,
+                      0.0);  // Matrix containing discretized differential data
+  _G =
+      Matrix<double>(imax + 2, jmax + 2,
+                     0.0);  // of the momentum equation for U and V respectively
   _RS = Matrix<double>(imax + 2, jmax + 2, 0.0);
 }
 
@@ -48,7 +55,7 @@ void Fields::calculate_rs(Grid &grid) {
   }
 }
 
-// Applying explicit Euler method 
+// Applying explicit Euler method
 
 void Fields::calculate_velocities(Grid &grid) {
   for (int i{1}; i < grid.imax(); i++) {

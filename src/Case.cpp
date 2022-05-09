@@ -1,9 +1,9 @@
 /*
-In this file, in the first part, we read and assign values from the input file present in 
-Examples folder, construct boundaries, create file system for our outputs and create our
-output directory.
-In the next part, based on the parameters from the file, we simulate our case and generate 
-results. They are saved in the defined output folder.
+In this file, in the first part, we read and assign values from the input file
+present in Examples folder, construct boundaries, create file system for our
+outputs and create our output directory. In the next part, based on the
+parameters from the file, we simulate our case and generate results. They are
+saved in the defined output folder.
 */
 #include "Case.hpp"
 
@@ -15,11 +15,12 @@ results. They are saved in the defined output folder.
 #else
 #include <experimental/filesystem>
 #endif
+#include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <vector>
-#include <iomanip>
 
 #ifdef GCC_VERSION_9_OR_HIGHER
 namespace filesystem = std::filesystem;
@@ -58,13 +59,13 @@ Case::Case(std::string file_name, int argn, char **args) {
   int itermax;    /* max. number of iterations for pressure per time step */
   double eps;     /* accuracy bound for pressure*/
 
-// Assigning parameters from the file to variables.
+  // Assigning parameters from the file to variables.
 
   if (file.is_open()) {
     std::string var;
     while (!file.eof() && file.good()) {
       file >> var;
-      if (var[0] == '#') { 
+      if (var[0] == '#') {
         file.ignore(MAX_LINE_LENGTH, '\n');
       } else {
         if (var == "xlength") file >> xlength;
@@ -119,7 +120,7 @@ Case::Case(std::string file_name, int argn, char **args) {
   _max_iter = itermax;
   _tolerance = eps;
 
-  // Constructing boundaries 
+  // Constructing boundaries
 
   if (not _grid.moving_wall_cells().empty()) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
@@ -207,8 +208,7 @@ void Case::set_file_names(std::string file_name) {
  * files.
  */
 void Case::simulate() {
-  
-// Defining parameters for running of the loop
+  // Defining parameters for running of the loop
 
   double t = 0.0;
   double dt = _field.dt();
@@ -220,19 +220,20 @@ void Case::simulate() {
   std::ofstream logfile;
   logfile.open("log.txt");
 
-// Applying Boundary Conditions based on their position
+  // Applying Boundary Conditions based on their position
 
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
 
-// Following is the actual loop that runs till the defined time limit.  
+  // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
-    // Calculating Fluxes (_F and _G) for velocities in X and Y direction respectively.
+    // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+    // respectively.
     _field.calculate_fluxes(_grid);
 
     // Calculating RHS for pressure poisson equation
@@ -268,21 +269,22 @@ void Case::simulate() {
     timestep++;
 
     // Printing Data in the terminal
-    std::cout<<"Timestep: "<<setw(4)<<timestep<<" | "<<"Time: "<<setw(8)<<t<<setw(3)<<" | "<<"Residual: "<<setw(11)<<res<<setw(3)<<" | "<<"Pressure Poisson Iterations: "<<setw(3)<<iter<<'\n';
-
-    if (fmod(timestep, _output_freq) < 0.001) {
+    std::cout << "Timestep: " << setw(4) << timestep << " | "
+              << "Time: " << setw(8) << t << setw(3) << " | "
+              << "Residual: " << setw(11) << res << setw(3) << " | "
+              << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+    if (fmod(t, _output_freq) < 0.0001 ||
+        _output_freq - fmod(t, _output_freq) < 0.00001) {
       output_vtk(timestep);
     }
-
-    
   }
   logfile.close();
 }
 
-// Following is the pre-defined function for writing the output files. 
+// Following is the pre-defined function for writing the output files.
 
 void Case::output_vtk(int timestep, int rank) {
-  // Creating a new structured grid 
+  // Creating a new structured grid
   vtkSmartPointer<vtkStructuredGrid> structuredGrid =
       vtkSmartPointer<vtkStructuredGrid>::New();
 
@@ -309,7 +311,8 @@ void Case::output_vtk(int timestep, int rank) {
     y += dy;
   }
 
-  // Specify the dimensions of the grid, addition of 1 to accomodate neighboring cells
+  // Specify the dimensions of the grid, addition of 1 to accomodate neighboring
+  // cells
   structuredGrid->SetDimensions(_grid.domain().size_x + 1,
                                 _grid.domain().size_y + 1, 1);
   structuredGrid->SetPoints(points);

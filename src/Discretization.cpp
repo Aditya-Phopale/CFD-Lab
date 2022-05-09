@@ -1,7 +1,7 @@
 /*
-In this file, we discretize our Navier-Stokes equation in space with finite differences
-We discretize the convection terms; horizontal velocity U, vertical velocity V, the 
-diffusion term, laplacian, and the SOR helper function.
+In this file, we discretize our Navier-Stokes equation in space with finite
+differences We discretize the convection terms; horizontal velocity U, vertical
+velocity V, the diffusion term, laplacian, and the SOR helper function.
 */
 #include "Discretization.hpp"
 
