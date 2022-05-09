@@ -125,6 +125,7 @@ After successfully running the simulation and generating the output files as a *
 
 ![Velocity Field](/docs/images/Vel.png)
 ![Pressure](/docs/images/Pre.png)
+![Vortices](/docs/images/Vor.png)
 ![Tubes](/docs/images/tube.png)
 ![Tubes with Glyph](/docs/images/tubes.png)
 ![Streamline](/docs/images/Str.png)
