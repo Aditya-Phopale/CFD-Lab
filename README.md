@@ -28,6 +28,25 @@ sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install build-essential cmake libvtk7-qt-dev openmpi-bin libopenmpi-dev
 ```
+## Code Theory
+
+For our 2D test case, we assume the fluid is viscous and follows the Navier-Stokes equations. Let,
+`U` be the velocity in X-direction,
+`V` be the velocity in Y-direction,
+`p` be the pressure
+
+![Navier-Stokes equations](https://drive.google.com/file/d/1zTMtxZ4LP9GxZuHelbvy2R7CqLbvlpf4/view?usp=sharing)
+
+
+## Application of Boundary Conditions
+
+## Timestep Calculation
+
+## Discretization
+
+## Calculation of fluxes and velocity 
+
+## Calculation of pressure
 
 ## Building the code
 
