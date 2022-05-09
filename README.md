@@ -139,6 +139,38 @@ Tubes,
 Tubes with Glyph Cones, representing the direction of fluid flow
 ![Tubes with Glyph](/docs/images/tubes.png)
 
-Streamline,
+Streamlines,
 ![Streamline](/docs/images/Str.png)
+
+## Problems
+
+### 5. For the SOR solver, for different values of omega, `omg` the behaviour is,
+
+#### `omg` = 0
+The `residual` goes on increasing, i.e., the solution does not converge, despite the value of `itermax`.
+
+#### 0 < `omg` < 1
+The `residual` goes on decreasing, i.e., the solution does converge, however requires a lot of timesteps. For values of `omg`, closer to 0, convergence is slow and the residual fluctuates.
+
+#### 1 < `omg` < 2
+The `residual` goes on decreasing , i.e., the solution does converge, even for normal values of `itermax`.
+
+### 6. Algorithm behaviour for varying dt 
+
+Based on our tests, we conclude that the maximum dt required for stable simulation is **0.009**, while other parameters remained default.
+
+### 7. For varying values of grid size at dt = 0.05
+
+**For `imax` = `jmax` = 16**, we observed convergence for given value of `dt` the value of `u` at prescribed position is `0.18383 m/s`.
+
+**For `imax` = `jmax` >= 32**, we observed that the solution does not converge for given `dt`, however, upon reducing the value of `dt`, we observe that the solution converges.
+
+### 8. For reducing values of kinematic viscosity to ( 0.01, 0.002, 0.0005, 0.0001).
+
+We observe that, additional vortices are seen at **TOP LEFT** and **BOTTOM RIGHT**. 
+
+
+
+
+
 
