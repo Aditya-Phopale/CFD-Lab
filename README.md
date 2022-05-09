@@ -48,8 +48,8 @@ For our 2D test case, we assume the fluid is viscous and follows the Navier-Stok
 
 ## Calculation of pressure
 
-## PLotting Residuals
-The functionality of pressure residuals plotting was added to enable user monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, first copy the Residuals.txt from the root folder to the build folder  
+## Plotting Residuals
+The functionality of pressure residuals plotting was added to enable user monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, first copy the `Residuals.txt` from the root folder to the `build` folder. After starting the simulation, open terminal and run `gnuplot Residuals.txt` from build. This would start plotting of the Residuals alognside the simulation.  
 
 ## Building the code
 
