@@ -124,3 +124,8 @@ We are investigating an [issue](https://gitlab.lrz.de/tum-i05/public/fluidchen-s
 After successfully running the simulation and generating the output files as a **VTK** output files we visualize the result in **Paraview**
 
 ![Velocity Field](/docs/images/Vel.png)
+![Pressure](/docs/images/Pre.png)
+![Tubes](/docs/images/tube.png)
+![Tubes with Glyph](/docs/images/tubes.png)
+![Streamline](/docs/images/Str.png)
+
