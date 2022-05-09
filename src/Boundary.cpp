@@ -30,7 +30,7 @@ instance, for the bottom wall; the fluid lies to the top of it. Similarly, we
 implement the same for the two other fixed walls
 */
 void FixedWallBoundary::apply(Fields &field) {
-  int i,j;
+  int i, j;
   for (auto cells : _cells) {
     i = cells->i();
     j = cells->j();
@@ -84,7 +84,7 @@ MovingWallBoundary::MovingWallBoundary(std::vector<Cell *> cells,
       _wall_temperature(wall_temperature) {}
 
 void MovingWallBoundary::apply(Fields &field) {
-  int i,j;
+  int i, j;
   for (auto cells : _cells) {
     i = cells->i();
     j = cells->j();
@@ -97,34 +97,32 @@ void MovingWallBoundary::apply(Fields &field) {
       field.g(i, j - 1) = field.v(i, j - 1);
       continue;
     }
-    // TO check
-    //   if (_cells[i]->is_border(border_position::TOP)) {
-    //     field.u(posx, posy) =
-    //         (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
-    //         field.u(posx, posy + 1);
-    //     field.v(posx, posy - 1) = 0.0;
-    //     field.p(posx, posy) = field.p(posx, posy + 1);
-    //     field.g(posx, posy) = field.v(posx, posy);
-    //     continue;
-    //   }
-    //   if (_cells[i]->is_border(border_position::RIGHT)) {
-    //     field.u(posx, posy) = 0.0;
-    //     field.v(posx, posy) =
-    //         (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
-    //         field.v(posx + 1, posy);
-    //     field.p(posx, posy) = field.p(posx, posy - 1);
-    //     field.f(posx, posy) = field.u(posx, posy);
-    //     continue;
-    //   }
-    //   if (_cells[i]->is_border(border_position::LEFT)) {
-    //     field.u(posx, posy) = 0.0;
-    //     field.v(posx, posy) =
-    //         (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
-    //         field.v(posx - 1, posy);
-    //     field.p(posx, posy) = field.p(posx, posy - 1);
-    //     field.f(posx, posy) = field.u(posx, posy);
-    //     continue;
-    //   }
-    // }
+    if (_cells[i]->is_border(border_position::TOP)) {
+      field.u(i, j) =
+          (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
+          field.u(i, j + 1);
+      field.v(i, j - 1) = 0.0;
+      field.p(i, j) = field.p(i, j + 1);
+      field.g(i, j) = field.v(i, j);
+      continue;
+    }
+    if (_cells[i]->is_border(border_position::RIGHT)) {
+      field.u(i, j) = 0.0;
+      field.v(i, j) =
+          (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
+          field.v(i + 1, j);
+      field.p(i, j) = field.p(i, j - 1);
+      field.f(i, j) = field.u(i, j);
+      continue;
+    }
+    if (_cells[i]->is_border(border_position::LEFT)) {
+      field.u(i, j) = 0.0;
+      field.v(i, j) =
+          (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
+          field.v(i - 1, j);
+      field.p(i, j) = field.p(i, j - 1);
+      field.f(i, j) = field.u(i, j);
+      continue;
+    }
   }
 }

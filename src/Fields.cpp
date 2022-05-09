@@ -30,23 +30,6 @@ Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
 // Calculating differential data for Explicit Euler Scheme
 
 void Fields::calculate_fluxes(Grid &grid) {
-  // int i;
-  // int j;
-  // for(auto cell : grid.fluid_cells()){
-  //   i = cell->i();
-  //   j = cell->j();
-  //   _F(i,j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
-  //                                  Discretization::convection_u(_U, _V, i, j));
-  //   _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
-  //                                  Discretization::convection_u(_U, _V, i, j));
-
-
-    
-  // }
-
-
-
-
   for (int i{1}; i < grid.imax(); i++) {
     for (int j{1}; j < grid.jmax() + 1; j++) {
       _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
@@ -64,40 +47,18 @@ void Fields::calculate_fluxes(Grid &grid) {
 
 void Fields::calculate_rs(Grid &grid) {
   int i, j;
-  for(auto cell : grid.fluid_cells()){
+  for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
     double term1 = (_F(i, j) - _F(i - 1, j)) / grid.dx();
     double term2 = (_G(i, j) - _G(i, j - 1)) / grid.dy();
     _RS(i, j) = (term1 + term2) / _dt;
   }
-
-
-
-//   for (int i{1}; i < grid.imax() + 1; i++) {
-//     for (int j{1}; j < grid.jmax() + 1; j++) {
-//       double term1 = (_F(i, j) - _F(i - 1, j)) / grid.dx();
-//       double term2 = (_G(i, j) - _G(i, j - 1)) / grid.dy();
-//       _RS(i, j) = (term1 + term2) / _dt;
-//     }
-//   }
 }
 
 // Applying explicit Euler method
 
 void Fields::calculate_velocities(Grid &grid) {
-  // int i;
-  // int j;
-  // for(auto cell : grid.fluid_cells()){
-  //   i = cell->i();
-  //   j = cell->j();
-  //   _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
-  //   _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
-
-  // }
-
-
-
   for (int i{1}; i < grid.imax(); i++) {
     for (int j{1}; j < grid.jmax() + 1; j++) {
       _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
@@ -124,24 +85,13 @@ double Fields::calculate_dt(Grid &grid) {
   double u_max = 0.0;
   double v_max = 0.0;
 
-  int i,j;
-  for(auto cell : grid.fluid_cells()){
+  int i, j;
+  for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
     u_max = std::max(u_max, fabs(_U(i, j)));
     v_max = std::max(v_max, fabs(_V(i, j)));
   }
-
-  // for (int i{1}; i < grid.imax(); i++) {
-  //   for (int j{1}; j < grid.jmax() + 1; j++) {
-  //     u_max = std::max(u_max, fabs(_U(i, j)));
-  //   }
-  // }
-  // for (int i{1}; i < grid.imax() + 1; i++) {
-  //   for (int j{1}; j < grid.jmax(); j++) {
-  //     v_max = std::max(v_max, fabs(_V(i, j)));
-  //   }
-  // }
 
   CFLu = grid.dx() / u_max;
   CFLv = grid.dy() / v_max;

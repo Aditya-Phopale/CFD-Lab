@@ -220,17 +220,14 @@ void Case::simulate() {
   std::ofstream logfile;
   logfile.open("log.txt");
 
-  // Applying Boundary Conditions based on their position
-
-  for (int i = 0; i < _boundaries.size(); i++) {
-    _boundaries[i]->apply(_field);
-  }
-
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
     // Calculating timestep for advancement to the next iteration.
-    //dt = _field.calculate_dt(_grid);
+    dt = _field.calculate_dt(_grid);
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y direction
     // respectively.
@@ -254,14 +251,9 @@ void Case::simulate() {
       logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
     }
 
-    // Calculating updated velocities using pressure calculated in the pressure
-    // poisson equation
+    // Calculating updated velocities using pressure calculated in the
+    // pressure poisson equation
     _field.calculate_velocities(_grid);
-
-    // Applying Boundary Conditions
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
 
     // Updating t for the next step
     t += dt;
@@ -277,7 +269,7 @@ void Case::simulate() {
       _output_freq = _output_freq + output_counter;
     }
   }
-  //std::cout<<_field.u(32,56)<<"\n";
+
   logfile.close();
 }
 
@@ -311,8 +303,8 @@ void Case::output_vtk(int timestep, int rank) {
     y += dy;
   }
 
-  // Specify the dimensions of the grid, addition of 1 to accomodate neighboring
-  // cells
+  // Specify the dimensions of the grid, addition of 1 to accomodate
+  // neighboring cells
   structuredGrid->SetDimensions(_grid.domain().size_x + 1,
                                 _grid.domain().size_y + 1, 1);
   structuredGrid->SetPoints(points);
