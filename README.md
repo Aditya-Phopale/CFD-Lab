@@ -124,30 +124,22 @@ We are investigating an [issue](https://gitlab.lrz.de/tum-i05/public/fluidchen-s
 After successfully running the simulation and generating the output files as a **VTK** output files we visualize the result in **Paraview** as follows,
 
 
-Velocity, as expected slighty offset from the center a vortex is formed
+Velocity,<br>
 ![Velocity Field](/docs/images/Vel.png)
 
-Pressure,
+Pressure,<br>
 ![Pressure](/docs/images/Pre.png)
 
-Vortices,
-![Vortices](/docs/images/Vor.png)
-
-Tubes,
-![Tubes](/docs/images/tube.png)
-
-Tubes with Glyph Cones, representing the direction of fluid flow
+Tubes with Glyph Cones, representing the direction of fluid flow<br>
 ![Tubes with Glyph](/docs/images/tubes.png)
-
-Streamlines,
-![Streamline](/docs/images/Str.png)
 
 ### Residuals
 
 For proper simulation paramters, expectedly, we observe convergence, but we also note that the peak value, i.e., initial residual, goes on reducing, indicating a good simulation
+![Residuals](/docs/images/Residualconv.png)
 
 For improper simulation paramters, expectedly, we observe divergence, the value of initial residual goes on increasing, until it can no longer be plotted. 
-
+![Residuals](/docs/images/residualdiv.png)
 
 ## Problems
 
