@@ -126,14 +126,19 @@ After successfully running the simulation and generating the output files as a *
 
 Velocity, as expected slighty offset from the center a vortex is formed
 ![Velocity Field](/docs/images/Vel.png)
+
 Pressure,
 ![Pressure](/docs/images/Pre.png)
+
 Vortices,
 ![Vortices](/docs/images/Vor.png)
+
 Tubes,
 ![Tubes](/docs/images/tube.png)
+
 Tubes with Glyph Cones, representing the direction of fluid flow
 ![Tubes with Glyph](/docs/images/tubes.png)
+
 Streamline,
 ![Streamline](/docs/images/Str.png)
 
