@@ -106,11 +106,39 @@ In order to run **Fluidchen**, the case file should be given as input parameter.
 ./fluidchen ../example_cases/LidDrivenCavity/LidDrivenCavity.dat
 ```
 
-This will run the case file and create the output folder `../example_cases/LidDrivenCavity/LidDrivenCavity_Output`, which holds the `.vtk` files of the solution.
+This will run the case file and create the output folder `../example_cases/LidDrivenCavity/LidDrivenCavity_Output`, which holds the `.vtk` files of the solution. 
 
 If the input file does not contain a geometry file (added later in the course), fluidchen will run the lid-driven cavity case with the given parameters.
+
+## Output
+
+In the terminal window, we also output, `Timestep`, `Time`,`Residual`, and `Pressure Poisson Interpretation`. Until convergence, we also output error message. 
 
 ## 
 ### No rule to make target '/usr/lib/x86_64-linux-gnu/libdl.so'
 
 We are investigating an [issue](https://gitlab.lrz.de/tum-i05/public/fluidchen-skeleton/-/issues/3) that appears on specific systems and combinations of dependencies.
+
+## Results and Interpretation
+
+After successfully running the simulation and generating the output files as a **VTK** output files we visualize the result in **Paraview** as follows,
+
+
+Velocity, as expected slighty offset from the center a vortex is formed
+![Velocity Field](/docs/images/Vel.png)
+
+Pressure,
+![Pressure](/docs/images/Pre.png)
+
+Vortices,
+![Vortices](/docs/images/Vor.png)
+
+Tubes,
+![Tubes](/docs/images/tube.png)
+
+Tubes with Glyph Cones, representing the direction of fluid flow
+![Tubes with Glyph](/docs/images/tubes.png)
+
+Streamline,
+![Streamline](/docs/images/Str.png)
+
