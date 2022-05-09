@@ -39,8 +39,10 @@ For our 2D test case, we assume the fluid is viscous and follows the Navier-Stok
 
 
 ## Application of Boundary Conditions
+The boundary conditions were moving wall with velocity = 1m/s at the TOP, with the rest of the walls being fixed with no-slip condition. These were defined in the `Boundary.cpp` and the `apply` method was implemented to apply these boundaries from `Case.cpp`
 
 ## Timestep Calculation
+For adaptive timestep control, `calculate_dt` function was defined in `Fields.cpp` which calculates the timestep for next iteration which satisfies the CFL condition for u, v and nu.
 
 ## Discretization
 The convection, diffusion as well as the pressure laplacian terms are discretized according to the finite difference formulation. These are implemented in the Discretization.cpp.  
