@@ -172,9 +172,22 @@ Based on our tests, we conclude that the maximum dt required for stable simulati
 
 **For `imax` = `jmax` >= 32**, we observed that the solution does not converge for given `dt`, however, upon reducing the value of `dt`, we observe that the solution converges.
 
-### 8. For reducing values of kinematic viscosity to ( 0.01, 0.002, 0.0005, 0.0001).
+### 8. For reducing values of kinematic viscosity `nu` to ( 0.01, 0.002, 0.0005, 0.0001).
 
 We observe that, additional vortices are seen at **TOP LEFT** and **BOTTOM RIGHT**. 
+
+**For `nu` = 0.01**
+![nu1](/docs/images/nu1.png)
+
+**For `nu` = 0.002**
+![nu2](/docs/images/nu2.png)
+
+**For `nu` = 0.0005**
+![nu3](/docs/images/nu3.png)
+
+**For `nu` = 0.0001**
+![nu4](/docs/images/nu4.png)
+
 
 
 
