@@ -33,10 +33,7 @@ sudo apt-get install build-essential cmake libvtk7-qt-dev openmpi-bin libopenmpi
 For our 2D test case, we assume the fluid is viscous and follows the Navier-Stokes equations. Let,
 `U` be the velocity in X-direction,
 `V` be the velocity in Y-direction,
-`p` be the pressure
-
-![Navier-Stokes equations](https://drive.google.com/file/d/1zTMtxZ4LP9GxZuHelbvy2R7CqLbvlpf4/view?usp=sharing)
-
+`p` be the pressure 
 
 ## Application of Boundary Conditions
 For our test case, we assume the top wall to be an infinitely long lid moving at a constant velocity, with the rest of the 3 walls being fixed with 'no-slip' condition. The boundary conditions particular to each wall are defined in `Boundary.cpp` under the  `apply` method based on the position of fluid relative to that particular wall in `Case.cpp`.
@@ -52,11 +49,21 @@ The fluxes `F`, `G` are calculated in the `Fields.cpp` using the Discretised for
 
 ## Calculation of pressure
 
+For calculation of Pressure, **Succesive-Over-Relaxation** iterative solver is implemented in `PressureSolver.cpp`, with omega, `omg` as 1.7.
+
 ## Plotting Residuals
 The functionality of pressure residuals plotting was added to enable the user to monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, 
 
-1. Copy the `Residuals.txt` from the root folder to the `build` folder. 
-2. After starting the simulation, open terminal and run `gnuplot Residuals.txt` from build. 
+1. Copy the `Residuals.txt` from the `root` folder to the `build` folder. 
+```shell
+cp ../Residuals.txt .
+```
+
+2. After starting the simulation, open terminal and run the following from build.
+```shell
+gnuplot Residuals.txt
+```
+
 3. This would start plotting of the Residuals alognside the simulation.  
 
 ## Building the code
