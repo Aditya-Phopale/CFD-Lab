@@ -8,8 +8,7 @@ set grid
 
 plot "<cat log.txt | cut -d' ' -f2" with linespoints
 
-pause 1
-xmax = GPVAL_DATA_X_MAX+100
-xmin = xmax-600
+xmax = GPVAL_DATA_X_MAX+2
+xmin = 0
 set xrange [xmin:xmax]
 reread
