@@ -39,20 +39,25 @@ For our 2D test case, we assume the fluid is viscous and follows the Navier-Stok
 
 
 ## Application of Boundary Conditions
-The boundary conditions were moving wall with velocity = 1m/s at the TOP, with the rest of the walls being fixed with no-slip condition. These were defined in the `Boundary.cpp` and the `apply` method was implemented to apply these boundaries from `Case.cpp`
+For our test case, we assume the top wall to be an infinitely long lid moving at a constant velocity, with the rest of the 3 walls being fixed with 'no-slip' condition. The boundary conditions particular to each wall are defined in `Boundary.cpp` under the  `apply` method based on the position of fluid relative to that particular wall in `Case.cpp`.
 
 ## Timestep Calculation
-For adaptive timestep control, `calculate_dt` function was defined in `Fields.cpp` which calculates the timestep for next iteration which satisfies the CFL condition for u, v and nu.
+In `Fields.cpp`, for adaptive timestep control, `calculate_dt` function was defined which calculates the timestep for next iteration, `dt`, which satisfies the **Courant-Friedrichs-Levi's** (CFL) conditions for `u`, `v`and `nu`.
 
 ## Discretization
-The convection, diffusion as well as the pressure laplacian terms are discretized according to the finite difference formulation. These are implemented in the Discretization.cpp.  
+The convection, diffusion as well as the pressure laplacian terms are discretized according to the finite difference formulation. These are implemented in the `Discretization.cpp`. The convection terms for `u` and `v` is calculated in unique functions, whereas the diffusion function is common to both.  
 
 ## Calculation of fluxes and velocity 
-The fluxes F, G are calculated in the fields.cpp using the Discretised form of convection and diffusion terms. The velocities are updated using the `calculate_velocities` function. Also the right side of the Pressure Poisson Equation is being calculated in `Fields.cpp` using the `calculate_rs` function.
+The fluxes `F`, `G` are calculated in the `Fields.cpp` using the Discretised form of convection and diffusion terms. The velocities are updated using the `calculate_velocities` function. Also the right side of the Pressure Poisson Equation is being calculated in `Fields.cpp` using the `calculate_rs` function.
+
 ## Calculation of pressure
 
 ## Plotting Residuals
-The functionality of pressure residuals plotting was added to enable user monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, first copy the `Residuals.txt` from the root folder to the `build` folder. After starting the simulation, open terminal and run `gnuplot Residuals.txt` from build. This would start plotting of the Residuals alognside the simulation.  
+The functionality of pressure residuals plotting was added to enable the user to monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, 
+
+1. Copy the `Residuals.txt` from the root folder to the `build` folder. 
+2. After starting the simulation, open terminal and run `gnuplot Residuals.txt` from build. 
+3. This would start plotting of the Residuals alognside the simulation.  
 
 ## Building the code
 
