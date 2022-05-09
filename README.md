@@ -121,12 +121,19 @@ We are investigating an [issue](https://gitlab.lrz.de/tum-i05/public/fluidchen-s
 
 ## Results and Interpretation
 
-After successfully running the simulation and generating the output files as a **VTK** output files we visualize the result in **Paraview**
+After successfully running the simulation and generating the output files as a **VTK** output files we visualize the result in **Paraview** as follows,
 
+
+Velocity, as expected slighty offset from the center a vortex is formed
 ![Velocity Field](/docs/images/Vel.png)
+Pressure,
 ![Pressure](/docs/images/Pre.png)
+Vortices,
 ![Vortices](/docs/images/Vor.png)
+Tubes,
 ![Tubes](/docs/images/tube.png)
+Tubes with Glyph Cones, representing the direction of fluid flow
 ![Tubes with Glyph](/docs/images/tubes.png)
+Streamline,
 ![Streamline](/docs/images/Str.png)
 
