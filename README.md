@@ -31,30 +31,26 @@ sudo apt-get install build-essential cmake libvtk7-qt-dev openmpi-bin libopenmpi
 ## Code Theory
 
 For our 2D test case, we assume the fluid is viscous and follows the Navier-Stokes equations. Let,
-
 `U` be the velocity in X-direction,
-
 `V` be the velocity in Y-direction,
-
 `p` be the pressure
 
+![Navier-Stokes equations](https://drive.google.com/file/d/1zTMtxZ4LP9GxZuHelbvy2R7CqLbvlpf4/view?usp=sharing)
 
-### Application of Boundary Conditions
 
-For our case, the top wall is an infinitely long lid moving at a fixed velocity. The rest of the 3 walls are stationary, and as follow 'no-slip' condition. In `Boundary.cpp`, we define the `.apply()` method which we use to apply the specific boundary conditions based on the position of fluid relative to the individual wall in `Case.cpp`.
+## Application of Boundary Conditions
 
-### Timestep Calculation 
+## Timestep Calculation
 
-For adaptive step size control, we use the minimum of the three `dt` values based on **Courant-Friedrichs-Levi's** conditions (CFL), which is implemented in `Fields.cpp`.
+## Discretization
+The convection, diffusion as well as the pressure laplacian terms are discretized according to the finite difference formulation. These are implemented in the Discretization.cpp.  
 
-### Discretization
+## Calculation of fluxes and velocity 
+The fluxes F, G are calculated in the fields.cpp using the Discretised form of convection and diffusion terms. The velocities are updated using the `calculate_velocities` function. Also the right side of the Pressure Poisson Equation is being calculated in `Fields.cpp` using the `calculate_rs` function.
+## Calculation of pressure
 
-### Calculation of fluxes and velocity 
-
-### Calculation of pressure
-
-### Plotting Residuals
-The functionality of pressure residuals plotting was added to enable the user to monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, first copy the Residuals.txt from the root folder to the build folder  
+## Plotting Residuals
+The functionality of pressure residuals plotting was added to enable user monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, first copy the `Residuals.txt` from the root folder to the `build` folder. After starting the simulation, open terminal and run `gnuplot Residuals.txt` from build. This would start plotting of the Residuals alognside the simulation.  
 
 ## Building the code
 
