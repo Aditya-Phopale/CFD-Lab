@@ -213,7 +213,7 @@ void Case::simulate() {
   double t = 0.0;
   double dt = _field.dt();
   int timestep = 0;
-  double output_counter = 0.0;
+  double output_counter = _output_freq;
   int iter;
   double res;
   int total_iter = 1;
@@ -230,7 +230,7 @@ void Case::simulate() {
 
   while (t <= _t_end) {
     // Calculating timestep for advancement to the next iteration.
-    dt = _field.calculate_dt(_grid);
+    //dt = _field.calculate_dt(_grid);
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y direction
     // respectively.
@@ -268,16 +268,16 @@ void Case::simulate() {
     timestep++;
 
     // Printing Data in the terminal
-    std::cout << "Timestep size: " << setw(4) << dt << " | "
+    std::cout << "Timestep size: " << setw(10) << dt << " | "
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-    if (fmod(t, _output_freq) < 0.0001 ||
-        _output_freq - fmod(t, _output_freq) < 0.0001) {
+    if (t >= _output_freq) {
       output_vtk(timestep);
+      _output_freq = _output_freq + output_counter;
     }
   }
-  //std::cout<<_field.u(16,28)<<"\n";
+  //std::cout<<_field.u(32,56)<<"\n";
   logfile.close();
 }
 
