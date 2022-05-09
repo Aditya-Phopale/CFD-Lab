@@ -64,7 +64,7 @@ cp ../Residuals.txt .
 gnuplot Residuals.txt
 ```
 
-3. This would start plotting of the Residuals alognside the simulation.  
+3. This would start plotting of the Residuals along side the simulation.  
 
 ## Building the code
 
@@ -141,6 +141,13 @@ Tubes with Glyph Cones, representing the direction of fluid flow
 
 Streamlines,
 ![Streamline](/docs/images/Str.png)
+
+### Residuals
+
+For proper simulation paramters, expectedly, we observe convergence, but we also note that the peak value, i.e., initial residual, goes on reducing, indicating a good simulation
+
+For improper simulation paramters, expectedly, we observe divergence, the value of initial residual goes on increasing, until it can no longer be plotted. 
+
 
 ## Problems
 
