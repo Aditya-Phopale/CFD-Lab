@@ -54,8 +54,10 @@ For calculation of Pressure, **Succesive-Over-Relaxation** iterative solver is i
 ## Plotting Residuals
 The functionality of pressure residuals plotting was added to enable the user to monitor the health of the simulation on the fly. To plot the residuals alongside the running simulation, 
 
-1. Copy the `Residuals.txt` from the `root` folder to the `build` folder. 
+1. Install gnuplot and copy the `Residuals.txt` from the `root` folder to the `build` folder. 
 ```shell
+sudo apt-get update -y
+sudo apt-get install -y gnuplot-qt
 cp ../Residuals.txt .
 ```
 
@@ -160,9 +162,9 @@ Based on our tests, we conclude that the maximum dt required for stable simulati
 
 ### 7. For varying values of grid size at dt = 0.05
 
-**For `imax` = `jmax` = 16**, we observed convergence for given value of `dt` the value of `u` at prescribed position is `0.18383 m/s`.
+**For `imax` = `jmax` = 16**, we observed convergence for given value of `dt` and `nu = 0.01` the value of `u` at prescribed position is `0.18383 m/s`.
 
-**For `imax` = `jmax` >= 32**, we observed that the solution does not converge for given `dt`, however, upon reducing the value of `dt`, we observe that the solution converges.
+**For `imax` = `jmax` >= 32**, we observed that the solution does not converge for given `dt` and `nu=0.01`, however, upon reducing the value of `dt`, we observe that the solution converges.
 
 ### 8. For reducing values of kinematic viscosity `nu` to ( 0.01, 0.002, 0.0005, 0.0001).
 
