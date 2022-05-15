@@ -15,6 +15,10 @@ enum class border_position {
   BOTTOM,
   LEFT,
   RIGHT,
+  NORTHWEST,
+  SOUTHEAST,
+  NORTHEAST,
+  SOUTHWEST
 };
 
 namespace border {
@@ -29,5 +33,8 @@ enum class cell_type {
   FLUID,
   FIXED_WALL,
   MOVING_WALL,
+  OBSTACLE,
+  INLET,
+  OUTLET,
   DEFAULT
 };

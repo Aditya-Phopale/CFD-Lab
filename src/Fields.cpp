@@ -30,19 +30,43 @@ Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
 // Calculating differential data for Explicit Euler Scheme
 
 void Fields::calculate_fluxes(Grid &grid) {
-  for (int i{1}; i < grid.imax(); i++) {
-    for (int j{1}; j < grid.jmax() + 1; j++) {
+
+  int i, j;
+  for (auto cell : grid.fluid_cells()) {
+    i = cell->i();
+    j = cell->j();
+
+    if(cell->neighbour(border_position::RIGHT)->type() == cell_type::FLUID){
       _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
                                    Discretization::convection_u(_U, _V, i, j));
     }
-  }
-
-  for (int i{1}; i < grid.imax() + 1; i++) {
-    for (int j{1}; j < grid.jmax(); j++) {
+    if(cell->neighbour(border_position::TOP)->type() == cell_type::FLUID){
       _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
                                    Discretization::convection_v(_U, _V, i, j));
     }
   }
+
+
+
+
+
+
+
+
+
+  // for (int i{1}; i < grid.imax(); i++) {
+  //   for (int j{1}; j < grid.jmax() + 1; j++) {
+  //     _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
+  //                                  Discretization::convection_u(_U, _V, i, j));
+  //   }
+  // }
+
+  // for (int i{1}; i < grid.imax() + 1; i++) {
+  //   for (int j{1}; j < grid.jmax(); j++) {
+  //     _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
+  //                                  Discretization::convection_v(_U, _V, i, j));
+  //   }
+  // }
 }
 
 void Fields::calculate_rs(Grid &grid) {
@@ -59,17 +83,31 @@ void Fields::calculate_rs(Grid &grid) {
 // Applying explicit Euler method
 
 void Fields::calculate_velocities(Grid &grid) {
-  for (int i{1}; i < grid.imax(); i++) {
-    for (int j{1}; j < grid.jmax() + 1; j++) {
+  int i, j;
+  for (auto cell : grid.fluid_cells()) {
+    i = cell->i();
+    j = cell->j();
+
+    if(cell->neighbour(border_position::RIGHT)->type() == cell_type::FLUID){
       _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
     }
-  }
-
-  for (int i{1}; i < grid.imax() + 1; i++) {
-    for (int j{1}; j < grid.jmax(); j++) {
+    if(cell->neighbour(border_position::TOP)->type() == cell_type::FLUID){
       _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
     }
   }
+  
+   
+  // for (int i{1}; i < grid.imax(); i++) {
+  //   for (int j{1}; j < grid.jmax() + 1; j++) {
+  //     _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
+  //   }
+  // }
+
+  // for (int i{1}; i < grid.imax() + 1; i++) {
+  //   for (int j{1}; j < grid.jmax(); j++) {
+  //     _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
+  //   }
+  // }
 }
 
 // Calculating dt based on CFL conditions

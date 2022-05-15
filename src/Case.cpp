@@ -45,6 +45,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   double nu;      /* viscosity   */
   double UI;      /* velocity x-direction */
   double VI;      /* velocity y-direction */
+  double UIN;
+  double VIN;
   double PI;      /* pressure */
   double GX;      /* gravitation x-direction */
   double GY;      /* gravitation y-direction */
@@ -68,6 +70,7 @@ Case::Case(std::string file_name, int argn, char **args) {
       if (var[0] == '#') {
         file.ignore(MAX_LINE_LENGTH, '\n');
       } else {
+        if (var == "geo_file") file >> _geom_name;
         if (var == "xlength") file >> xlength;
         if (var == "ylength") file >> ylength;
         if (var == "nu") file >> nu;
@@ -83,6 +86,8 @@ Case::Case(std::string file_name, int argn, char **args) {
         if (var == "GX") file >> GX;
         if (var == "GY") file >> GY;
         if (var == "PI") file >> PI;
+        if (var == "UIN") file >> UIN;
+        if (var == "VIN") file >> VIN;
         if (var == "itermax") file >> itermax;
         if (var == "imax") file >> imax;
         if (var == "jmax") file >> jmax;
@@ -129,6 +134,14 @@ Case::Case(std::string file_name, int argn, char **args) {
   if (not _grid.fixed_wall_cells().empty()) {
     _boundaries.push_back(
         std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+  }
+  if (not _grid.inlet_cells().empty()) {
+    _boundaries.push_back(std::make_unique<InletBoundary>(
+        _grid.inlet_cells(), UIN, VIN));
+  }
+  if (not _grid.outlet_Cells().empty()) {
+    _boundaries.push_back(std::make_unique<OutletBoundary>(
+        _grid.outlet_Cells()) );
   }
 }
 
@@ -222,55 +235,57 @@ void Case::simulate() {
 
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t <= _t_end) {
+  while (t < dt) {
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
     }
-    // Calculating timestep for advancement to the next iteration.
-    dt = _field.calculate_dt(_grid);
+    output_vtk(timestep);
+    t = t+1;
+  //   // Calculating timestep for advancement to the next iteration.
+  //   dt = _field.calculate_dt(_grid);
 
-    // Calculating Fluxes (_F and _G) for velocities in X and Y direction
-    // respectively.
-    _field.calculate_fluxes(_grid);
+  //   // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+  //   // respectively.
+  //   _field.calculate_fluxes(_grid);
 
-    // Calculating RHS for pressure poisson equation
-    _field.calculate_rs(_grid);
+  //   // Calculating RHS for pressure poisson equation
+  //   _field.calculate_rs(_grid);
 
-    iter = 0;    // Pressure poisson solver iteration initialization
-    res = 1000;  // Any value greatrer than tolerance.
+  //   iter = 0;    // Pressure poisson solver iteration initialization
+  //   res = 1000;  // Any value greatrer than tolerance.
 
-    while (res > _tolerance) {
-      if (iter >= _max_iter) {
-        std::cout << "Pressure poisson solver did not converge to the given "
-                     "tolerance...\n";
-        break;
-      }
-      res = _pressure_solver->solve(_field, _grid, _boundaries);
-      iter++;
-      total_iter++;
-      logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
-    }
+  //   while (res > _tolerance) {
+  //     if (iter >= _max_iter) {
+  //       std::cout << "Pressure poisson solver did not converge to the given "
+  //                    "tolerance...\n";
+  //       break;
+  //     }
+  //     res = _pressure_solver->solve(_field, _grid, _boundaries);
+  //     iter++;
+  //     total_iter++;
+  //     logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
+  //   }
 
-    // Calculating updated velocities using pressure calculated in the
-    // pressure poisson equation
-    _field.calculate_velocities(_grid);
+  //   // Calculating updated velocities using pressure calculated in the
+  //   // pressure poisson equation
+  //   _field.calculate_velocities(_grid);
 
-    // Updating t for the next step
-    t += dt;
-    timestep++;
+  //   // Updating t for the next step
+  //   t += dt;
+  //   timestep++;
 
-    // Printing Data in the terminal
-    std::cout << "Timestep size: " << setw(10) << dt << " | "
-              << "Time: " << setw(8) << t << setw(3) << " | "
-              << "Residual: " << setw(11) << res << setw(3) << " | "
-              << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-    if (t >= _output_freq) {
-      output_vtk(timestep);
-      _output_freq = _output_freq + output_counter;
-    }
+  //   // Printing Data in the terminal
+  //   std::cout << "Timestep size: " << setw(10) << dt << " | "
+  //             << "Time: " << setw(8) << t << setw(3) << " | "
+  //             << "Residual: " << setw(11) << res << setw(3) << " | "
+  //             << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+  //   if (t >= _output_freq) {
+  //     output_vtk(timestep);
+  //     _output_freq = _output_freq + output_counter;
+  //   }
   }
 
-  logfile.close();
+  // logfile.close();
 }
 
 // Following is the pre-defined function for writing the output files.

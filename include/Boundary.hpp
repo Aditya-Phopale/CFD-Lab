@@ -58,3 +58,32 @@ class MovingWallBoundary : public Boundary {
   std::map<int, double> _wall_velocity;
   std::map<int, double> _wall_temperature;
 };
+
+class InletBoundary : public Boundary {
+ public:
+  InletBoundary(std::vector<Cell *> cells, double uin, double vin);
+  InletBoundary(std::vector<Cell *> cells,
+                     double uin, double vin,
+                     std::map<int, double> wall_temperature);
+  virtual ~InletBoundary() = default;
+  virtual void apply(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+  double _uin;
+  double _vin;
+  std::map<int, double> _wall_temperature;
+};
+
+class OutletBoundary : public Boundary {
+ public:
+  OutletBoundary(std::vector<Cell *> cells);
+  OutletBoundary(std::vector<Cell *> cells,
+                     std::map<int, double> wall_temperature);
+  virtual ~OutletBoundary() = default;
+  virtual void apply(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+  std::map<int, double> _wall_temperature;
+};
