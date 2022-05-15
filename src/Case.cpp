@@ -42,9 +42,9 @@ namespace filesystem = std::experimental::filesystem;
 Case::Case(std::string file_name, int argn, char **args) {
   const int MAX_LINE_LENGTH = 1024;
   std::ifstream file(file_name);
-  double nu;      /* viscosity   */
-  double UI;      /* velocity x-direction */
-  double VI;      /* velocity y-direction */
+  double nu; /* viscosity   */
+  double UI; /* velocity x-direction */
+  double VI; /* velocity y-direction */
   double UIN;
   double VIN;
   double PI;      /* pressure */
@@ -132,12 +132,12 @@ Case::Case(std::string file_name, int argn, char **args) {
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
   }
   if (not _grid.inlet_cells().empty()) {
-    _boundaries.push_back(std::make_unique<InletBoundary>(
-        _grid.inlet_cells(), UIN, VIN));
+    _boundaries.push_back(
+        std::make_unique<InletBoundary>(_grid.inlet_cells(), UIN, VIN));
   }
   if (not _grid.outlet_cells().empty()) {
-    _boundaries.push_back(std::make_unique<OutletBoundary>(
-        _grid.outlet_cells()) );
+    _boundaries.push_back(
+        std::make_unique<OutletBoundary>(_grid.outlet_cells()));
   }
   if (not _grid.fixed_wall_cells().empty()) {
     _boundaries.push_back(
@@ -235,14 +235,13 @@ void Case::simulate() {
 
   initial_condition(_grid, _field);
 
+  for (int i = 0; i < _boundaries.size(); i++) {
+    _boundaries[i]->apply(_field);
+  }
 
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t < _t_end) {
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
-    //output_vtk(timestep);
+  while (t <= _t_end) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
@@ -271,7 +270,9 @@ void Case::simulate() {
     // Calculating updated velocities using pressure calculated in the
     // pressure poisson equation
     _field.calculate_velocities(_grid);
-
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
     // Updating t for the next step
     t += dt;
     timestep++;
@@ -281,15 +282,13 @@ void Case::simulate() {
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-    //output_vtk(timestep);
+
     if (t >= _output_freq) {
-      initial_condition(_grid, _field);
       output_vtk(timestep);
       _output_freq = _output_freq + output_counter;
     }
   }
-
- logfile.close();
+  logfile.close();
 }
 
 // Following is the pre-defined function for writing the output files.
@@ -387,15 +386,15 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain) {
   domain.size_y = jmax_domain;
 }
 
-void Case::initial_condition(const Grid &grid, Fields &field){
-  int i,j;
-  for(auto cell : grid.fixed_wall_cells()){
-    i = cell->i();;
+void Case::initial_condition(const Grid &grid, Fields &field) {
+  int i, j;
+  for (auto cell : grid.fixed_wall_cells()) {
+    i = cell->i();
     j = cell->j();
-    field.u(i,j) = 0.0;
-    field.v(i,j) = 0.0;
-    field.p(i,j) = 0.0;
-    field.f(i,j) = 0.0;
-    field.g(i,j) = 0.0;   
+    field.u(i, j) = 0.0;
+    field.v(i, j) = 0.0;
+    field.p(i, j) = 0.0;
+    field.f(i, j) = 0.0;
+    field.g(i, j) = 0.0;
   }
 }
