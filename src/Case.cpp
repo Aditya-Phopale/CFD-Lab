@@ -131,17 +131,17 @@ Case::Case(std::string file_name, int argn, char **args) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
   }
-  if (not _grid.fixed_wall_cells().empty()) {
-    _boundaries.push_back(
-        std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
-  }
   if (not _grid.inlet_cells().empty()) {
     _boundaries.push_back(std::make_unique<InletBoundary>(
         _grid.inlet_cells(), UIN, VIN));
   }
-  if (not _grid.outlet_Cells().empty()) {
+  if (not _grid.outlet_cells().empty()) {
     _boundaries.push_back(std::make_unique<OutletBoundary>(
-        _grid.outlet_Cells()) );
+        _grid.outlet_cells()) );
+  }
+  if (not _grid.fixed_wall_cells().empty()) {
+    _boundaries.push_back(
+        std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
   }
 }
 
@@ -233,59 +233,63 @@ void Case::simulate() {
   std::ofstream logfile;
   logfile.open("log.txt");
 
+  initial_condition(_grid, _field);
+
+
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t < dt) {
+  while (t < _t_end) {
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
     }
-    output_vtk(timestep);
-    t = t+1;
-  //   // Calculating timestep for advancement to the next iteration.
-  //   dt = _field.calculate_dt(_grid);
+    //output_vtk(timestep);
+    // Calculating timestep for advancement to the next iteration.
+    dt = _field.calculate_dt(_grid);
 
-  //   // Calculating Fluxes (_F and _G) for velocities in X and Y direction
-  //   // respectively.
-  //   _field.calculate_fluxes(_grid);
+    // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+    // respectively.
+    _field.calculate_fluxes(_grid);
 
-  //   // Calculating RHS for pressure poisson equation
-  //   _field.calculate_rs(_grid);
+    // Calculating RHS for pressure poisson equation
+    _field.calculate_rs(_grid);
 
-  //   iter = 0;    // Pressure poisson solver iteration initialization
-  //   res = 1000;  // Any value greatrer than tolerance.
+    iter = 0;    // Pressure poisson solver iteration initialization
+    res = 1000;  // Any value greatrer than tolerance.
 
-  //   while (res > _tolerance) {
-  //     if (iter >= _max_iter) {
-  //       std::cout << "Pressure poisson solver did not converge to the given "
-  //                    "tolerance...\n";
-  //       break;
-  //     }
-  //     res = _pressure_solver->solve(_field, _grid, _boundaries);
-  //     iter++;
-  //     total_iter++;
-  //     logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
-  //   }
+    while (res > _tolerance) {
+      if (iter >= _max_iter) {
+        std::cout << "Pressure poisson solver did not converge to the given "
+                     "tolerance...\n";
+        break;
+      }
+      res = _pressure_solver->solve(_field, _grid, _boundaries);
+      iter++;
+      total_iter++;
+      logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
+    }
 
-  //   // Calculating updated velocities using pressure calculated in the
-  //   // pressure poisson equation
-  //   _field.calculate_velocities(_grid);
+    // Calculating updated velocities using pressure calculated in the
+    // pressure poisson equation
+    _field.calculate_velocities(_grid);
 
-  //   // Updating t for the next step
-  //   t += dt;
-  //   timestep++;
+    // Updating t for the next step
+    t += dt;
+    timestep++;
 
-  //   // Printing Data in the terminal
-  //   std::cout << "Timestep size: " << setw(10) << dt << " | "
-  //             << "Time: " << setw(8) << t << setw(3) << " | "
-  //             << "Residual: " << setw(11) << res << setw(3) << " | "
-  //             << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-  //   if (t >= _output_freq) {
-  //     output_vtk(timestep);
-  //     _output_freq = _output_freq + output_counter;
-  //   }
+    // Printing Data in the terminal
+    std::cout << "Timestep size: " << setw(10) << dt << " | "
+              << "Time: " << setw(8) << t << setw(3) << " | "
+              << "Residual: " << setw(11) << res << setw(3) << " | "
+              << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+    //output_vtk(timestep);
+    if (t >= _output_freq) {
+      initial_condition(_grid, _field);
+      output_vtk(timestep);
+      _output_freq = _output_freq + output_counter;
+    }
   }
 
-  // logfile.close();
+ logfile.close();
 }
 
 // Following is the pre-defined function for writing the output files.
@@ -381,4 +385,17 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain) {
   domain.jmax = jmax_domain + 2;
   domain.size_x = imax_domain;
   domain.size_y = jmax_domain;
+}
+
+void Case::initial_condition(const Grid &grid, Fields &field){
+  int i,j;
+  for(auto cell : grid.fixed_wall_cells()){
+    i = cell->i();;
+    j = cell->j();
+    field.u(i,j) = 0.0;
+    field.v(i,j) = 0.0;
+    field.p(i,j) = 0.0;
+    field.f(i,j) = 0.0;
+    field.g(i,j) = 0.0;   
+  }
 }

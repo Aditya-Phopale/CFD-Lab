@@ -80,7 +80,7 @@ class Grid {
 
     const std::vector<Cell *> &inlet_cells() const;
 
-    const std::vector<Cell *> &outlet_Cells() const;
+    const std::vector<Cell *> &outlet_cells() const;
 
   private:
     /**@brief Default lid driven cavity case generator

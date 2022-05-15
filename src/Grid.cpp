@@ -342,6 +342,6 @@ const std::vector<Cell *> &Grid::inlet_cells() const {
   return _inlet_cells;
 }
 
-const std::vector<Cell *> &Grid::outlet_Cells() const{
+const std::vector<Cell *> &Grid::outlet_cells() const{
   return _outlet_cells;
 }

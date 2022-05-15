@@ -86,5 +86,7 @@ class Case {
      */
     void output_vtk(int t, int my_rank = 0);
 
+    void initial_condition(const Grid &grid, Fields &field);
+
     void build_domain(Domain &domain, int imax_domain, int jmax_domain);
 };
