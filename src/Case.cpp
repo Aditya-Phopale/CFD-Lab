@@ -241,7 +241,7 @@ void Case::simulate() {
 
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t <= _t_end) {
+  while (t <= dt) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
@@ -282,12 +282,23 @@ void Case::simulate() {
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+    output_vtk(timestep);
 
     if (t >= _output_freq) {
+      // initial_condition(_grid, _field);
       output_vtk(timestep);
       _output_freq = _output_freq + output_counter;
     }
   }
+  // std::cout << "******************************************"
+  //           << "\n";
+  // for (int j{21}; j >= 0; j--) {
+  //   for (int i{0}; i < 102; i++) {
+  //     std::cout << _field.u(i, j) << " ";
+  //   }
+  //   std::cout << '\n';
+  // }
+
   logfile.close();
 }
 
@@ -320,6 +331,15 @@ void Case::output_vtk(int timestep, int rank) {
     }
     y += dy;
   }
+  int i;
+  int j;
+  std::vector<vtkIdType> ids;
+  for (auto cell : _grid.fixed_wall_cells()) {
+    i = cell->i();
+    j = cell->j();
+    int idx = (i - 1) + (j - 1) * 100;
+    ids.push_back(static_cast<vtkIdType>(idx));
+  }
 
   // Specify the dimensions of the grid, addition of 1 to accomodate
   // neighboring cells
@@ -327,6 +347,17 @@ void Case::output_vtk(int timestep, int rank) {
                                 _grid.domain().size_y + 1, 1);
   structuredGrid->SetPoints(points);
 
+  for (auto t{0}; t < ids.size(); t++) {
+    structuredGrid->BlankPoint(ids.at(t));
+  }
+  // for (vtkIdType t = 101; t < structuredGrid->GetNumberOfPoints(); t++) {
+  //   double temp_pt[3];
+  //   structuredGrid->GetPoint(t, temp_pt);
+  //   std::cout << temp_pt[0] << " " << temp_pt[1] << "\n";
+  //   if (temp_pt[0] < 1.2 && temp_pt[1] < 1) {
+  //     structuredGrid->BlankPoint(t);
+  //   }
+  // }
   // Pressure Array
   vtkDoubleArray *Pressure = vtkDoubleArray::New();
   Pressure->SetName("pressure");

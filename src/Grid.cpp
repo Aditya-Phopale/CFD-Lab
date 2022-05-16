@@ -13,7 +13,6 @@ grid based on where the fluid lies relative to the cell.
 #include "Enums.hpp"
 
 Grid::Grid(std::string geom_name, Domain &domain) {
-  
   _domain = domain;
 
   _cells = Matrix<Cell>(_domain.size_x + 2, _domain.size_y + 2);
@@ -24,16 +23,16 @@ Grid::Grid(std::string geom_name, Domain &domain) {
         std::vector<int>(_domain.domain_size_y + 2, 0));
     parse_geometry_file(geom_name, geometry_data);
     assign_cell_types(geometry_data);
-    for(int j=_domain.domain_size_y + 1; j>=0; j--){
-      for( int i=0; i<_domain.domain_size_x + 2; i++){
-        std::cout<<geometry_data.at(i).at(j)<<" ";
-      }
-      std::cout<<'\n';
-    }
+    // for(int j=_domain.domain_size_y + 1; j>=0; j--){
+    //   for( int i=0; i<_domain.domain_size_x + 2; i++){
+    //     std::cout<<geometry_data.at(i).at(j)<<" ";
+    //   }
+    //   std::cout<<'\n';
+    // }
 
   } else {
     build_lid_driven_cavity();
-  } 
+  }
 }
 
 void Grid::build_lid_driven_cavity() {
@@ -67,20 +66,23 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
         _cells(i, j) = Cell(i, j, cell_type::FLUID);
         _fluid_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == 3) {
-        _cells(i,j) = Cell(i, j, cell_type::OBSTACLE, geometry_data.at(i_geom).at(j_geom));
+        _cells(i, j) = Cell(i, j, cell_type::OBSTACLE,
+                            geometry_data.at(i_geom).at(j_geom));
         _fixed_wall_cells.push_back(&_cells(i, j));
-      } else if (geometry_data.at(i_geom).at(j_geom) == 1){
-        _cells(i,j) = Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
+      } else if (geometry_data.at(i_geom).at(j_geom) == 1) {
+        _cells(i, j) =
+            Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
         _inlet_cells.push_back(&_cells(i, j));
-      } else if (geometry_data.at(i_geom).at(j_geom) == 2){
-        _cells(i,j) = Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
+      } else if (geometry_data.at(i_geom).at(j_geom) == 2) {
+        _cells(i, j) =
+            Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
         _outlet_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) ==
                  LidDrivenCavity::moving_wall_id) {
         _cells(i, j) = Cell(i, j, cell_type::MOVING_WALL,
                             geometry_data.at(i_geom).at(j_geom));
         _moving_wall_cells.push_back(&_cells(i, j));
-      }//  else {
+      }  //  else {
       //   if (i == 0 or j == 0 or i == _domain.size_x + 1 or
       //       j == _domain.size_y + 1) {
       //     // Outer walls
@@ -240,23 +242,27 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
 
       if (_cells(i, j).type() != cell_type::FLUID) {
         if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
-            cell_type::FLUID && _cells(i, j).neighbour(border_position::TOP)->type() ==
-            cell_type::FLUID ) {
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::FLUID) {
           _cells(i, j).add_border(border_position::NORTHWEST);
         }
         if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
-            cell_type::FLUID && _cells(i, j).neighbour(border_position::TOP)->type() ==
-            cell_type::FLUID) {
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::FLUID) {
           _cells(i, j).add_border(border_position::NORTHEAST);
         }
         if (_cells(i, j).neighbour(border_position::BOTTOM)->type() ==
-            cell_type::FLUID && _cells(i, j).neighbour(border_position::RIGHT)->type() ==
-            cell_type::FLUID) {
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::FLUID) {
           _cells(i, j).add_border(border_position::SOUTHEAST);
         }
         if (_cells(i, j).neighbour(border_position::BOTTOM)->type() ==
-            cell_type::FLUID && _cells(i, j).neighbour(border_position::LEFT)->type() ==
-            cell_type::FLUID) {
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::FLUID) {
           _cells(i, j).add_border(border_position::SOUTHWEST);
         }
         if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
@@ -338,10 +344,6 @@ const std::vector<Cell *> &Grid::moving_wall_cells() const {
   return _moving_wall_cells;
 }
 
-const std::vector<Cell *> &Grid::inlet_cells() const {
-  return _inlet_cells;
-}
+const std::vector<Cell *> &Grid::inlet_cells() const { return _inlet_cells; }
 
-const std::vector<Cell *> &Grid::outlet_cells() const{
-  return _outlet_cells;
-}
+const std::vector<Cell *> &Grid::outlet_cells() const { return _outlet_cells; }
