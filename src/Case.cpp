@@ -21,6 +21,7 @@ saved in the defined output folder.
 #include <iostream>
 #include <map>
 #include <vector>
+#include <limits>
 
 #ifdef GCC_VERSION_9_OR_HIGHER
 namespace filesystem = std::filesystem;
@@ -237,7 +238,7 @@ void Case::simulate() {
     _field.calculate_rs(_grid);
 
     iter = 0;    // Pressure poisson solver iteration initialization
-    res = 1000;  // Any value greatrer than tolerance.
+    res = std::numeric_limits<double>::max();  // Any value greatrer than tolerance.
 
     while (res > _tolerance) {
       if (iter >= _max_iter) {
