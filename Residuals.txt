@@ -1,0 +1,14 @@
+set logscale y
+set title "Residuals"
+set ylabel 'Residual'
+set xlabel 'Iteration'
+set key outside
+set grid
+
+
+plot "<cat log.txt | cut -d' ' -f2" with linespoints
+
+xmax = GPVAL_DATA_X_MAX+2
+xmin = 0
+set xrange [xmin:xmax]
+reread
