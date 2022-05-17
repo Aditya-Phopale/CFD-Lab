@@ -23,11 +23,20 @@ Grid::Grid(std::string geom_name, Domain &domain) {
         std::vector<int>(_domain.domain_size_y + 2, 0));
     parse_geometry_file(geom_name, geometry_data);
     assign_cell_types(geometry_data);
-    // for(int j=_domain.domain_size_y + 1; j>=0; j--){
-    //   for( int i=0; i<_domain.domain_size_x + 2; i++){
-    //     std::cout<<geometry_data.at(i).at(j)<<" ";
+    geometry_excluding_ghosts.resize(_domain.domain_size_x,
+                                     std::vector<int>(_domain.domain_size_y));
+    for (int j = 0; j < jmax(); j++) {
+      for (int i = 0; i < imax(); i++) {
+        geometry_excluding_ghosts.at(i).at(j) =
+            geometry_data.at(i + 1).at(j + 1);
+      }
+    }
+
+    // for (int j = jmax() - 1; j >= 1; j--) {
+    //   for (int i = 1; i < imax(); i++) {
+    //     std::cout << geometry_excluding_ghosts.at(i).at(j) << " ";
     //   }
-    //   std::cout<<'\n';
+    //   std::cout << "\n";
     // }
 
   } else {
@@ -347,3 +356,8 @@ const std::vector<Cell *> &Grid::moving_wall_cells() const {
 const std::vector<Cell *> &Grid::inlet_cells() const { return _inlet_cells; }
 
 const std::vector<Cell *> &Grid::outlet_cells() const { return _outlet_cells; }
+
+const std::vector<std::vector<int>> &Grid::get_geometry_excluding_ghosts()
+    const {
+  return geometry_excluding_ghosts;
+}

@@ -82,7 +82,7 @@ class Grid {
 
   const std::vector<Cell *> &outlet_cells() const;
 
-  const std::vector<std::pair<int, int>> &obstacle_indices() const;
+  const std::vector<std::vector<int>> &get_geometry_excluding_ghosts() const;
 
  private:
   /**@brief Default lid driven cavity case generator
@@ -107,6 +107,8 @@ class Grid {
   std::vector<Cell *> _outlet_cells;
 
   Domain _domain;
+
+  std::vector<std::vector<int>> geometry_excluding_ghosts;
 
   double _dx;
   double _dy;
