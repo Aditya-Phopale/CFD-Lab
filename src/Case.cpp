@@ -114,7 +114,6 @@ Case::Case(std::string file_name, int argn, char **args) {
   }
   file.close();
 
-
   std::map<int, double> wall_temp;
   bool boolenergy_eq = false;
   if(energy_eqn.compare("on") == 0){
@@ -175,6 +174,10 @@ Case::Case(std::string file_name, int argn, char **args) {
         std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells(), wall_temp));
 
     }
+  }
+  if (not _grid.adiabatic_cells().empty()) {
+    _boundaries.push_back(
+        std::make_unique<AdiabaticBoundary>(_grid.adiabatic_cells()));
   }
 }
 
@@ -264,15 +267,20 @@ void Case::simulate() {
   double res;
   int total_iter = 1;
   std::ofstream logfile;
-  logfile.open("log.txt");
-
-  initial_condition(_grid, _field);
+  //logfile.open("log.txt");
 
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
 
-  // Following is the actual loop that runs till the defined time limit.
+  for(int j = 51; j>=0; j--){
+    for( int i =0; i<102; i++){
+      std::cout<<_field.t(i,j)<<" ";
+    }
+    std::cout<<'\n';
+  }
+
+  //Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
     // Calculating timestep for advancement to the next iteration.
@@ -303,6 +311,7 @@ void Case::simulate() {
     // Calculating updated velocities using pressure calculated in the
     // pressure poisson equation
     _field.calculate_velocities(_grid);
+
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
     }
@@ -315,7 +324,7 @@ void Case::simulate() {
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-    // output_vtk(timestep);
+     output_vtk(timestep);
 
     if (t >= _output_freq) {
       // initial_condition(_grid, _field);
@@ -323,14 +332,6 @@ void Case::simulate() {
       _output_freq = _output_freq + output_counter;
     }
   }
-  // std::cout << "******************************************"
-  //           << "\n";
-  // for (int j{21}; j >= 0; j--) {
-  //   for (int i{0}; i < 102; i++) {
-  //     std::cout << _field.u(i, j) << " ";
-  //   }
-  //   std::cout << '\n';
-  // }
 
   logfile.close();
 }
@@ -354,6 +355,8 @@ void Case::output_vtk(int timestep, int rank) {
   { y += dy; }
   { x += dx; }
 
+  
+
   double z = 0;
   for (int col = 0; col < _grid.domain().size_y + 1; col++) {
     x = _grid.domain().imin * dx;
@@ -368,7 +371,7 @@ void Case::output_vtk(int timestep, int rank) {
   auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
   for (int i = 0; i < _grid.imax(); i++) {
     for (int j = 0; j < _grid.jmax(); j++) {
-      if (_geom_excl_ghosts.at(i).at(j) == 3) {
+      if (_geom_excl_ghosts.at(i).at(j) == 3 || _geom_excl_ghosts.at(i).at(j) == 4 || _geom_excl_ghosts.at(i).at(j) == 5) {
         pointVisibility.push_back(i + j * _grid.imax());
       }
     }
@@ -394,11 +397,17 @@ void Case::output_vtk(int timestep, int rank) {
   Velocity->SetName("velocity");
   Velocity->SetNumberOfComponents(3);
 
+  vtkDoubleArray *Temperature = vtkDoubleArray::New();
+  Temperature->SetName("temperature");
+  Temperature->SetNumberOfComponents(1);
+
   // Print pressure and temperature from bottom to top
   for (int j = 1; j < _grid.domain().size_y + 1; j++) {
     for (int i = 1; i < _grid.domain().size_x + 1; i++) {
       double pressure = _field.p(i, j);
+      double temperature = _field.t(i, j);
       Pressure->InsertNextTuple(&pressure);
+      Temperature->InsertNextTuple(&temperature);
     }
   }
 
@@ -417,6 +426,8 @@ void Case::output_vtk(int timestep, int rank) {
 
   // Add Pressure to Structured Grid
   structuredGrid->GetCellData()->AddArray(Pressure);
+
+  structuredGrid->GetCellData()->AddArray(Temperature);
 
   // Add Velocity to Structured Grid
   structuredGrid->GetPointData()->AddArray(Velocity);
@@ -443,15 +454,4 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain) {
   domain.size_y = jmax_domain;
 }
 
-void Case::initial_condition(const Grid &grid, Fields &field) {
-  int i, j;
-  for (auto cell : grid.fixed_wall_cells()) {
-    i = cell->i();
-    j = cell->j();
-    field.u(i, j) = 0.0;
-    field.v(i, j) = 0.0;
-    field.p(i, j) = 0.0;
-    field.f(i, j) = 0.0;
-    field.g(i, j) = 0.0;
-  }
-}
+

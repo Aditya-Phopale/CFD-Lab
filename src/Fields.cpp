@@ -18,11 +18,11 @@ Fields::Fields(double nu, double alpha, double beta, double dt, double tau, int 
   _P =
       Matrix<double>(imax + 2, jmax + 2,
                      PI);  // Matrix for the pressure values in the cell centers
-
-  _T =
-      Matrix<double>(imax + 2, jmax + 2,
+  if(energy_eq){
+    _T =
+        Matrix<double>(imax + 2, jmax + 2,
                      TI);  // Matrix for the temperature values in the cell centers
-
+  }
   _F = Matrix<double>(imax + 2, jmax + 2,
                       0.0);  // Matrix containing discretized differential data
   _G =
@@ -144,8 +144,10 @@ double &Fields::p(int i, int j) { return _P(i, j); }
 double &Fields::u(int i, int j) { return _U(i, j); }
 double &Fields::v(int i, int j) { return _V(i, j); }
 double &Fields::f(int i, int j) { return _F(i, j); }
+double &Fields::t(int i, int j) { return _T(i,j);  }
 double &Fields::g(int i, int j) { return _G(i, j); }
 double &Fields::rs(int i, int j) { return _RS(i, j); }
+bool Fields::energy_eq() {return _energy_eq; } 
 
 Matrix<double> &Fields::p_matrix() { return _P; }
 

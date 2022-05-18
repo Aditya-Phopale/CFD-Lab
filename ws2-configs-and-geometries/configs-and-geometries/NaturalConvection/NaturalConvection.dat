@@ -68,7 +68,7 @@ VI           0.0
 # alpha:  thermal diffusivity (nu/Pr)
 #--------------------------------------------
 energy_eq    on
-TI           0
+TI           0.5
 beta         0.00021
 alpha        0.000142857
 

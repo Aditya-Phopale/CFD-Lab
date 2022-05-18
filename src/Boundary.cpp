@@ -34,20 +34,36 @@ void FixedWallBoundary::apply(Fields &field) {
   for (auto cells : _cells) {
     i = cells->i();
     j = cells->j();
+    double temp = 0.0;
+    bool energy_flag = field.energy_eq();
+    if(energy_flag){
+      if(cells->type() == cell_type::FIXED_WALL3){
+        temp = _wall_temperature[cellID::fixed_wall_3];
+      }
+      else{
+        temp = _wall_temperature[cellID::fixed_wall_4];
+      }
+    }  
     if (cells->is_border(border_position::NORTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = 0.0;
       field.p(i, j) = (field.p(i, j + 1) + field.p(i + 1, j))/2;
       field.g(i, j) = field.v(i, j);
       field.f(i,j) = field.u(i,j);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-(field.t(i,j+1) + field.t(i+1,j))/2;
+      }
       continue;
     }
     if (cells->is_border(border_position::NORTHWEST)) {
       field.u(i-1, j) = 0.0;
       field.v(i, j) = 0.0;
-      field.p(i, j) = (field.p(i, j + 1)+ field.p(i-1,j))/2;
+      field.p(i, j) = (field.p(i, j + 1) + field.p(i-1,j))/2;
       field.g(i, j) = field.v(i, j);
       field.f(i-1,j) = field.u(i-1,j);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-(field.t(i,j+1) + field.t(i-1,j))/2;
+      }
       continue;
     }
     if (cells->is_border(border_position::SOUTHWEST)) {
@@ -56,6 +72,9 @@ void FixedWallBoundary::apply(Fields &field) {
       field.p(i, j) = (field.p(i-1, j)+ field.p(i,j-1))/2;
       field.g(i, j-1) = field.v(i, j-1);
       field.f(i-1, j) = field.u(i-1, j);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-(field.t(i,j-1) + field.t(i-1,j))/2;
+      }
       continue;
     }
     if (cells->is_border(border_position::SOUTHEAST)) {
@@ -64,6 +83,9 @@ void FixedWallBoundary::apply(Fields &field) {
       field.p(i, j) = (field.p(i, j - 1) + field.p(i+1,j))/2;
       field.g(i, j-1) = field.v(i, j-1);
       field.f(i, j) = field.u(i, j);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-(field.t(i,j-1) + field.t(i+1,j))/2;
+      }
       continue;
     }
     
@@ -73,6 +95,9 @@ void FixedWallBoundary::apply(Fields &field) {
       field.v(i, j) = 0.0;
       field.p(i, j) = field.p(i, j + 1);
       field.g(i, j) = field.v(i, j);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-field.t(i,j+1);
+      }
       continue;
     }
     if (cells->is_border(border_position::BOTTOM)) {
@@ -80,6 +105,9 @@ void FixedWallBoundary::apply(Fields &field) {
       field.v(i, j-1) = 0.0;
       field.p(i, j) = field.p(i, j - 1);
       field.g(i, j-1) = field.v(i, j-1);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-field.t(i,j-1);
+      }
       continue;
     }
     if (cells->is_border(border_position::RIGHT)) {
@@ -87,6 +115,9 @@ void FixedWallBoundary::apply(Fields &field) {
       field.v(i, j) = -field.v(i + 1, j);
       field.p(i, j) = field.p(i + 1, j);
       field.f(i, j) = field.u(i, j);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-field.t(i+1,j);
+      }
       continue;
     }
     if (cells->is_border(border_position::LEFT)) {
@@ -94,6 +125,9 @@ void FixedWallBoundary::apply(Fields &field) {
       field.v(i, j) = -field.v(i - 1, j);
       field.p(i, j) = field.p(i - 1, j);
       field.f(i - 1, j) = field.u(i - 1, j);
+      if(energy_flag){
+        field.t(i,j) = (2.0)*(temp)-field.t(i-1,j);
+      }
       continue;
     }
     
@@ -250,3 +284,82 @@ void InletBoundary::apply(Fields &field) {
 
 AdiabaticBoundary::AdiabaticBoundary(std::vector<Cell *> cells)
     : _cells(cells) {}
+
+void AdiabaticBoundary::apply(Fields &field) {
+  int i, j;
+  for (auto cells : _cells) {
+    i = cells->i();
+    j = cells->j();
+    if (cells->is_border(border_position::NORTHEAST)) {
+      field.u(i, j) = 0.0;
+      field.v(i, j) = 0.0;
+      field.p(i, j) = (field.p(i, j + 1) + field.p(i + 1, j))/2;
+      field.g(i, j) = field.v(i, j);
+      field.f(i,j) = field.u(i,j);
+      field.t(i,j) = (field.t(i,j+1) + field.t(i+1,j))/2;
+      continue;
+    }
+    if (cells->is_border(border_position::NORTHWEST)) {
+      field.u(i-1, j) = 0.0;
+      field.v(i, j) = 0.0;
+      field.p(i, j) = (field.p(i, j + 1) + field.p(i-1,j))/2;
+      field.g(i, j) = field.v(i, j);
+      field.f(i-1,j) = field.u(i-1,j);      
+      field.t(i,j) = (field.t(i,j+1) + field.t(i-1,j))/2;      
+      continue;
+    }
+    if (cells->is_border(border_position::SOUTHWEST)) {
+      field.u(i-1, j) = 0.0;
+      field.v(i, j-1) = 0.0;
+      field.p(i, j) = (field.p(i-1, j)+ field.p(i,j-1))/2;
+      field.g(i, j-1) = field.v(i, j-1);
+      field.f(i-1, j) = field.u(i-1, j);
+      field.t(i,j) = (field.t(i,j-1) + field.t(i-1,j))/2;      
+      continue;
+    }
+    if (cells->is_border(border_position::SOUTHEAST)) {
+      field.u(i, j) = 0.0;
+      field.v(i, j-1) = 0.0;
+      field.p(i, j) = (field.p(i, j - 1) + field.p(i+1,j))/2;
+      field.g(i, j-1) = field.v(i, j-1);
+      field.f(i, j) = field.u(i, j);
+      field.t(i,j) = (field.t(i,j-1) + field.t(i+1,j))/2;
+      continue;
+    }
+    
+    
+    if (cells->is_border(border_position::TOP)) {
+      field.u(i, j) = -field.u(i, j + 1);
+      field.v(i, j) = 0.0;
+      field.p(i, j) = field.p(i, j + 1);
+      field.g(i, j) = field.v(i, j);
+      field.t(i,j) = field.t(i,j+1);      
+      continue;
+    }
+    if (cells->is_border(border_position::BOTTOM)) {
+      field.u(i, j) = -field.u(i, j - 1);
+      field.v(i, j-1) = 0.0;
+      field.p(i, j) = field.p(i, j - 1);
+      field.g(i, j-1) = field.v(i, j-1);
+      field.t(i,j) = field.t(i,j-1);     
+      continue;
+    }
+    if (cells->is_border(border_position::RIGHT)) {
+      field.u(i, j) = 0.0;
+      field.v(i, j) = -field.v(i + 1, j);
+      field.p(i, j) = field.p(i + 1, j);
+      field.f(i, j) = field.u(i, j);      
+      field.t(i,j) = field.t(i+1,j);
+      continue;
+    }
+    if (cells->is_border(border_position::LEFT)) {
+      field.u(i - 1, j) = 0.0;
+      field.v(i, j) = -field.v(i - 1, j);
+      field.p(i, j) = field.p(i - 1, j);
+      field.f(i - 1, j) = field.u(i - 1, j);
+      field.t(i,j) = field.t(i-1,j);      
+      continue;
+    }
+    
+  }
+}

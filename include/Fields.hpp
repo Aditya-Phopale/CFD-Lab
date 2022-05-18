@@ -83,6 +83,8 @@ class Fields {
     /// y-momentum flux index based access and modify
     double &g(int i, int j);
 
+    bool energy_eq();
+
     /// get timestep size
     double dt() const;
 
