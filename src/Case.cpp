@@ -46,6 +46,7 @@ Case::Case(std::string file_name, int argn, char **args) {
   double nu; /* viscosity   */
   double UI; /* velocity x-direction */
   double VI; /* velocity y-direction */
+  double TI = 0; /* Initial temperature.*/
   double UIN;
   double VIN;
   double PI;      /* pressure */
@@ -61,6 +62,13 @@ Case::Case(std::string file_name, int argn, char **args) {
   double tau;     /* safety factor for time step*/
   int itermax;    /* max. number of iterations for pressure per time step */
   double eps;     /* accuracy bound for pressure*/
+  double alpha = 0;   /* Thermal Diffusivity*/
+  double beta = 0;    /* Thermal expansion coefficient*/
+  int num_walls;
+  std::string energy_eqn;
+  double temp3;
+  double temp4;
+  double temp5;
 
   // Assigning parameters from the file to variables.
 
@@ -84,6 +92,7 @@ Case::Case(std::string file_name, int argn, char **args) {
         if (var == "dt_value") file >> _output_freq;
         if (var == "UI") file >> UI;
         if (var == "VI") file >> VI;
+        if (var == "TI") file >> TI;
         if (var == "GX") file >> GX;
         if (var == "GY") file >> GY;
         if (var == "PI") file >> PI;
@@ -92,10 +101,27 @@ Case::Case(std::string file_name, int argn, char **args) {
         if (var == "itermax") file >> itermax;
         if (var == "imax") file >> imax;
         if (var == "jmax") file >> jmax;
+        if (var == "alpha") file >> alpha;
+        if (var == "beta") file >> beta;
+        if (var == "num_walls") file >> num_walls;
+        if (var == "wall_temp_3") file >> temp3;
+        if (var == "wall_temp_4") file >> temp4;
+        if (var == "wall_temp_5") file >> temp5;
+        if (var == "energy_eq") file >> energy_eqn;
+
       }
     }
   }
   file.close();
+
+
+  std::map<int, double> wall_temp;
+  bool boolenergy_eq = false;
+  if(energy_eqn.compare("on") == 0){
+    boolenergy_eq = true;
+    wall_temp.insert(std::pair<int, double>(cellID::fixed_wall_3, temp3));
+    wall_temp.insert(std::pair<int, double>(cellID::fixed_wall_4, temp4));
+  }
 
   std::map<int, double> wall_vel;
   if (_geom_name.compare("NONE") == 0) {
@@ -118,8 +144,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   build_domain(domain, imax, jmax);
 
   _grid = Grid(_geom_name, domain);
-  _field = Fields(nu, dt, tau, _grid.domain().size_x, _grid.domain().size_y, UI,
-                  VI, PI);
+  _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x, _grid.domain().size_y, UI,
+                  VI, PI, TI, GX, GY, boolenergy_eq);
 
   _discretization = Discretization(domain.dx, domain.dy, gamma);
   _pressure_solver = std::make_unique<SOR>(omg);
@@ -141,8 +167,14 @@ Case::Case(std::string file_name, int argn, char **args) {
         std::make_unique<OutletBoundary>(_grid.outlet_cells()));
   }
   if (not _grid.fixed_wall_cells().empty()) {
-    _boundaries.push_back(
+    if(!boolenergy_eq){
+      _boundaries.push_back(
         std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+    } else{
+      _boundaries.push_back(
+        std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells(), wall_temp));
+
+    }
   }
 }
 

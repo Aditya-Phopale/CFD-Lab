@@ -82,6 +82,8 @@ class Grid {
 
   const std::vector<Cell *> &outlet_cells() const;
 
+  const std::vector<Cell *> &adiabatic_cells() const;
+
   const std::vector<std::vector<int>> &get_geometry_excluding_ghosts() const;
 
  private:
@@ -105,6 +107,7 @@ class Grid {
   std::vector<Cell *> _moving_wall_cells;
   std::vector<Cell *> _inlet_cells;
   std::vector<Cell *> _outlet_cells;
+  std::vector<Cell *> _adiabatic_cells;
 
   Domain _domain;
 

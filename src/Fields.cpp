@@ -8,9 +8,9 @@ the current timestep will be advanced to the next one
 #include <cmath>
 #include <iostream>
 
-Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
-               double VI, double PI)
-    : _nu(nu), _dt(dt), _tau(tau) {
+Fields::Fields(double nu, double alpha, double beta, double dt, double tau, int imax, int jmax, double UI,
+               double VI, double PI, double TI, double GX, double GY, bool energy_eq)
+    : _nu(nu), _dt(dt), _tau(tau), _alpha(alpha), _beta(beta), _gx(GX), _gy(GY), _energy_eq(energy_eq) {
   _U = Matrix<double>(imax + 2, jmax + 2,
                       UI);  // Matrix for velocity along the X-direction
   _V = Matrix<double>(imax + 2, jmax + 2,
@@ -18,6 +18,10 @@ Fields::Fields(double nu, double dt, double tau, int imax, int jmax, double UI,
   _P =
       Matrix<double>(imax + 2, jmax + 2,
                      PI);  // Matrix for the pressure values in the cell centers
+
+  _T =
+      Matrix<double>(imax + 2, jmax + 2,
+                     TI);  // Matrix for the temperature values in the cell centers
 
   _F = Matrix<double>(imax + 2, jmax + 2,
                       0.0);  // Matrix containing discretized differential data

@@ -71,20 +71,28 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
   for (int j_geom = _domain.jmin; j_geom < _domain.jmax; ++j_geom) {
     { i = 0; }
     for (int i_geom = _domain.imin; i_geom < _domain.imax; ++i_geom) {
-      if (geometry_data.at(i_geom).at(j_geom) == 0) {
+      if (geometry_data.at(i_geom).at(j_geom) == cellID::fluid) {
         _cells(i, j) = Cell(i, j, cell_type::FLUID);
         _fluid_cells.push_back(&_cells(i, j));
-      } else if (geometry_data.at(i_geom).at(j_geom) == 3) {
-        _cells(i, j) = Cell(i, j, cell_type::OBSTACLE,
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
+          _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
                             geometry_data.at(i_geom).at(j_geom));
-        _fixed_wall_cells.push_back(&_cells(i, j));
-      } else if (geometry_data.at(i_geom).at(j_geom) == 1) {
+          _fixed_wall_cells.push_back(&_cells(i, j));
+      } else if(geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_4){
+          _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL4,
+                            geometry_data.at(i_geom).at(j_geom));
+          _fixed_wall_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_5) {
+          _cells(i, j) = Cell(i, j, cell_type::ADIABATIC_WALL,
+                            geometry_data.at(i_geom).at(j_geom));
+          _adiabatic_cells.push_back(&_cells(i,j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::inflow) {
         _cells(i, j) =
             Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
         _inlet_cells.push_back(&_cells(i, j));
-      } else if (geometry_data.at(i_geom).at(j_geom) == 2) {
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::outflow) {
         _cells(i, j) =
-            Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
+            Cell(i, j, cell_type::OUTLET, geometry_data.at(i_geom).at(j_geom));
         _outlet_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) ==
                  LidDrivenCavity::moving_wall_id) {
@@ -356,6 +364,8 @@ const std::vector<Cell *> &Grid::moving_wall_cells() const {
 const std::vector<Cell *> &Grid::inlet_cells() const { return _inlet_cells; }
 
 const std::vector<Cell *> &Grid::outlet_cells() const { return _outlet_cells; }
+
+const std::vector<Cell *> &Grid::adiabatic_cells() const {return _adiabatic_cells;}
 
 const std::vector<std::vector<int>> &Grid::get_geometry_excluding_ghosts()
     const {

@@ -247,3 +247,6 @@ void InletBoundary::apply(Fields &field) {
     }
   }
 }
+
+AdiabaticBoundary::AdiabaticBoundary(std::vector<Cell *> cells)
+    : _cells(cells) {}

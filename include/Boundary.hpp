@@ -87,3 +87,13 @@ class OutletBoundary : public Boundary {
   std::vector<Cell *> _cells;
   std::map<int, double> _wall_temperature;
 };
+
+class AdiabaticBoundary : public Boundary {
+ public:
+  AdiabaticBoundary(std::vector<Cell *> cells);
+  virtual ~AdiabaticBoundary() = default;
+  virtual void apply(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+};
