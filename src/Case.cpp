@@ -43,27 +43,27 @@ namespace filesystem = std::experimental::filesystem;
 Case::Case(std::string file_name, int argn, char **args) {
   const int MAX_LINE_LENGTH = 1024;
   std::ifstream file(file_name);
-  double nu; /* viscosity   */
-  double UI; /* velocity x-direction */
-  double VI; /* velocity y-direction */
+  double nu;     /* viscosity   */
+  double UI;     /* velocity x-direction */
+  double VI;     /* velocity y-direction */
   double TI = 0; /* Initial temperature.*/
   double UIN;
   double VIN;
-  double PI;      /* pressure */
-  double GX;      /* gravitation x-direction */
-  double GY;      /* gravitation y-direction */
-  double xlength; /* length of the domain x-dir.*/
-  double ylength; /* length of the domain y-dir.*/
-  double dt;      /* time step */
-  int imax;       /* number of cells x-direction*/
-  int jmax;       /* number of cells y-direction*/
-  double gamma;   /* uppwind differencing factor*/
-  double omg;     /* relaxation factor */
-  double tau;     /* safety factor for time step*/
-  int itermax;    /* max. number of iterations for pressure per time step */
-  double eps;     /* accuracy bound for pressure*/
-  double alpha = 0;   /* Thermal Diffusivity*/
-  double beta = 0;    /* Thermal expansion coefficient*/
+  double PI;        /* pressure */
+  double GX;        /* gravitation x-direction */
+  double GY;        /* gravitation y-direction */
+  double xlength;   /* length of the domain x-dir.*/
+  double ylength;   /* length of the domain y-dir.*/
+  double dt;        /* time step */
+  int imax;         /* number of cells x-direction*/
+  int jmax;         /* number of cells y-direction*/
+  double gamma;     /* uppwind differencing factor*/
+  double omg;       /* relaxation factor */
+  double tau;       /* safety factor for time step*/
+  int itermax;      /* max. number of iterations for pressure per time step */
+  double eps;       /* accuracy bound for pressure*/
+  double alpha = 0; /* Thermal Diffusivity*/
+  double beta = 0;  /* Thermal expansion coefficient*/
   int num_walls;
   std::string energy_eqn;
   double temp3;
@@ -108,7 +108,6 @@ Case::Case(std::string file_name, int argn, char **args) {
         if (var == "wall_temp_4") file >> temp4;
         if (var == "wall_temp_5") file >> temp5;
         if (var == "energy_eq") file >> energy_eqn;
-
       }
     }
   }
@@ -116,7 +115,7 @@ Case::Case(std::string file_name, int argn, char **args) {
 
   std::map<int, double> wall_temp;
   bool boolenergy_eq = false;
-  if(energy_eqn.compare("on") == 0){
+  if (energy_eqn.compare("on") == 0) {
     boolenergy_eq = true;
     wall_temp.insert(std::pair<int, double>(cellID::fixed_wall_3, temp3));
     wall_temp.insert(std::pair<int, double>(cellID::fixed_wall_4, temp4));
@@ -143,8 +142,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   build_domain(domain, imax, jmax);
 
   _grid = Grid(_geom_name, domain);
-  _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x, _grid.domain().size_y, UI,
-                  VI, PI, TI, GX, GY, boolenergy_eq);
+  _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
+                  _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
 
   _discretization = Discretization(domain.dx, domain.dy, gamma);
   _pressure_solver = std::make_unique<SOR>(omg);
@@ -166,13 +165,12 @@ Case::Case(std::string file_name, int argn, char **args) {
         std::make_unique<OutletBoundary>(_grid.outlet_cells()));
   }
   if (not _grid.fixed_wall_cells().empty()) {
-    if(!boolenergy_eq){
+    if (!boolenergy_eq) {
       _boundaries.push_back(
-        std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
-    } else{
-      _boundaries.push_back(
-        std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells(), wall_temp));
-
+          std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+    } else {
+      _boundaries.push_back(std::make_unique<FixedWallBoundary>(
+          _grid.fixed_wall_cells(), wall_temp));
     }
   }
   if (not _grid.adiabatic_cells().empty()) {
@@ -267,24 +265,27 @@ void Case::simulate() {
   double res;
   int total_iter = 1;
   std::ofstream logfile;
-  //logfile.open("log.txt");
+  // logfile.open("log.txt");
 
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
 
-  for(int j = 51; j>=0; j--){
-    for( int i =0; i<102; i++){
-      std::cout<<_field.t(i,j)<<" ";
-    }
-    std::cout<<'\n';
-  }
+  // for (int j = 51; j >= 0; j--) {
+  //   for (int i = 0; i < 102; i++) {
+  //     std::cout << _field.t(i, j) << " ";
+  //   }
+  //   std::cout << '\n';
+  // }
 
-  //Following is the actual loop that runs till the defined time limit.
+  // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
+
+    // Calculate new Temperatures
+    _field.calculate_temperature(_grid);
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y direction
     // respectively.
@@ -305,7 +306,7 @@ void Case::simulate() {
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       iter++;
       total_iter++;
-      logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
+      // logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
     }
 
     // Calculating updated velocities using pressure calculated in the
@@ -324,16 +325,15 @@ void Case::simulate() {
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-     output_vtk(timestep);
+    output_vtk(timestep);
 
     if (t >= _output_freq) {
-      // initial_condition(_grid, _field);
       output_vtk(timestep);
       _output_freq = _output_freq + output_counter;
     }
   }
 
-  logfile.close();
+  // logfile.close();
 }
 
 // Following is the pre-defined function for writing the output files.
@@ -355,8 +355,6 @@ void Case::output_vtk(int timestep, int rank) {
   { y += dy; }
   { x += dx; }
 
-  
-
   double z = 0;
   for (int col = 0; col < _grid.domain().size_y + 1; col++) {
     x = _grid.domain().imin * dx;
@@ -371,7 +369,9 @@ void Case::output_vtk(int timestep, int rank) {
   auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
   for (int i = 0; i < _grid.imax(); i++) {
     for (int j = 0; j < _grid.jmax(); j++) {
-      if (_geom_excl_ghosts.at(i).at(j) == 3 || _geom_excl_ghosts.at(i).at(j) == 4 || _geom_excl_ghosts.at(i).at(j) == 5) {
+      if (_geom_excl_ghosts.at(i).at(j) == 3 ||
+          _geom_excl_ghosts.at(i).at(j) == 4 ||
+          _geom_excl_ghosts.at(i).at(j) == 5) {
         pointVisibility.push_back(i + j * _grid.imax());
       }
     }
@@ -453,5 +453,3 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain) {
   domain.size_x = imax_domain;
   domain.size_y = jmax_domain;
 }
-
-
