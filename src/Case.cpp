@@ -285,7 +285,9 @@ void Case::simulate() {
     dt = _field.calculate_dt(_grid);
 
     // Calculate new Temperatures
-    _field.calculate_temperature(_grid);
+    if (_field.energy_eq()) {
+      _field.calculate_temperature(_grid);
+    }
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y direction
     // respectively.
@@ -325,7 +327,6 @@ void Case::simulate() {
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-    output_vtk(timestep);
 
     if (t >= _output_freq) {
       output_vtk(timestep);
@@ -397,17 +398,26 @@ void Case::output_vtk(int timestep, int rank) {
   Velocity->SetName("velocity");
   Velocity->SetNumberOfComponents(3);
 
-  vtkDoubleArray *Temperature = vtkDoubleArray::New();
-  Temperature->SetName("temperature");
-  Temperature->SetNumberOfComponents(1);
+  if (_field.energy_eq()) {
+    vtkDoubleArray *Temperature = vtkDoubleArray::New();
+    Temperature->SetName("temperature");
+    Temperature->SetNumberOfComponents(1);
+
+    for (int j = 1; j < _grid.domain().size_y + 1; j++) {
+      for (int i = 1; i < _grid.domain().size_x + 1; i++) {
+        double temperature = _field.t(i, j);
+        Temperature->InsertNextTuple(&temperature);
+      }
+    }
+
+    structuredGrid->GetCellData()->AddArray(Temperature);
+  }
 
   // Print pressure and temperature from bottom to top
   for (int j = 1; j < _grid.domain().size_y + 1; j++) {
     for (int i = 1; i < _grid.domain().size_x + 1; i++) {
       double pressure = _field.p(i, j);
-      double temperature = _field.t(i, j);
       Pressure->InsertNextTuple(&pressure);
-      Temperature->InsertNextTuple(&temperature);
     }
   }
 
@@ -426,8 +436,6 @@ void Case::output_vtk(int timestep, int rank) {
 
   // Add Pressure to Structured Grid
   structuredGrid->GetCellData()->AddArray(Pressure);
-
-  structuredGrid->GetCellData()->AddArray(Temperature);
 
   // Add Velocity to Structured Grid
   structuredGrid->GetPointData()->AddArray(Velocity);
