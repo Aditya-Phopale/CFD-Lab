@@ -43,6 +43,7 @@ Fields::Fields(double nu, double alpha, double beta, double dt, double tau,
 
 void Fields::calculate_fluxes(Grid &grid) {
   int i, j;
+
   for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
@@ -69,13 +70,14 @@ void Fields::calculate_fluxes(Grid &grid) {
 
 void Fields::calculate_temperature(Grid &grid) {
   int i, j;
+  Matrix<double> T_old = _T;
   for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
 
     _T(i, j) =
-        _T(i, j) + _dt * (_alpha * Discretization::diffusion(_T, i, j) -
-                          Discretization::convection_T(_U, _V, _T, i, j));
+        T_old(i, j) + _dt * (_alpha * Discretization::diffusion(T_old, i, j) -
+                             Discretization::convection_T(_U, _V, T_old, i, j));
   }
 }
 

@@ -100,6 +100,9 @@ class Grid {
   void parse_geometry_file(std::string filedoc,
                            std::vector<std::vector<int>> &geometry_data);
 
+  /// Check geometry
+  void check_geometry_file(std::vector<std::vector<int>> &geometry_data);
+
   Matrix<Cell> _cells;
 
   std::vector<Cell *> _fluid_cells;

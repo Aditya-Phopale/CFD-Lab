@@ -305,6 +305,9 @@ void Case::simulate() {
                      "tolerance...\n";
         break;
       }
+      for (int i = 0; i < _boundaries.size(); i++) {
+        _boundaries[i]->apply_pressure(_field);
+      }
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       iter++;
       total_iter++;
@@ -370,9 +373,9 @@ void Case::output_vtk(int timestep, int rank) {
   auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
   for (int i = 0; i < _grid.imax(); i++) {
     for (int j = 0; j < _grid.jmax(); j++) {
-      if (_geom_excl_ghosts.at(i).at(j) == 3 ||
-          _geom_excl_ghosts.at(i).at(j) == 4 ||
-          _geom_excl_ghosts.at(i).at(j) == 5) {
+      if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
+          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
+          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
         pointVisibility.push_back(i + j * _grid.imax());
       }
     }

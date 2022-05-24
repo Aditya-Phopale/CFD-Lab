@@ -75,17 +75,17 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
         _cells(i, j) = Cell(i, j, cell_type::FLUID);
         _fluid_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
-          _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
+        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
                             geometry_data.at(i_geom).at(j_geom));
-          _fixed_wall_cells.push_back(&_cells(i, j));
-      } else if(geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_4){
-          _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL4,
+        _fixed_wall_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_4) {
+        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL4,
                             geometry_data.at(i_geom).at(j_geom));
-          _fixed_wall_cells.push_back(&_cells(i, j));
+        _fixed_wall_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_5) {
-          _cells(i, j) = Cell(i, j, cell_type::ADIABATIC_WALL,
+        _cells(i, j) = Cell(i, j, cell_type::ADIABATIC_WALL,
                             geometry_data.at(i_geom).at(j_geom));
-          _adiabatic_cells.push_back(&_cells(i,j));
+        _adiabatic_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::inflow) {
         _cells(i, j) =
             Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
@@ -99,16 +99,7 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
         _cells(i, j) = Cell(i, j, cell_type::MOVING_WALL,
                             geometry_data.at(i_geom).at(j_geom));
         _moving_wall_cells.push_back(&_cells(i, j));
-      }  //  else {
-      //   if (i == 0 or j == 0 or i == _domain.size_x + 1 or
-      //       j == _domain.size_y + 1) {
-      //     // Outer walls
-      //     _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL,
-      //                         geometry_data.at(i_geom).at(j_geom));
-      //     _fixed_wall_cells.push_back(&_cells(i, j));
-      //   }
-      // }
-
+      }
       ++i;
     }
     ++j;
@@ -337,6 +328,28 @@ void Grid::parse_geometry_file(std::string filedoc,
   infile.close();
 }
 
+void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
+  // int i = 0;
+  // int j = 0;
+
+  for (int j = _domain.jmin + 1; j < _domain.jmax - 1; ++j) {
+    // { i = 0; }
+    for (int i = _domain.imin + 1; i < _domain.imax - 1; ++i) {
+      if (geometry_data.at(i).at(j) == 3 || geometry_data.at(i).at(j) == 4 ||
+          geometry_data.at(i).at(j) == 5) {
+        int sum = geometry_data.at(i + 1).at(j) +
+                  geometry_data.at(i - 1).at(j) +
+                  geometry_data.at(i).at(j + 1) + geometry_data.at(i).at(j - 1);
+
+        if (sum <= 5) {
+          geometry_data.at(i).at(j) = 0;
+          std::cout << "Check your geometry bro\n";
+        }
+      }
+    }
+  }
+}
+
 int Grid::imax() const { return _domain.size_x; }
 int Grid::jmax() const { return _domain.size_y; }
 
@@ -365,7 +378,9 @@ const std::vector<Cell *> &Grid::inlet_cells() const { return _inlet_cells; }
 
 const std::vector<Cell *> &Grid::outlet_cells() const { return _outlet_cells; }
 
-const std::vector<Cell *> &Grid::adiabatic_cells() const {return _adiabatic_cells;}
+const std::vector<Cell *> &Grid::adiabatic_cells() const {
+  return _adiabatic_cells;
+}
 
 const std::vector<std::vector<int>> &Grid::get_geometry_excluding_ghosts()
     const {
