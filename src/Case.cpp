@@ -265,22 +265,18 @@ void Case::simulate() {
   double res;
   int total_iter = 1;
   std::ofstream logfile;
-  // logfile.open("log.txt");
+  logfile.open("log.txt");
 
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
-
-  // for (int j = 51; j >= 0; j--) {
-  //   for (int i = 0; i < 102; i++) {
-  //     std::cout << _field.t(i, j) << " ";
-  //   }
-  //   std::cout << '\n';
-  // }
+  
+  output_vtk(timestep);
 
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
+    
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
@@ -311,7 +307,7 @@ void Case::simulate() {
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       iter++;
       total_iter++;
-      // logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
+      logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
     }
 
     // Calculating updated velocities using pressure calculated in the
@@ -326,18 +322,19 @@ void Case::simulate() {
     timestep++;
 
     // Printing Data in the terminal
-    std::cout << "Timestep size: " << setw(10) << dt << " | "
+    if(timestep % 100 == 0){
+      std::cout << "Timestep size: " << setw(10) << dt << " | "
               << "Time: " << setw(8) << t << setw(3) << " | "
               << "Residual: " << setw(11) << res << setw(3) << " | "
               << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-
+    }
     if (t >= _output_freq) {
       output_vtk(timestep);
       _output_freq = _output_freq + output_counter;
     }
   }
 
-  // logfile.close();
+  logfile.close();
 }
 
 // Following is the pre-defined function for writing the output files.

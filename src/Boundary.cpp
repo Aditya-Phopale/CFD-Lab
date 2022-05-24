@@ -46,7 +46,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = 0.0;
-      // field.p(i, j) = (field.p(i, j + 1) + field.p(i + 1, j)) / 2;
       field.g(i, j) = field.v(i, j);
       field.f(i, j) = field.u(i, j);
       if (energy_flag) {
@@ -58,7 +57,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = 0.0;
-      // field.p(i, j) = (field.p(i, j + 1) + field.p(i - 1, j)) / 2;
       field.g(i, j) = field.v(i, j);
       field.f(i - 1, j) = field.u(i - 1, j);
       if (energy_flag) {
@@ -70,7 +68,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      // field.p(i, j) = (field.p(i - 1, j) + field.p(i, j - 1)) / 2;
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i - 1, j) = field.u(i - 1, j);
       if (energy_flag) {
@@ -82,7 +79,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      // field.p(i, j) = (field.p(i, j - 1) + field.p(i + 1, j)) / 2;
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i, j) = field.u(i, j);
       if (energy_flag) {
@@ -95,7 +91,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::TOP)) {
       field.u(i, j) = -field.u(i, j + 1);
       field.v(i, j) = 0.0;
-      // field.p(i, j) = field.p(i, j + 1);
       field.g(i, j) = field.v(i, j);
       if (energy_flag) {
         field.t(i, j) = (2.0) * (temp)-field.t(i, j + 1);
@@ -105,7 +100,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::BOTTOM)) {
       field.u(i, j) = -field.u(i, j - 1);
       field.v(i, j - 1) = 0.0;
-      // field.p(i, j) = field.p(i, j - 1);
       field.g(i, j - 1) = field.v(i, j - 1);
       if (energy_flag) {
         field.t(i, j) = (2.0) * (temp)-field.t(i, j - 1);
@@ -115,7 +109,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::RIGHT)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = -field.v(i + 1, j);
-      // field.p(i, j) = field.p(i + 1, j);
       field.f(i, j) = field.u(i, j);
       if (energy_flag) {
         field.t(i, j) = (2.0) * (temp)-field.t(i + 1, j);
@@ -125,7 +118,6 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::LEFT)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = -field.v(i - 1, j);
-      // field.p(i, j) = field.p(i - 1, j);
       field.f(i - 1, j) = field.u(i - 1, j);
       if (energy_flag) {
         field.t(i, j) = (2.0) * (temp)-field.t(i - 1, j);
@@ -206,7 +198,6 @@ void MovingWallBoundary::apply(Fields &field) {
           (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
           field.u(i, j - 1);
       field.v(i, j - 1) = 0.0;
-      // field.p(i, j) = field.p(i, j - 1);
       field.g(i, j - 1) = field.v(i, j - 1);
       continue;
     }
@@ -215,7 +206,6 @@ void MovingWallBoundary::apply(Fields &field) {
           (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
           field.u(i, j + 1);
       field.v(i, j) = 0.0;
-      // field.p(i, j) = field.p(i, j + 1);
       field.g(i, j) = field.v(i, j);
       continue;
     }
@@ -224,7 +214,6 @@ void MovingWallBoundary::apply(Fields &field) {
       field.v(i, j) =
           (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
           field.v(i + 1, j);
-      // field.p(i, j) = field.p(i + 1, j);
       field.f(i, j) = field.u(i, j);
       continue;
     }
@@ -233,7 +222,6 @@ void MovingWallBoundary::apply(Fields &field) {
       field.v(i, j) =
           (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
           field.v(i - 1, j);
-      // field.p(i, j) = field.p(i - 1, j);
       field.f(i - 1, j) = field.u(i - 1, j);
       continue;
     }
@@ -278,28 +266,24 @@ void OutletBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::LEFT)) {
       field.u(i - 1, j) = field.u(i - 2, j);
       field.v(i, j) = field.v(i - 1, j);
-      // field.p(i, j) = -field.p(i - 1, j);
-      field.f(i - 1, j) = field.u(i - 1, j);  //- 2*field.dt()*field.p(i,j);
+      field.f(i - 1, j) = field.u(i - 1, j); 
       continue;
     }
     if (cells->is_border(border_position::RIGHT)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = -field.v(i + 1, j);
-      // field.p(i, j) = field.p(i + 1, j);
       field.f(i, j) = field.u(i, j);
       continue;
     }
     if (cells->is_border(border_position::TOP)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = -field.v(i - 1, j);
-      // field.p(i, j) = field.p(i - 1, j);
       field.g(i, j) = field.v(i, j);
       continue;
     }
     if (cells->is_border(border_position::BOTTOM)) {
       field.u(i, j) = -field.u(i, j - 1);
       field.v(i, j) = 0.0;
-      // field.p(i, j) = field.p(i, j - 1);
       field.g(i, j) = field.v(i, j);
       continue;
     }
@@ -411,7 +395,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = 0.0;
-      // field.p(i, j) = (field.p(i, j + 1) + field.p(i + 1, j)) / 2;
       field.g(i, j) = field.v(i, j);
       field.f(i, j) = field.u(i, j);
       field.t(i, j) = (field.t(i, j + 1) + field.t(i + 1, j)) / 2;
@@ -420,7 +403,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = 0.0;
-      // field.p(i, j) = (field.p(i, j + 1) + field.p(i - 1, j)) / 2;
       field.g(i, j) = field.v(i, j);
       field.f(i - 1, j) = field.u(i - 1, j);
       field.t(i, j) = (field.t(i, j + 1) + field.t(i - 1, j)) / 2;
@@ -429,7 +411,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      // field.p(i, j) = (field.p(i - 1, j) + field.p(i, j - 1)) / 2;
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i - 1, j) = field.u(i - 1, j);
       field.t(i, j) = (field.t(i, j - 1) + field.t(i - 1, j)) / 2;
@@ -438,7 +419,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      // field.p(i, j) = (field.p(i, j - 1) + field.p(i + 1, j)) / 2;
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i, j) = field.u(i, j);
       field.t(i, j) = (field.t(i, j - 1) + field.t(i + 1, j)) / 2;
@@ -448,7 +428,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::TOP)) {
       field.u(i, j) = -field.u(i, j + 1);
       field.v(i, j) = 0.0;
-      // field.p(i, j) = field.p(i, j + 1);
       field.g(i, j) = field.v(i, j);
       field.t(i, j) = field.t(i, j + 1);
       continue;
@@ -456,7 +435,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::BOTTOM)) {
       field.u(i, j) = -field.u(i, j - 1);
       field.v(i, j - 1) = 0.0;
-      // field.p(i, j) = field.p(i, j - 1);
       field.g(i, j - 1) = field.v(i, j - 1);
       field.t(i, j) = field.t(i, j - 1);
       continue;
@@ -464,7 +442,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::RIGHT)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = -field.v(i + 1, j);
-      // field.p(i, j) = field.p(i + 1, j);
       field.f(i, j) = field.u(i, j);
       field.t(i, j) = field.t(i + 1, j);
       continue;
@@ -472,7 +449,6 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::LEFT)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = -field.v(i - 1, j);
-      // field.p(i, j) = field.p(i - 1, j);
       field.f(i - 1, j) = field.u(i - 1, j);
       field.t(i, j) = field.t(i - 1, j);
       continue;

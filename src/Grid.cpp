@@ -33,13 +33,6 @@ Grid::Grid(std::string geom_name, Domain &domain) {
       }
     }
 
-    // for (int j = jmax() - 1; j >= 1; j--) {
-    //   for (int i = 1; i < imax(); i++) {
-    //     std::cout << geometry_excluding_ghosts.at(i).at(j) << " ";
-    //   }
-    //   std::cout << "\n";
-    // }
-
   } else {
     build_lid_driven_cavity();
   }
@@ -330,11 +323,8 @@ void Grid::parse_geometry_file(std::string filedoc,
 }
 
 void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
-  // int i = 0;
-  // int j = 0;
 
   for (int j = _domain.jmin + 1; j < _domain.jmax - 1; ++j) {
-    // { i = 0; }
     for (int i = _domain.imin + 1; i < _domain.imax - 1; ++i) {
       if (geometry_data.at(i).at(j) == 3 || geometry_data.at(i).at(j) == 4 ||
           geometry_data.at(i).at(j) == 5) {
@@ -344,7 +334,7 @@ void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
 
         if (sum <= 5) {
           geometry_data.at(i).at(j) = 0;
-          std::cout << "Check your geometry bro\n";
+          std::cout << "Illegal Geometry detetcted.. Changed illegal cell to Fluid. \n";
         }
       }
     }
