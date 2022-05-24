@@ -22,6 +22,7 @@ Grid::Grid(std::string geom_name, Domain &domain) {
         _domain.domain_size_x + 2,
         std::vector<int>(_domain.domain_size_y + 2, 0));
     parse_geometry_file(geom_name, geometry_data);
+    check_geometry_file(geometry_data);
     assign_cell_types(geometry_data);
     geometry_excluding_ghosts.resize(_domain.domain_size_x,
                                      std::vector<int>(_domain.domain_size_y));
