@@ -19,6 +19,7 @@ saved in the defined output folder.
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <vector>
 
@@ -291,8 +292,9 @@ void Case::simulate() {
     // Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
 
-    iter = 0;    // Pressure poisson solver iteration initialization
-    res = 1000;  // Any value greatrer than tolerance.
+    iter = 0;  // Pressure poisson solver iteration initialization
+    res = std::numeric_limits<double>::max();  // Any value greatrer than
+                                               // tolerance.
 
     while (res > _tolerance) {
       if (iter >= _max_iter) {
@@ -383,9 +385,9 @@ void Case::output_vtk(int timestep, int rank) {
                                 _grid.domain().size_y + 1, 1);
   structuredGrid->SetPoints(points);
 
-  for (auto t{0}; t < pointVisibility.size(); t++) {
-    structuredGrid->BlankCell(pointVisibility.at(t));
-  }
+  // for (auto t{0}; t < pointVisibility.size(); t++) {
+  //   structuredGrid->BlankCell(pointVisibility.at(t));
+  // }
 
   // Pressure Array
   vtkDoubleArray *Pressure = vtkDoubleArray::New();

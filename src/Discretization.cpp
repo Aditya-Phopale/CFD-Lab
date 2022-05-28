@@ -35,14 +35,6 @@ double Discretization::convection_u(const Matrix<double> &U,
           (fabs(interpolate(V, i, j, 1, 0)) * (U(i, j) - U(i, j + 1)) / 2 -
            fabs(interpolate(V, i, j - 1, 1, 0)) * (U(i, j - 1) - U(i, j)) / 2);
 
-  // double term2 =
-  //     (1 / (4 * _dy)) *
-  //         ((V(i, j) + V(i + 1, j)) * (U(i, j) + U(i, j + 1)) -
-  //          (V(i, j - 1) + V(i + 1, j - 1)) * (U(i, j - 1) + U(i, j))) +
-  //     _gamma / (4 * _dy) *
-  //         (fabs(V(i, j) + V(i + 1, j)) * (U(i, j) - U(i, j + 1)) -
-  //          fabs(V(i, j - 1) + V(i + 1, j - 1)) * (U(i, j - 1) - U(i, j)));
-
   return term1 + term2;
 }
 
@@ -50,19 +42,12 @@ double Discretization::convection_u(const Matrix<double> &U,
 
 double Discretization::convection_v(const Matrix<double> &U,
                                     const Matrix<double> &V, int i, int j) {
-  // double term1 =
-  //     (1 / _dy) * (interpolate(V,i,j,0,1) * interpolate(V,i,j,0,1) -
-  //                  interpolate(V,i,j,0,-1)* interpolate(V,i,j,0,-1)) +
-  //     (_gamma / _dy) *
-  //         (fabs(interpolate(V,i,j,0,1)) * (V(i, j) - V(i, j + 1))/2 -
-  //          fabs(interpolate(V,i,j,0,-1)) * (V(i, j - 1) - V(i, j))/2);
-
   double term1 =
-      (1 / _dy) * (((V(i, j) + V(i, j + 1)) * (V(i, j) + V(i, j + 1)) / 4) -
-                   ((V(i, j - 1) + V(i, j)) * (V(i, j - 1) + V(i, j)) / 4)) +
-      _gamma / (4 * _dy) *
-          (fabs(V(i, j) + V(i, j + 1)) * (V(i, j) - V(i, j + 1)) -
-           fabs(V(i, j - 1) + V(i, j)) * (V(i, j - 1) - V(i, j)));
+      (1 / _dy) * (interpolate(V, i, j, 0, 1) * interpolate(V, i, j, 0, 1) -
+                   interpolate(V, i, j, 0, -1) * interpolate(V, i, j, 0, -1)) +
+      (_gamma / _dy) *
+          (fabs(interpolate(V, i, j, 0, 1)) * (V(i, j) - V(i, j + 1)) / 2 -
+           fabs(interpolate(V, i, j, 0, -1)) * (V(i, j - 1) - V(i, j)) / 2);
 
   double term2 =
       (1 / _dx) *
@@ -72,14 +57,6 @@ double Discretization::convection_v(const Matrix<double> &U,
           (fabs(interpolate(U, i, j, 0, 1)) * (V(i, j) - V(i + 1, j)) / 2 -
            fabs(interpolate(U, i - 1, j, 0, 1)) * (V(i - 1, j) - V(i, j)) / 2);
 
-  // double term2 =
-  //     (1 / (4 * _dx)) *
-  //         ((U(i, j) + U(i, j + 1)) * (V(i, j) + V(i + 1, j)) -
-  //          (U(i - 1, j) + U(i - 1, j + 1)) * (V(i - 1, j) + V(i, j))) +
-  //     _gamma / (4 * _dx) *
-  //         (fabs(U(i, j) + U(i, j + 1)) * (V(i, j) - V(i + 1, j)) -
-  //          fabs(U(i - 1, j) + U(i - 1, j + 1)) * (V(i - 1, j) - V(i, j)));
-
   return term1 + term2;
 }
 
@@ -88,14 +65,14 @@ double Discretization::convection_T(const Matrix<double> &U,
                                     const Matrix<double> &V,
                                     const Matrix<double> &T, int i, int j) {
   double term1 =
-      (1 / _dx) * (U(i, j) * interpolate(T, i, j, 1, 0) -
-                   U(i - 1, j) * interpolate(T, i, j, -1, 0)) +
+      (1 / (2 * _dx)) * (U(i, j) * (T(i, j) + T(i + 1, j)) -
+                         U(i - 1, j) * (T(i - 1, j) + T(i, j))) +
       (_gamma / (2 * _dx)) * (fabs(U(i, j)) * (T(i, j) - T(i + 1, j)) -
                               fabs(U(i - 1, j)) * (T(i - 1, j) - T(i, j)));
 
   double term2 =
-      (1 / _dy) * (V(i, j) * interpolate(T, i, j, 0, 1) -
-                   V(i, j - 1) * interpolate(T, i, j, 0, -1)) +
+      (1 / (2 * _dy)) * (V(i, j) * (T(i, j) + T(i, j + 1)) -
+                         V(i, j - 1) * (T(i, j - 1) + T(i, j))) +
       (_gamma / (2 * _dy)) * (fabs(V(i, j)) * (T(i, j) - T(i, j + 1)) -
                               fabs(V(i, j - 1)) * (T(i, j - 1) - T(i, j)));
 
