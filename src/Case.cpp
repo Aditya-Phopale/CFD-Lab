@@ -270,13 +270,12 @@ void Case::simulate() {
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
-  
+
   output_vtk(timestep);
 
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
-    
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
@@ -322,11 +321,11 @@ void Case::simulate() {
     timestep++;
 
     // Printing Data in the terminal
-    if(timestep % 100 == 0){
+    if (timestep % 100 == 0) {
       std::cout << "Timestep size: " << setw(10) << dt << " | "
-              << "Time: " << setw(8) << t << setw(3) << " | "
-              << "Residual: " << setw(11) << res << setw(3) << " | "
-              << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+                << "Time: " << setw(8) << t << setw(3) << " | "
+                << "Residual: " << setw(11) << res << setw(3) << " | "
+                << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
     }
     if (t >= _output_freq) {
       output_vtk(timestep);

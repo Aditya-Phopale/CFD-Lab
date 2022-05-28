@@ -266,7 +266,7 @@ void OutletBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::LEFT)) {
       field.u(i - 1, j) = field.u(i - 2, j);
       field.v(i, j) = field.v(i - 1, j);
-      field.f(i - 1, j) = field.u(i - 1, j); 
+      field.f(i - 1, j) = field.u(i - 1, j);
       continue;
     }
     if (cells->is_border(border_position::RIGHT)) {
