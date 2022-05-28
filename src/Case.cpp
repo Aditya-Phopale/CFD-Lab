@@ -385,9 +385,9 @@ void Case::output_vtk(int timestep, int rank) {
                                 _grid.domain().size_y + 1, 1);
   structuredGrid->SetPoints(points);
 
-  // for (auto t{0}; t < pointVisibility.size(); t++) {
-  //   structuredGrid->BlankCell(pointVisibility.at(t));
-  // }
+  for (auto t{0}; t < pointVisibility.size(); t++) {
+    structuredGrid->BlankCell(pointVisibility.at(t));
+  }
 
   // Pressure Array
   vtkDoubleArray *Pressure = vtkDoubleArray::New();
