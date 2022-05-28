@@ -56,6 +56,13 @@ void Grid::build_lid_driven_cavity() {
     }
   }
   assign_cell_types(geometry_data);
+  geometry_excluding_ghosts.resize(_domain.domain_size_x,
+                                   std::vector<int>(_domain.domain_size_y));
+  for (int j = 0; j < jmax(); j++) {
+    for (int i = 0; i < imax(); i++) {
+      geometry_excluding_ghosts.at(i).at(j) = geometry_data.at(i + 1).at(j + 1);
+    }
+  }
 }
 
 void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
@@ -323,7 +330,6 @@ void Grid::parse_geometry_file(std::string filedoc,
 }
 
 void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
-
   for (int j = _domain.jmin + 1; j < _domain.jmax - 1; ++j) {
     for (int i = _domain.imin + 1; i < _domain.imax - 1; ++i) {
       if (geometry_data.at(i).at(j) == 3 || geometry_data.at(i).at(j) == 4 ||
@@ -334,7 +340,8 @@ void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
 
         if (sum <= 5) {
           geometry_data.at(i).at(j) = 0;
-          std::cout << "Illegal Geometry detetcted.. Changed illegal cell to Fluid. \n";
+          std::cout << "Illegal Geometry detetcted.. Changed illegal cell to "
+                       "Fluid. \n";
         }
       }
     }
