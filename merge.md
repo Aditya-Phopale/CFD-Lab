@@ -1,18 +1,22 @@
 Following are our results for Worksheet 2
 
 Channel with BFS GIF
+
 ![ChannelWithBFS](/docs/images/chwbfs.gif)
 
 Channel with BFS
+
 ![ChannelWithBFS](/docs/images/ChannelWithBFS.png)
 
 Channel with BFS (Streamlines)
+
 ![Channel With BFS Streamlines](/docs/images/ChannelWithBFSstreamlines.png)
 
 Channel with Obstacle GIF
 ![ChannelWithObstacle](/docs/images/obs.gif)
 
 Channel with Obstacle
+
 ![Channel With Obstacle](/docs/images/ChannelWithObstacle.png)
 
 Fluid Trap GIF
