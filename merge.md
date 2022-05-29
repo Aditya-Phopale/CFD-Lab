@@ -6,20 +6,21 @@ Channel with BFS GIF
 
 Channel with BFS
 
-![ChannelWithBFS](/docs/images/ChannelWithBFS.png)
+![ChannelWithBFS](/docs/images/ChannelwithBFS.png)
 
 Channel with BFS (Streamlines)
 
-![Channel With BFS Streamlines](/docs/images/ChannelWithBFSstreamlines.png)
+![Channel With BFS Streamlines](/docs/images/ChannelwithBFSstreamlines.png)
 
 Channel with Obstacle GIF
 ![ChannelWithObstacle](/docs/images/obs.gif)
 
 Channel with Obstacle
 
-![Channel With Obstacle](/docs/images/ChannelWithObstacle.png)
+![Channel With Obstacle](/docs/images/ChannelwithObstacle.png)
 
 Fluid Trap GIF
+
 ![Fluid Trap](/docs/images/ft.gif)
 
 Fluid Trap
