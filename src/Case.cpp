@@ -22,6 +22,7 @@ saved in the defined output folder.
 #include <limits>
 #include <map>
 #include <vector>
+#include <limits>
 
 #ifdef GCC_VERSION_9_OR_HIGHER
 namespace filesystem = std::filesystem;
