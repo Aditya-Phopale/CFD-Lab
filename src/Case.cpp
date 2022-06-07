@@ -23,6 +23,7 @@ saved in the defined output folder.
 #include <map>
 #include <vector>
 #include <limits>
+#include<mpi.h>
 
 #ifdef GCC_VERSION_9_OR_HIGHER
 namespace filesystem = std::filesystem;
@@ -42,7 +43,7 @@ namespace filesystem = std::experimental::filesystem;
 
 // Read input parameters.
 
-Case::Case(std::string file_name, int argn, char **args) {
+Case::Case(std::string file_name, int argn, char **args, int my_rank) : my_rank(my_rank){
   const int MAX_LINE_LENGTH = 1024;
   std::ifstream file(file_name);
   double nu;     /* viscosity   */
@@ -71,8 +72,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   double temp3;
   double temp4;
   double temp5;
-
-  // Assigning parameters from the file to variables.
+  int iproc, jproc;
+    // Assigning parameters from the file to variables.
 
   if (file.is_open()) {
     std::string var;
@@ -110,6 +111,8 @@ Case::Case(std::string file_name, int argn, char **args) {
         if (var == "wall_temp_4") file >> temp4;
         if (var == "wall_temp_5") file >> temp5;
         if (var == "energy_eq") file >> energy_eqn;
+        if (var == "iproc") file >> iproc;
+        if (var == "jproc") file >> jproc;
       }
     }
   }
@@ -117,6 +120,7 @@ Case::Case(std::string file_name, int argn, char **args) {
 
   std::map<int, double> wall_temp;
   bool boolenergy_eq = false;
+
   if (energy_eqn.compare("on") == 0) {
     boolenergy_eq = true;
     wall_temp.insert(std::pair<int, double>(cellID::fixed_wall_3, temp3));
@@ -140,8 +144,9 @@ Case::Case(std::string file_name, int argn, char **args) {
   domain.dy = ylength / static_cast<double>(jmax);
   domain.domain_size_x = imax;
   domain.domain_size_y = jmax;
+  
 
-  build_domain(domain, imax, jmax);
+  build_domain(domain, imax, jmax, iproc, jproc);
 
   _grid = Grid(_geom_name, domain);
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
@@ -455,11 +460,11 @@ void Case::output_vtk(int timestep, int rank) {
   writer->Write();
 }
 
-void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain) {
-  domain.imin = 0;
-  domain.jmin = 0;
-  domain.imax = imax_domain + 2;
-  domain.jmax = jmax_domain + 2;
-  domain.size_x = imax_domain;
-  domain.size_y = jmax_domain;
+void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain, int iproc, int jproc) {
+  domain.imin = (my_rank%iproc) * (imax_domain/iproc);
+  domain.jmin = (my_rank%jproc) * (jmax_domain/jproc);
+  domain.imax = ((my_rank)%(iproc)+1) * (imax_domain/iproc) + 2;
+  domain.jmax = ((my_rank)%(jproc)+1) * (jmax_domain/jproc) + 2;
+  domain.size_x = imax_domain/iproc;
+  domain.size_y = jmax_domain/jproc;
 }

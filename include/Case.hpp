@@ -25,7 +25,7 @@ class Case {
      *
      * @param[in] Input file name
      */
-    Case(std::string file_name, int argn, char **args);
+    Case(std::string file_name, int argn, char **args, int my_rank);
 
     /**
      * @brief Main function to simulate the flow until the end time.
@@ -47,6 +47,7 @@ class Case {
     std::string _geom_name{"NONE"};
     /// Relative input file path
     std::string _prefix;
+    int my_rank;
 
     /// Simulation time
     double _t_end;
@@ -88,5 +89,5 @@ class Case {
 
     void initial_condition(const Grid &grid, Fields &field);
 
-    void build_domain(Domain &domain, int imax_domain, int jmax_domain);
+    void build_domain(Domain &domain, int imax_domain, int jmax_domain, int iproc, int jproc);
 };
