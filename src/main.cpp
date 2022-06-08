@@ -7,12 +7,11 @@ date file is provided.
 #include<mpi.h>
 
 #include "Case.hpp"
+#include "Communication.hpp"
 
 int main(int argn, char **args) {
   int rank, size;
-  MPI_Init(&argn, &args);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  Communication::init_parallel(argn, args, rank, size);
   if (argn > 1) {
     std::string file_name{args[1]};
     Case problem(file_name, argn, args, rank);
@@ -22,5 +21,5 @@ int main(int argn, char **args) {
     std::cout << "Example usage: /path/to/fluidchen /path/to/input_data.dat"
               << std::endl;
   }
-  MPI_Finalize();
+  Communication::finalize();
 }

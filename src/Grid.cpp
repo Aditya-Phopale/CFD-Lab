@@ -41,7 +41,7 @@ Grid::Grid(std::string geom_name, Domain &domain) {
 void Grid::build_lid_driven_cavity() {
   std::vector<std::vector<int>> geometry_data(
       _domain.domain_size_x + 2,
-      std::vector<int>(_domain.domain_sicd .ze_y + 2, 0));
+      std::vector<int>(_domain.domain_size_y + 2, 0));
 
   for (int i = _domain.imin; i < _domain.imax; ++i) {
     for (int j = _domain.jmin; j < _domain.jmax; ++j) {

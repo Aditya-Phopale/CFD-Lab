@@ -43,7 +43,7 @@ namespace filesystem = std::experimental::filesystem;
 
 // Read input parameters.
 
-Case::Case(std::string file_name, int argn, char **args, int my_rank) : my_rank(my_rank){
+Case::Case(std::string file_name, int argn, char **args, int my_rank=0) : my_rank(my_rank){
   const int MAX_LINE_LENGTH = 1024;
   std::ifstream file(file_name);
   double nu;     /* viscosity   */
@@ -72,7 +72,8 @@ Case::Case(std::string file_name, int argn, char **args, int my_rank) : my_rank(
   double temp3;
   double temp4;
   double temp5;
-  int iproc, jproc;
+  int iproc=1;
+  int jproc=1;
     // Assigning parameters from the file to variables.
 
   if (file.is_open()) {
@@ -461,10 +462,59 @@ void Case::output_vtk(int timestep, int rank) {
 }
 
 void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain, int iproc, int jproc) {
+
   domain.imin = (my_rank%iproc) * (imax_domain/iproc);
-  domain.jmin = (my_rank%jproc) * (jmax_domain/jproc);
-  domain.imax = ((my_rank)%(iproc)+1) * (imax_domain/iproc) + 2;
-  domain.jmax = ((my_rank)%(jproc)+1) * (jmax_domain/jproc) + 2;
+  domain.jmin = (my_rank/iproc)%jproc * (jmax_domain/jproc);
+  domain.imax = (my_rank%iproc+1) * (imax_domain/iproc) + 2;
+  domain.jmax = ((my_rank/iproc)%jproc+1) * (jmax_domain/jproc) + 2;
   domain.size_x = imax_domain/iproc;
   domain.size_y = jmax_domain/jproc;
+  if(domain.jmin==0 && domain.imin==0) {
+    domain.domain_neighbors.at(0)=my_rank + 1;
+    domain.domain_neighbors.at(1)= - 1;
+    domain.domain_neighbors.at(2)=my_rank + iproc;
+    domain.domain_neighbors.at(3)= - 1;
+}
+  else if(domain.jmin==0 && domain.imin==domain.domain_size_x) {
+    domain.domain_neighbors.at(0)= - 1;
+    domain.domain_neighbors.at(1)=my_rank - 1;
+    domain.domain_neighbors.at(2)=my_rank + 1;
+    domain.domain_neighbors.at(3)= - 1;
+}
+  else if(domain.jmin==domain.domain_size_y && domain.imin==domain.domain_size_x) {
+    domain.domain_neighbors.at(0)= - 1;
+    domain.domain_neighbors.at(1)=my_rank - 1;
+    domain.domain_neighbors.at(2)= - 1;
+    domain.domain_neighbors.at(3)= my_rank - iproc;
+}
+  else if(domain.jmin==domain.domain_size_y && domain.imin==0) {
+    domain.domain_neighbors.at(0)=my_rank + 1;
+    domain.domain_neighbors.at(1)= - 1;
+    domain.domain_neighbors.at(2)= - 1;
+    domain.domain_neighbors.at(3)= my_rank - iproc;
+}
+ else if(domain.imin==0) {
+    domain.domain_neighbors.at(0)=my_rank + 1;
+    domain.domain_neighbors.at(1)= - 1;
+    domain.domain_neighbors.at(2)=my_rank + iproc;
+    domain.domain_neighbors.at(3)=my_rank - iproc;
+}
+  else if(domain.imax==domain.domain_size_x) {
+    domain.domain_neighbors.at(0)= - 1;
+    domain.domain_neighbors.at(1)=my_rank - 1;
+    domain.domain_neighbors.at(2)=my_rank + iproc;
+    domain.domain_neighbors.at(3)=my_rank - iproc;
+}
+  else if(domain.jmin==0) {
+    domain.domain_neighbors.at(0)=my_rank + 1;
+    domain.domain_neighbors.at(1)=my_rank - 1;
+    domain.domain_neighbors.at(2)=my_rank + jproc;
+    domain.domain_neighbors.at(3)=-1;
+}
+else if(domain.jmin==domain.domain_size_y) {
+    domain.domain_neighbors.at(0)=my_rank + 1;
+    domain.domain_neighbors.at(1)=my_rank - 1;
+    domain.domain_neighbors.at(2)=-1;
+    domain.domain_neighbors.at(3)=my_rank - jproc;
+}
 }
