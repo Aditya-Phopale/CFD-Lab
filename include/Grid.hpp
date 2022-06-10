@@ -111,6 +111,10 @@ class Grid {
   std::vector<Cell *> _inlet_cells;
   std::vector<Cell *> _outlet_cells;
   std::vector<Cell *> _adiabatic_cells;
+  std::vector<Cell *> _e_buffer;
+  std::vector<Cell *> _w_buffer;
+  std::vector<Cell *> _n_buffer;
+  std::vector<Cell *> _s_buffer;
 
   Domain _domain;
 

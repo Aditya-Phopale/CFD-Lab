@@ -15,6 +15,8 @@ saved in the defined output folder.
 #else
 #include <experimental/filesystem>
 #endif
+#include <mpi.h>
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -22,8 +24,6 @@ saved in the defined output folder.
 #include <limits>
 #include <map>
 #include <vector>
-#include <limits>
-#include<mpi.h>
 
 #ifdef GCC_VERSION_9_OR_HIGHER
 namespace filesystem = std::filesystem;
@@ -43,7 +43,9 @@ namespace filesystem = std::experimental::filesystem;
 
 // Read input parameters.
 
-Case::Case(std::string file_name, int argn, char **args, int my_rank=0) : my_rank(my_rank){
+Case::Case(std::string file_name, int argn, char **args, int my_rank,
+           int my_size)
+    : my_rank(my_rank), my_size(my_size) {
   const int MAX_LINE_LENGTH = 1024;
   std::ifstream file(file_name);
   double nu;     /* viscosity   */
@@ -72,9 +74,9 @@ Case::Case(std::string file_name, int argn, char **args, int my_rank=0) : my_ran
   double temp3;
   double temp4;
   double temp5;
-  int iproc=1;
-  int jproc=1;
-    // Assigning parameters from the file to variables.
+  int iproc = 1;
+  int jproc = 1;
+  // Assigning parameters from the file to variables.
 
   if (file.is_open()) {
     std::string var;
@@ -140,52 +142,49 @@ Case::Case(std::string file_name, int argn, char **args, int my_rank=0) : my_ran
 
   // Building up our domain
 
-  Domain domain;
-  domain.dx = xlength / static_cast<double>(imax);
-  domain.dy = ylength / static_cast<double>(jmax);
-  domain.domain_size_x = imax;
-  domain.domain_size_y = jmax;
-  
-
-  build_domain(domain, imax, jmax, iproc, jproc);
-
-  _grid = Grid(_geom_name, domain);
-  _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
-                  _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
-
-  _discretization = Discretization(domain.dx, domain.dy, gamma);
-  _pressure_solver = std::make_unique<SOR>(omg);
-  _max_iter = itermax;
-  _tolerance = eps;
-
-  // Constructing boundaries
-
-  if (not _grid.moving_wall_cells().empty()) {
-    _boundaries.push_back(std::make_unique<MovingWallBoundary>(
-        _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
+  std::vector<Domain> domain_dist;
+  if (my_rank == 0) {
+    build_domain(domain_dist, xlength, ylength, imax, jmax, iproc, jproc);
   }
-  if (not _grid.inlet_cells().empty()) {
-    _boundaries.push_back(
-        std::make_unique<InletBoundary>(_grid.inlet_cells(), UIN, VIN));
-  }
-  if (not _grid.outlet_cells().empty()) {
-    _boundaries.push_back(
-        std::make_unique<OutletBoundary>(_grid.outlet_cells()));
-  }
-  if (not _grid.fixed_wall_cells().empty()) {
-    if (!boolenergy_eq) {
-      _boundaries.push_back(
-          std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
-    } else {
-      _boundaries.push_back(std::make_unique<FixedWallBoundary>(
-          _grid.fixed_wall_cells(), wall_temp));
-    }
-  }
-  if (not _grid.adiabatic_cells().empty()) {
-    _boundaries.push_back(
-        std::make_unique<AdiabaticBoundary>(_grid.adiabatic_cells()));
-  }
+
+  _grid = Grid(_geom_name, domain_dist[my_rank], my_rank);
 }
+// _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
+//                 _grid.domain().size_y, UI, VI, PI, TI, GX, GY,
+//                 boolenergy_eq);
+
+// _discretization = Discretization(domain.dx, domain.dy, gamma);
+// _pressure_solver = std::make_unique<SOR>(omg);
+// _max_iter = itermax;
+// _tolerance = eps;
+
+// // Constructing boundaries
+
+// if (not _grid.moving_wall_cells().empty()) {
+//   _boundaries.push_back(std::make_unique<MovingWallBoundary>(
+//       _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
+// }
+// if (not _grid.inlet_cells().empty()) {
+//   _boundaries.push_back(
+//       std::make_unique<InletBoundary>(_grid.inlet_cells(), UIN, VIN));
+// }
+// if (not _grid.outlet_cells().empty()) {
+//   _boundaries.push_back(std::make_unique<OutletBoundary>(_grid.outlet_cells()));
+// }
+// if (not _grid.fixed_wall_cells().empty()) {
+//   if (!boolenergy_eq) {
+//     _boundaries.push_back(
+//         std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+//   } else {
+//     _boundaries.push_back(std::make_unique<FixedWallBoundary>(
+//         _grid.fixed_wall_cells(), wall_temp));
+//   }
+// }
+// if (not _grid.adiabatic_cells().empty()) {
+//   _boundaries.push_back(
+//       std::make_unique<AdiabaticBoundary>(_grid.adiabatic_cells()));
+// }
+// }
 
 void Case::set_file_names(std::string file_name) {
   std::string temp_dir;
@@ -235,286 +234,273 @@ void Case::set_file_names(std::string file_name) {
   }
 }
 
-/**
- * This function is the main simulation loop. In the simulation loop, following
- * steps are required
- * - Calculate and apply boundary conditions for all the boundaries in
- * _boundaries container using apply() member function of Boundary class
- * - Calculate fluxes (F and G) using calculate_fluxes() member function of
- * Fields class. Flux consists of diffusion and convection part, which are
- * located in Discretization class
- * - Calculate right-hand-side of PPE using calculate_rs() member function of
- * Fields class
- * - Iterate the pressure poisson equation until the residual becomes smaller
- * than the desired tolerance or the maximum number of the iterations are
- * performed using solve() member function of PressureSolver class
- * - Calculate the velocities u and v using calculate_velocities() member
- * function of Fields class
- * - Calculat the maximal timestep size for the next iteration using
- * calculate_dt() member function of Fields class
- * - Write vtk files using output_vtk() function
- *
- * Please note that some classes such as PressureSolver, Boundary are abstract
- * classes which means they only provide the interface. No member functions
- * should be defined in abstract classes. You need to define functions in
- * inherited classes such as MovingWallBoundary class.
- *
- * For information about the classes and functions, you can check the header
- * files.
- */
-void Case::simulate() {
-  // Defining parameters for running of the loop
+// /**
+//  * This function is the main simulation loop. In the simulation loop,
+//  following
+//  * steps are required
+//  * - Calculate and apply boundary conditions for all the boundaries in
+//  * _boundaries container using apply() member function of Boundary class
+//  * - Calculate fluxes (F and G) using calculate_fluxes() member function of
+//  * Fields class. Flux consists of diffusion and convection part, which are
+//  * located in Discretization class
+//  * - Calculate right-hand-side of PPE using calculate_rs() member function of
+//  * Fields class
+//  * - Iterate the pressure poisson equation until the residual becomes smaller
+//  * than the desired tolerance or the maximum number of the iterations are
+//  * performed using solve() member function of PressureSolver class
+//  * - Calculate the velocities u and v using calculate_velocities() member
+//  * function of Fields class
+//  * - Calculat the maximal timestep size for the next iteration using
+//  * calculate_dt() member function of Fields class
+//  * - Write vtk files using output_vtk() function
+//  *
+//  * Please note that some classes such as PressureSolver, Boundary are
+//  abstract
+//  * classes which means they only provide the interface. No member functions
+//  * should be defined in abstract classes. You need to define functions in
+//  * inherited classes such as MovingWallBoundary class.
+//  *
+//  * For information about the classes and functions, you can check the header
+//  * files.
+//  */
+// void Case::simulate() {
+//   // Defining parameters for running of the loop
 
-  double t = 0.0;
-  double dt = _field.dt();
-  int timestep = 0;
-  double output_counter = _output_freq;
-  int iter;
-  double res;
-  int total_iter = 1;
-  std::ofstream logfile;
-  logfile.open("log.txt");
+//   double t = 0.0;
+//   double dt = _field.dt();
+//   int timestep = 0;
+//   double output_counter = _output_freq;
+//   int iter;
+//   double res;
+//   int total_iter = 1;
+//   std::ofstream logfile;
+//   logfile.open("log.txt");
 
-  for (int i = 0; i < _boundaries.size(); i++) {
-    _boundaries[i]->apply(_field);
+//   for (int i = 0; i < _boundaries.size(); i++) {
+//     _boundaries[i]->apply(_field);
+//   }
+
+//   output_vtk(timestep);
+
+//   // Following is the actual loop that runs till the defined time limit.
+
+//   while (t <= _t_end) {
+//     // Calculating timestep for advancement to the next iteration.
+//     dt = _field.calculate_dt(_grid);
+
+//     // Calculate new Temperatures
+//     if (_field.energy_eq()) {
+//       _field.calculate_temperature(_grid);
+//     }
+
+//     // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+//     // respectively.
+//     _field.calculate_fluxes(_grid);
+
+//     // Calculating RHS for pressure poisson equation
+//     _field.calculate_rs(_grid);
+
+//     iter = 0;  // Pressure poisson solver iteration initialization
+//     res = std::numeric_limits<double>::max();  // Any value greatrer than
+//                                                // tolerance.
+
+//     while (res > _tolerance) {
+//       if (iter >= _max_iter) {
+//         std::cout << "Pressure poisson solver did not converge to the given "
+//                      "tolerance...\n";
+//         break;
+//       }
+//       for (int i = 0; i < _boundaries.size(); i++) {
+//         _boundaries[i]->apply_pressure(_field);
+//       }
+//       res = _pressure_solver->solve(_field, _grid, _boundaries);
+//       iter++;
+//       total_iter++;
+//       logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
+//     }
+
+//     // Calculating updated velocities using pressure calculated in the
+//     // pressure poisson equation
+//     _field.calculate_velocities(_grid);
+
+//     for (int i = 0; i < _boundaries.size(); i++) {
+//       _boundaries[i]->apply(_field);
+//     }
+//     // Updating t for the next step
+//     t += dt;
+//     timestep++;
+
+//     // Printing Data in the terminal
+//     if (timestep % 100 == 0) {
+//       std::cout << "Timestep size: " << setw(10) << dt << " | "
+//                 << "Time: " << setw(8) << t << setw(3) << " | "
+//                 << "Residual: " << setw(11) << res << setw(3) << " | "
+//                 << "Pressure Poisson Iterations: " << setw(3) << iter <<
+//                 '\n';
+//     }
+//     if (t >= _output_freq) {
+//       output_vtk(timestep);
+//       _output_freq = _output_freq + output_counter;
+//     }
+//   }
+
+//   logfile.close();
+// }
+
+// // Following is the pre-defined function for writing the output files.
+
+// void Case::output_vtk(int timestep, int rank) {
+//   // Creating a new structured grid
+//   vtkSmartPointer<vtkStructuredGrid> structuredGrid =
+//       vtkSmartPointer<vtkStructuredGrid>::New();
+
+//   // Creating grid
+//   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+
+//   double dx = _grid.dx();
+//   double dy = _grid.dy();
+
+//   double x = _grid.domain().imin * dx;
+//   double y = _grid.domain().jmin * dy;
+
+//   { y += dy; }
+//   { x += dx; }
+
+//   double z = 0;
+//   for (int col = 0; col < _grid.domain().size_y + 1; col++) {
+//     x = _grid.domain().imin * dx;
+//     { x += dx; }
+//     for (int row = 0; row < _grid.domain().size_x + 1; row++) {
+//       points->InsertNextPoint(x, y, z);
+//       x += dx;
+//     }
+//     y += dy;
+//   }
+//   std::vector<vtkIdType> pointVisibility;
+//   auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
+//   for (int i = 0; i < _grid.imax(); i++) {
+//     for (int j = 0; j < _grid.jmax(); j++) {
+//       if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
+//           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
+//           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
+//         pointVisibility.push_back(i + j * _grid.imax());
+//       }
+//     }
+//   }
+
+//   // Specify the dimensions of the grid, addition of 1 to accomodate
+//   // neighboring cells
+//   structuredGrid->SetDimensions(_grid.domain().size_x + 1,
+//                                 _grid.domain().size_y + 1, 1);
+//   structuredGrid->SetPoints(points);
+
+//   for (auto t{0}; t < pointVisibility.size(); t++) {
+//     structuredGrid->BlankCell(pointVisibility.at(t));
+//   }
+
+//   // Pressure Array
+//   vtkDoubleArray *Pressure = vtkDoubleArray::New();
+//   Pressure->SetName("pressure");
+//   Pressure->SetNumberOfComponents(1);
+
+//   // Velocity Array
+//   vtkDoubleArray *Velocity = vtkDoubleArray::New();
+//   Velocity->SetName("velocity");
+//   Velocity->SetNumberOfComponents(3);
+
+//   if (_field.energy_eq()) {
+//     vtkDoubleArray *Temperature = vtkDoubleArray::New();
+//     Temperature->SetName("temperature");
+//     Temperature->SetNumberOfComponents(1);
+
+//     for (int j = 1; j < _grid.domain().size_y + 1; j++) {
+//       for (int i = 1; i < _grid.domain().size_x + 1; i++) {
+//         double temperature = _field.t(i, j);
+//         Temperature->InsertNextTuple(&temperature);
+//       }
+//     }
+
+//     structuredGrid->GetCellData()->AddArray(Temperature);
+//   }
+
+//   // Print pressure and temperature from bottom to top
+//   for (int j = 1; j < _grid.domain().size_y + 1; j++) {
+//     for (int i = 1; i < _grid.domain().size_x + 1; i++) {
+//       double pressure = _field.p(i, j);
+//       Pressure->InsertNextTuple(&pressure);
+//     }
+//   }
+
+//   // Temp Velocity
+//   float vel[3];
+//   vel[2] = 0;  // Set z component to 0
+
+//   // Print Velocity from bottom to top
+//   for (int j = 0; j < _grid.domain().size_y + 1; j++) {
+//     for (int i = 0; i < _grid.domain().size_x + 1; i++) {
+//       vel[0] = (_field.u(i, j) + _field.u(i, j + 1)) * 0.5;
+//       vel[1] = (_field.v(i, j) + _field.v(i + 1, j)) * 0.5;
+//       Velocity->InsertNextTuple(vel);
+//     }
+//   }
+
+//   // Add Pressure to Structured Grid
+//   structuredGrid->GetCellData()->AddArray(Pressure);
+
+//   // Add Velocity to Structured Grid
+//   structuredGrid->GetPointData()->AddArray(Velocity);
+
+//   // Write Grid
+//   vtkSmartPointer<vtkStructuredGridWriter> writer =
+//       vtkSmartPointer<vtkStructuredGridWriter>::New();
+
+//   // Create Filename
+//   std::string outputname =
+//       _dict_name + '/' + _case_name + "_" + std::to_string(timestep) +
+//       ".vtk";
+
+//   writer->SetFileName(outputname.c_str());
+//   writer->SetInputData(structuredGrid);
+//   writer->Write();
+// }
+
+void Case::build_domain(std::vector<Domain> &domain_dist, int xlength,
+                        int ylength, int imax_domain, int jmax_domain,
+                        int iproc, int jproc) {
+  for (int curr_rank{0}; curr_rank < iproc * jproc; curr_rank++) {
+    Domain domain;
+    domain.dx = xlength / imax_domain;
+    domain.dy = ylength / jmax_domain;
+    domain.domain_size_x = imax_domain;
+    domain.domain_size_y = jmax_domain;
+    domain.imin = (curr_rank % iproc) * (imax_domain / iproc);
+    domain.jmin = (curr_rank / iproc) % jproc * (jmax_domain / jproc);
+    domain.imax = (curr_rank % iproc + 1) * (imax_domain / iproc) + 2;
+    domain.jmax = ((curr_rank / iproc) % jproc + 1) * (jmax_domain / jproc) + 2;
+    domain.size_x = imax_domain / iproc;
+    domain.size_y = jmax_domain / jproc;
+
+    if (curr_rank % iproc + 1 < iproc) {
+      domain.domain_neighbors.at(0) = curr_rank + 1;
+    }
+    if (curr_rank % iproc - 1 >= 0) {
+      domain.domain_neighbors.at(2) = curr_rank - 1;
+    }
+    if (curr_rank + iproc < my_size) {
+      domain.domain_neighbors.at(1) = curr_rank + iproc;
+    }
+    if (curr_rank - iproc >= 0) {
+      domain.domain_neighbors.at(3) = curr_rank - iproc;
+    }
+
+    domain_dist.push_back(domain);
+    std::cout << curr_rank << " " << domain_dist[curr_rank].imin << " "
+              << domain_dist[curr_rank].imax << " "
+              << domain_dist[curr_rank].jmin << " "
+              << domain_dist[curr_rank].jmax << " "
+              << domain_dist[curr_rank].domain_neighbors.at(0) << " "
+              << domain_dist[curr_rank].domain_neighbors.at(1) << " "
+              << domain_dist[curr_rank].domain_neighbors.at(2) << " "
+              << domain_dist[curr_rank].domain_neighbors.at(3) << "\n";
   }
-
-  output_vtk(timestep);
-
-  // Following is the actual loop that runs till the defined time limit.
-
-  while (t <= _t_end) {
-    // Calculating timestep for advancement to the next iteration.
-    dt = _field.calculate_dt(_grid);
-
-    // Calculate new Temperatures
-    if (_field.energy_eq()) {
-      _field.calculate_temperature(_grid);
-    }
-
-    // Calculating Fluxes (_F and _G) for velocities in X and Y direction
-    // respectively.
-    _field.calculate_fluxes(_grid);
-
-    // Calculating RHS for pressure poisson equation
-    _field.calculate_rs(_grid);
-
-    iter = 0;  // Pressure poisson solver iteration initialization
-    res = std::numeric_limits<double>::max();  // Any value greatrer than
-                                               // tolerance.
-
-    while (res > _tolerance) {
-      if (iter >= _max_iter) {
-        std::cout << "Pressure poisson solver did not converge to the given "
-                     "tolerance...\n";
-        break;
-      }
-      for (int i = 0; i < _boundaries.size(); i++) {
-        _boundaries[i]->apply_pressure(_field);
-      }
-      res = _pressure_solver->solve(_field, _grid, _boundaries);
-      iter++;
-      total_iter++;
-      logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
-    }
-
-    // Calculating updated velocities using pressure calculated in the
-    // pressure poisson equation
-    _field.calculate_velocities(_grid);
-
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
-    // Updating t for the next step
-    t += dt;
-    timestep++;
-
-    // Printing Data in the terminal
-    if (timestep % 100 == 0) {
-      std::cout << "Timestep size: " << setw(10) << dt << " | "
-                << "Time: " << setw(8) << t << setw(3) << " | "
-                << "Residual: " << setw(11) << res << setw(3) << " | "
-                << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
-    }
-    if (t >= _output_freq) {
-      output_vtk(timestep);
-      _output_freq = _output_freq + output_counter;
-    }
-  }
-
-  logfile.close();
-}
-
-// Following is the pre-defined function for writing the output files.
-
-void Case::output_vtk(int timestep, int rank) {
-  // Creating a new structured grid
-  vtkSmartPointer<vtkStructuredGrid> structuredGrid =
-      vtkSmartPointer<vtkStructuredGrid>::New();
-
-  // Creating grid
-  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-
-  double dx = _grid.dx();
-  double dy = _grid.dy();
-
-  double x = _grid.domain().imin * dx;
-  double y = _grid.domain().jmin * dy;
-
-  { y += dy; }
-  { x += dx; }
-
-  double z = 0;
-  for (int col = 0; col < _grid.domain().size_y + 1; col++) {
-    x = _grid.domain().imin * dx;
-    { x += dx; }
-    for (int row = 0; row < _grid.domain().size_x + 1; row++) {
-      points->InsertNextPoint(x, y, z);
-      x += dx;
-    }
-    y += dy;
-  }
-  std::vector<vtkIdType> pointVisibility;
-  auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
-  for (int i = 0; i < _grid.imax(); i++) {
-    for (int j = 0; j < _grid.jmax(); j++) {
-      if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
-          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
-          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
-        pointVisibility.push_back(i + j * _grid.imax());
-      }
-    }
-  }
-
-  // Specify the dimensions of the grid, addition of 1 to accomodate
-  // neighboring cells
-  structuredGrid->SetDimensions(_grid.domain().size_x + 1,
-                                _grid.domain().size_y + 1, 1);
-  structuredGrid->SetPoints(points);
-
-  for (auto t{0}; t < pointVisibility.size(); t++) {
-    structuredGrid->BlankCell(pointVisibility.at(t));
-  }
-
-  // Pressure Array
-  vtkDoubleArray *Pressure = vtkDoubleArray::New();
-  Pressure->SetName("pressure");
-  Pressure->SetNumberOfComponents(1);
-
-  // Velocity Array
-  vtkDoubleArray *Velocity = vtkDoubleArray::New();
-  Velocity->SetName("velocity");
-  Velocity->SetNumberOfComponents(3);
-
-  if (_field.energy_eq()) {
-    vtkDoubleArray *Temperature = vtkDoubleArray::New();
-    Temperature->SetName("temperature");
-    Temperature->SetNumberOfComponents(1);
-
-    for (int j = 1; j < _grid.domain().size_y + 1; j++) {
-      for (int i = 1; i < _grid.domain().size_x + 1; i++) {
-        double temperature = _field.t(i, j);
-        Temperature->InsertNextTuple(&temperature);
-      }
-    }
-
-    structuredGrid->GetCellData()->AddArray(Temperature);
-  }
-
-  // Print pressure and temperature from bottom to top
-  for (int j = 1; j < _grid.domain().size_y + 1; j++) {
-    for (int i = 1; i < _grid.domain().size_x + 1; i++) {
-      double pressure = _field.p(i, j);
-      Pressure->InsertNextTuple(&pressure);
-    }
-  }
-
-  // Temp Velocity
-  float vel[3];
-  vel[2] = 0;  // Set z component to 0
-
-  // Print Velocity from bottom to top
-  for (int j = 0; j < _grid.domain().size_y + 1; j++) {
-    for (int i = 0; i < _grid.domain().size_x + 1; i++) {
-      vel[0] = (_field.u(i, j) + _field.u(i, j + 1)) * 0.5;
-      vel[1] = (_field.v(i, j) + _field.v(i + 1, j)) * 0.5;
-      Velocity->InsertNextTuple(vel);
-    }
-  }
-
-  // Add Pressure to Structured Grid
-  structuredGrid->GetCellData()->AddArray(Pressure);
-
-  // Add Velocity to Structured Grid
-  structuredGrid->GetPointData()->AddArray(Velocity);
-
-  // Write Grid
-  vtkSmartPointer<vtkStructuredGridWriter> writer =
-      vtkSmartPointer<vtkStructuredGridWriter>::New();
-
-  // Create Filename
-  std::string outputname =
-      _dict_name + '/' + _case_name + "_" + std::to_string(timestep) + ".vtk";
-
-  writer->SetFileName(outputname.c_str());
-  writer->SetInputData(structuredGrid);
-  writer->Write();
-}
-
-void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain, int iproc, int jproc) {
-
-  domain.imin = (my_rank%iproc) * (imax_domain/iproc);
-  domain.jmin = (my_rank/iproc)%jproc * (jmax_domain/jproc);
-  domain.imax = (my_rank%iproc+1) * (imax_domain/iproc) + 2;
-  domain.jmax = ((my_rank/iproc)%jproc+1) * (jmax_domain/jproc) + 2;
-  domain.size_x = imax_domain/iproc;
-  domain.size_y = jmax_domain/jproc;
-  if(domain.jmin==0 && domain.imin==0) {
-    domain.domain_neighbors.at(0)=my_rank + 1;
-    domain.domain_neighbors.at(1)= - 1;
-    domain.domain_neighbors.at(2)=my_rank + iproc;
-    domain.domain_neighbors.at(3)= - 1;
-}
-  else if(domain.jmin==0 && domain.imin==domain.domain_size_x) {
-    domain.domain_neighbors.at(0)= - 1;
-    domain.domain_neighbors.at(1)=my_rank - 1;
-    domain.domain_neighbors.at(2)=my_rank + 1;
-    domain.domain_neighbors.at(3)= - 1;
-}
-  else if(domain.jmin==domain.domain_size_y && domain.imin==domain.domain_size_x) {
-    domain.domain_neighbors.at(0)= - 1;
-    domain.domain_neighbors.at(1)=my_rank - 1;
-    domain.domain_neighbors.at(2)= - 1;
-    domain.domain_neighbors.at(3)= my_rank - iproc;
-}
-  else if(domain.jmin==domain.domain_size_y && domain.imin==0) {
-    domain.domain_neighbors.at(0)=my_rank + 1;
-    domain.domain_neighbors.at(1)= - 1;
-    domain.domain_neighbors.at(2)= - 1;
-    domain.domain_neighbors.at(3)= my_rank - iproc;
-}
- else if(domain.imin==0) {
-    domain.domain_neighbors.at(0)=my_rank + 1;
-    domain.domain_neighbors.at(1)= - 1;
-    domain.domain_neighbors.at(2)=my_rank + iproc;
-    domain.domain_neighbors.at(3)=my_rank - iproc;
-}
-  else if(domain.imax==domain.domain_size_x) {
-    domain.domain_neighbors.at(0)= - 1;
-    domain.domain_neighbors.at(1)=my_rank - 1;
-    domain.domain_neighbors.at(2)=my_rank + iproc;
-    domain.domain_neighbors.at(3)=my_rank - iproc;
-}
-  else if(domain.jmin==0) {
-    domain.domain_neighbors.at(0)=my_rank + 1;
-    domain.domain_neighbors.at(1)=my_rank - 1;
-    domain.domain_neighbors.at(2)=my_rank + jproc;
-    domain.domain_neighbors.at(3)=-1;
-}
-else if(domain.jmin==domain.domain_size_y) {
-    domain.domain_neighbors.at(0)=my_rank + 1;
-    domain.domain_neighbors.at(1)=my_rank - 1;
-    domain.domain_neighbors.at(2)=-1;
-    domain.domain_neighbors.at(3)=my_rank - jproc;
-}
 }

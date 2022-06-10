@@ -12,7 +12,7 @@ grid based on where the fluid lies relative to the cell.
 
 #include "Enums.hpp"
 
-Grid::Grid(std::string geom_name, Domain &domain) {
+Grid::Grid(std::string geom_name, Domain &domain, int my_rank) {
   _domain = domain;
 
   _cells = Matrix<Cell>(_domain.size_x + 2, _domain.size_y + 2);
@@ -20,14 +20,15 @@ Grid::Grid(std::string geom_name, Domain &domain) {
   if (geom_name.compare("NONE")) {
     std::vector<std::vector<int>> geometry_data(
         _domain.domain_size_x + 2,
-        std::vector<int>(_domain.domain_size_y + 2, 0));
+        std::vector<int>(_domain.domain_size_y + 2,
+                         0));  //! use domain.size_x instead
     parse_geometry_file(geom_name, geometry_data);
-    check_geometry_file(geometry_data);
+    check_geometry_file(geometry_data, my_rank);
     assign_cell_types(geometry_data);
     geometry_excluding_ghosts.resize(_domain.domain_size_x,
                                      std::vector<int>(_domain.domain_size_y));
-    for (int j = 0; j < jmax(); j++) {
-      for (int i = 0; i < imax(); i++) {
+    for (int j = _domain.imin; j < jmax(); j++) {
+      for (int i = _domain.jmin; i < imax(); i++) {
         geometry_excluding_ghosts.at(i).at(j) =
             geometry_data.at(i + 1).at(j + 1);
       }
@@ -73,31 +74,31 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
     { i = 0; }
     for (int i_geom = _domain.imin; i_geom < _domain.imax; ++i_geom) {
       if (geometry_data.at(i_geom).at(j_geom) == cellID::fluid) {
-        _cells(i, j) = Cell(i, j, cell_type::FLUID);
+        _cells(i, j) = Cell(i_geom, j_geom, cell_type::FLUID);
         _fluid_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
-        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
+        _cells(i, j) = Cell(i_geom, j_geom, cell_type::FIXED_WALL3,
                             geometry_data.at(i_geom).at(j_geom));
         _fixed_wall_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_4) {
-        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL4,
+        _cells(i, j) = Cell(i_geom, j_geom, cell_type::FIXED_WALL4,
                             geometry_data.at(i_geom).at(j_geom));
         _fixed_wall_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_5) {
-        _cells(i, j) = Cell(i, j, cell_type::ADIABATIC_WALL,
+        _cells(i, j) = Cell(i_geom, j_geom, cell_type::ADIABATIC_WALL,
                             geometry_data.at(i_geom).at(j_geom));
         _adiabatic_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::inflow) {
-        _cells(i, j) =
-            Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
+        _cells(i, j) = Cell(i_geom, j_geom, cell_type::INLET,
+                            geometry_data.at(i_geom).at(j_geom));
         _inlet_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::outflow) {
-        _cells(i, j) =
-            Cell(i, j, cell_type::OUTLET, geometry_data.at(i_geom).at(j_geom));
+        _cells(i, j) = Cell(i_geom, j_geom, cell_type::OUTLET,
+                            geometry_data.at(i_geom).at(j_geom));
         _outlet_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) ==
                  LidDrivenCavity::moving_wall_id) {
-        _cells(i, j) = Cell(i, j, cell_type::MOVING_WALL,
+        _cells(i, j) = Cell(i_geom, j_geom, cell_type::MOVING_WALL,
                             geometry_data.at(i_geom).at(j_geom));
         _moving_wall_cells.push_back(&_cells(i, j));
       }
@@ -329,7 +330,8 @@ void Grid::parse_geometry_file(std::string filedoc,
   infile.close();
 }
 
-void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
+void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data,
+                               int my_rank) {
   for (int j = _domain.jmin + 1; j < _domain.jmax - 1; ++j) {
     for (int i = _domain.imin + 1; i < _domain.imax - 1; ++i) {
       if (geometry_data.at(i).at(j) == 3 || geometry_data.at(i).at(j) == 4 ||
@@ -340,8 +342,10 @@ void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
 
         if (sum <= 5) {
           geometry_data.at(i).at(j) = 0;
-          std::cout << "Illegal Geometry detetcted.. Changed illegal cell to "
-                       "Fluid. \n";
+          if (my_rank == 0) {
+            std::cout << "Illegal Geometry detetcted.. Changed illegal cell to "
+                         "Fluid. \n";
+          }
         }
       }
     }
