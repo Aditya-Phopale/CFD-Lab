@@ -90,6 +90,6 @@ class Case {
 
   void initial_condition(const Grid &grid, Fields &field);
 
-  void build_domain(std::vector<Domain> &domain_dist, int xlength, int ylength,
-                    int imax_domain, int jmax_domain, int iproc, int jproc);
+  void build_domain(Domain &domain, int imax_domain, int jmax_domain, int iproc,
+                    int jproc);
 };

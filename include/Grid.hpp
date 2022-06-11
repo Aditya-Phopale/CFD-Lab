@@ -29,7 +29,7 @@ class Grid {
    * @param[in] cell size in y direction
    *
    */
-  Grid(std::string geom_name, Domain &domain);
+  Grid(std::string geom_name, Domain &domain, int my_rank);
 
   /// index based cell access
   Cell cell(int i, int j) const;
@@ -43,7 +43,6 @@ class Grid {
   /// access number of cells in x direction including ghost cells
   int jmaxb() const;
 
-  /// access number of cells in x direction excluding ghost cells
   const Domain &domain() const;
 
   /// access cell size in x-direction
@@ -101,7 +100,8 @@ class Grid {
                            std::vector<std::vector<int>> &geometry_data);
 
   /// Check geometry
-  void check_geometry_file(std::vector<std::vector<int>> &geometry_data);
+  void check_geometry_file(std::vector<std::vector<int>> &geometry_data,
+                           int my_rank);
 
   Matrix<Cell> _cells;
 
@@ -111,10 +111,6 @@ class Grid {
   std::vector<Cell *> _inlet_cells;
   std::vector<Cell *> _outlet_cells;
   std::vector<Cell *> _adiabatic_cells;
-  std::vector<Cell *> _e_buffer;
-  std::vector<Cell *> _w_buffer;
-  std::vector<Cell *> _n_buffer;
-  std::vector<Cell *> _s_buffer;
 
   Domain _domain;
 

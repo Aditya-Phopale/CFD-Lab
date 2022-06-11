@@ -141,50 +141,54 @@ Case::Case(std::string file_name, int argn, char **args, int my_rank,
   set_file_names(file_name);
 
   // Building up our domain
+  Domain domain;
+  domain.dx = xlength / imax;
+  domain.dy = ylength / jmax;
+  domain.domain_size_x = imax;
+  domain.domain_size_y = jmax;
 
-  std::vector<Domain> domain_dist;
-  if (my_rank == 0) {
-    build_domain(domain_dist, xlength, ylength, imax, jmax, iproc, jproc);
+  build_domain(domain, imax, jmax, iproc, jproc);
+
+  _grid = Grid(_geom_name, domain, my_rank);
+
+  _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
+                  _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
+
+  _discretization = Discretization(domain.dx, domain.dy, gamma);
+  _pressure_solver = std::make_unique<SOR>(omg);
+  _max_iter = itermax;
+  _tolerance = eps;
+
+  // // Constructing boundaries
+
+  if (not _grid.moving_wall_cells().empty()) {
+    _boundaries.push_back(std::make_unique<MovingWallBoundary>(
+        _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
+  }
+  if (not _grid.inlet_cells().empty()) {
+    _boundaries.push_back(
+        std::make_unique<InletBoundary>(_grid.inlet_cells(), UIN, VIN));
+  }
+  if (not _grid.outlet_cells().empty()) {
+    _boundaries.push_back(
+        std::make_unique<OutletBoundary>(_grid.outlet_cells()));
+  }
+  if (not _grid.fixed_wall_cells().empty()) {
+    if (!boolenergy_eq) {
+      _boundaries.push_back(
+          std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+    } else {
+      _boundaries.push_back(std::make_unique<FixedWallBoundary>(
+          _grid.fixed_wall_cells(), wall_temp));
+    }
+  }
+  if (not _grid.adiabatic_cells().empty()) {
+    _boundaries.push_back(
+        std::make_unique<AdiabaticBoundary>(_grid.adiabatic_cells()));
   }
 
-  _grid = Grid(_geom_name, domain_dist[my_rank], my_rank);
+  output_vtk(0, my_rank);
 }
-// _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
-//                 _grid.domain().size_y, UI, VI, PI, TI, GX, GY,
-//                 boolenergy_eq);
-
-// _discretization = Discretization(domain.dx, domain.dy, gamma);
-// _pressure_solver = std::make_unique<SOR>(omg);
-// _max_iter = itermax;
-// _tolerance = eps;
-
-// // Constructing boundaries
-
-// if (not _grid.moving_wall_cells().empty()) {
-//   _boundaries.push_back(std::make_unique<MovingWallBoundary>(
-//       _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
-// }
-// if (not _grid.inlet_cells().empty()) {
-//   _boundaries.push_back(
-//       std::make_unique<InletBoundary>(_grid.inlet_cells(), UIN, VIN));
-// }
-// if (not _grid.outlet_cells().empty()) {
-//   _boundaries.push_back(std::make_unique<OutletBoundary>(_grid.outlet_cells()));
-// }
-// if (not _grid.fixed_wall_cells().empty()) {
-//   if (!boolenergy_eq) {
-//     _boundaries.push_back(
-//         std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
-//   } else {
-//     _boundaries.push_back(std::make_unique<FixedWallBoundary>(
-//         _grid.fixed_wall_cells(), wall_temp));
-//   }
-// }
-// if (not _grid.adiabatic_cells().empty()) {
-//   _boundaries.push_back(
-//       std::make_unique<AdiabaticBoundary>(_grid.adiabatic_cells()));
-// }
-// }
 
 void Case::set_file_names(std::string file_name) {
   std::string temp_dir;
@@ -349,158 +353,150 @@ void Case::set_file_names(std::string file_name) {
 
 // // Following is the pre-defined function for writing the output files.
 
-// void Case::output_vtk(int timestep, int rank) {
-//   // Creating a new structured grid
-//   vtkSmartPointer<vtkStructuredGrid> structuredGrid =
-//       vtkSmartPointer<vtkStructuredGrid>::New();
+void Case::output_vtk(int timestep, int rank) {
+  // Creating a new structured grid
+  vtkSmartPointer<vtkStructuredGrid> structuredGrid =
+      vtkSmartPointer<vtkStructuredGrid>::New();
 
-//   // Creating grid
-//   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  // Creating grid
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
-//   double dx = _grid.dx();
-//   double dy = _grid.dy();
+  double dx = _grid.dx();
+  double dy = _grid.dy();
 
-//   double x = _grid.domain().imin * dx;
-//   double y = _grid.domain().jmin * dy;
+  double x = _grid.domain().imin * dx;
+  double y = _grid.domain().jmin * dy;
 
-//   { y += dy; }
-//   { x += dx; }
+  { y += dy; }
+  { x += dx; }
 
-//   double z = 0;
-//   for (int col = 0; col < _grid.domain().size_y + 1; col++) {
-//     x = _grid.domain().imin * dx;
-//     { x += dx; }
-//     for (int row = 0; row < _grid.domain().size_x + 1; row++) {
-//       points->InsertNextPoint(x, y, z);
-//       x += dx;
-//     }
-//     y += dy;
-//   }
-//   std::vector<vtkIdType> pointVisibility;
-//   auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
-//   for (int i = 0; i < _grid.imax(); i++) {
-//     for (int j = 0; j < _grid.jmax(); j++) {
-//       if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
-//           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
-//           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
-//         pointVisibility.push_back(i + j * _grid.imax());
-//       }
-//     }
-//   }
-
-//   // Specify the dimensions of the grid, addition of 1 to accomodate
-//   // neighboring cells
-//   structuredGrid->SetDimensions(_grid.domain().size_x + 1,
-//                                 _grid.domain().size_y + 1, 1);
-//   structuredGrid->SetPoints(points);
-
-//   for (auto t{0}; t < pointVisibility.size(); t++) {
-//     structuredGrid->BlankCell(pointVisibility.at(t));
-//   }
-
-//   // Pressure Array
-//   vtkDoubleArray *Pressure = vtkDoubleArray::New();
-//   Pressure->SetName("pressure");
-//   Pressure->SetNumberOfComponents(1);
-
-//   // Velocity Array
-//   vtkDoubleArray *Velocity = vtkDoubleArray::New();
-//   Velocity->SetName("velocity");
-//   Velocity->SetNumberOfComponents(3);
-
-//   if (_field.energy_eq()) {
-//     vtkDoubleArray *Temperature = vtkDoubleArray::New();
-//     Temperature->SetName("temperature");
-//     Temperature->SetNumberOfComponents(1);
-
-//     for (int j = 1; j < _grid.domain().size_y + 1; j++) {
-//       for (int i = 1; i < _grid.domain().size_x + 1; i++) {
-//         double temperature = _field.t(i, j);
-//         Temperature->InsertNextTuple(&temperature);
-//       }
-//     }
-
-//     structuredGrid->GetCellData()->AddArray(Temperature);
-//   }
-
-//   // Print pressure and temperature from bottom to top
-//   for (int j = 1; j < _grid.domain().size_y + 1; j++) {
-//     for (int i = 1; i < _grid.domain().size_x + 1; i++) {
-//       double pressure = _field.p(i, j);
-//       Pressure->InsertNextTuple(&pressure);
-//     }
-//   }
-
-//   // Temp Velocity
-//   float vel[3];
-//   vel[2] = 0;  // Set z component to 0
-
-//   // Print Velocity from bottom to top
-//   for (int j = 0; j < _grid.domain().size_y + 1; j++) {
-//     for (int i = 0; i < _grid.domain().size_x + 1; i++) {
-//       vel[0] = (_field.u(i, j) + _field.u(i, j + 1)) * 0.5;
-//       vel[1] = (_field.v(i, j) + _field.v(i + 1, j)) * 0.5;
-//       Velocity->InsertNextTuple(vel);
-//     }
-//   }
-
-//   // Add Pressure to Structured Grid
-//   structuredGrid->GetCellData()->AddArray(Pressure);
-
-//   // Add Velocity to Structured Grid
-//   structuredGrid->GetPointData()->AddArray(Velocity);
-
-//   // Write Grid
-//   vtkSmartPointer<vtkStructuredGridWriter> writer =
-//       vtkSmartPointer<vtkStructuredGridWriter>::New();
-
-//   // Create Filename
-//   std::string outputname =
-//       _dict_name + '/' + _case_name + "_" + std::to_string(timestep) +
-//       ".vtk";
-
-//   writer->SetFileName(outputname.c_str());
-//   writer->SetInputData(structuredGrid);
-//   writer->Write();
-// }
-
-void Case::build_domain(std::vector<Domain> &domain_dist, int xlength,
-                        int ylength, int imax_domain, int jmax_domain,
-                        int iproc, int jproc) {
-  for (int curr_rank{0}; curr_rank < iproc * jproc; curr_rank++) {
-    Domain domain;
-    domain.dx = xlength / imax_domain;
-    domain.dy = ylength / jmax_domain;
-    domain.domain_size_x = imax_domain;
-    domain.domain_size_y = jmax_domain;
-    domain.imin = (curr_rank % iproc) * (imax_domain / iproc);
-    domain.jmin = (curr_rank / iproc) % jproc * (jmax_domain / jproc);
-    domain.imax = (curr_rank % iproc + 1) * (imax_domain / iproc) + 2;
-    domain.jmax = ((curr_rank / iproc) % jproc + 1) * (jmax_domain / jproc) + 2;
-    domain.size_x = imax_domain / iproc;
-    domain.size_y = jmax_domain / jproc;
-
-    if (curr_rank % iproc + 1 < iproc) {
-      domain.domain_neighbors.at(0) = curr_rank + 1;
+  double z = 0;
+  for (int col = 0; col < _grid.domain().size_y + 1; col++) {
+    x = _grid.domain().imin * dx;
+    { x += dx; }
+    for (int row = 0; row < _grid.domain().size_x + 1; row++) {
+      points->InsertNextPoint(x, y, z);
+      x += dx;
     }
-    if (curr_rank % iproc - 1 >= 0) {
-      domain.domain_neighbors.at(2) = curr_rank - 1;
-    }
-    if (curr_rank + iproc < my_size) {
-      domain.domain_neighbors.at(1) = curr_rank + iproc;
-    }
-    if (curr_rank - iproc >= 0) {
-      domain.domain_neighbors.at(3) = curr_rank - iproc;
-    }
-
-    domain_dist.push_back(domain);
-    std::cout << curr_rank << " " << domain_dist[curr_rank].imin << " "
-              << domain_dist[curr_rank].imax << " "
-              << domain_dist[curr_rank].jmin << " "
-              << domain_dist[curr_rank].jmax << " "
-              << domain_dist[curr_rank].domain_neighbors.at(0) << " "
-              << domain_dist[curr_rank].domain_neighbors.at(1) << " "
-              << domain_dist[curr_rank].domain_neighbors.at(2) << " "
-              << domain_dist[curr_rank].domain_neighbors.at(3) << "\n";
+    y += dy;
   }
+  std::vector<vtkIdType> pointVisibility;
+  auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
+  for (int j = 0; j < _grid.jmax(); j++) {
+    for (int i = 0; i < _grid.imax(); i++) {
+      if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
+          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
+          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
+        std::cout << i << " " << j << "\n";
+        pointVisibility.push_back(i + _grid.domain().imin +
+                                  (j + _grid.domain().jmin) *
+                                      _grid.domain().size_x);
+      }
+    }
+  }
+
+  // Specify the dimensions of the grid, addition of 1 to accomodate
+  // neighboring cells
+  structuredGrid->SetDimensions(_grid.domain().size_x + 1,
+                                _grid.domain().size_y + 1, 1);
+  structuredGrid->SetPoints(points);
+
+  for (auto t{0}; t < pointVisibility.size(); t++) {
+    structuredGrid->BlankCell(pointVisibility.at(t));
+  }
+
+  // Pressure Array
+  vtkDoubleArray *Pressure = vtkDoubleArray::New();
+  Pressure->SetName("pressure");
+  Pressure->SetNumberOfComponents(1);
+
+  // Velocity Array
+  vtkDoubleArray *Velocity = vtkDoubleArray::New();
+  Velocity->SetName("velocity");
+  Velocity->SetNumberOfComponents(3);
+
+  if (_field.energy_eq()) {
+    vtkDoubleArray *Temperature = vtkDoubleArray::New();
+    Temperature->SetName("temperature");
+    Temperature->SetNumberOfComponents(1);
+
+    for (int j = 1; j < _grid.domain().size_y + 1; j++) {
+      for (int i = 1; i < _grid.domain().size_x + 1; i++) {
+        double temperature = _field.t(i, j);
+        Temperature->InsertNextTuple(&temperature);
+      }
+    }
+
+    structuredGrid->GetCellData()->AddArray(Temperature);
+  }
+
+  // Print pressure and temperature from bottom to top
+  for (int j = 1; j < _grid.domain().size_y + 1; j++) {
+    for (int i = 1; i < _grid.domain().size_x + 1; i++) {
+      double pressure = _field.p(i, j);
+      Pressure->InsertNextTuple(&pressure);
+    }
+  }
+
+  // Temp Velocity
+  float vel[3];
+  vel[2] = 0;  // Set z component to 0
+
+  // Print Velocity from bottom to top
+  for (int j = 0; j < _grid.domain().size_y + 1; j++) {
+    for (int i = 0; i < _grid.domain().size_x + 1; i++) {
+      vel[0] = (_field.u(i, j) + _field.u(i, j + 1)) * 0.5;
+      vel[1] = (_field.v(i, j) + _field.v(i + 1, j)) * 0.5;
+      Velocity->InsertNextTuple(vel);
+    }
+  }
+
+  // Add Pressure to Structured Grid
+  structuredGrid->GetCellData()->AddArray(Pressure);
+
+  // Add Velocity to Structured Grid
+  structuredGrid->GetPointData()->AddArray(Velocity);
+
+  // Write Grid
+  vtkSmartPointer<vtkStructuredGridWriter> writer =
+      vtkSmartPointer<vtkStructuredGridWriter>::New();
+
+  // Create Filename
+  std::string outputname = _dict_name + '/' + _case_name + "_" +
+                           std::to_string(timestep) + "_" +
+                           std::to_string(rank) + ".vtk";
+
+  writer->SetFileName(outputname.c_str());
+  writer->SetInputData(structuredGrid);
+  writer->Write();
+}
+
+void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain,
+                        int iproc, int jproc) {
+  domain.imin = (my_rank % iproc) * (imax_domain / iproc);
+  domain.jmin = (my_rank / iproc) % jproc * (jmax_domain / jproc);
+  domain.imax = (my_rank % iproc + 1) * (imax_domain / iproc) + 2;
+  domain.jmax = ((my_rank / iproc) % jproc + 1) * (jmax_domain / jproc) + 2;
+  domain.size_x = imax_domain / iproc;
+  domain.size_y = jmax_domain / jproc;
+
+  if (my_rank % iproc + 1 < iproc) {
+    domain.domain_neighbors.at(0) = my_rank + 1;
+  }
+  if (my_rank % iproc - 1 >= 0) {
+    domain.domain_neighbors.at(2) = my_rank - 1;
+  }
+  if (my_rank + iproc < my_size) {
+    domain.domain_neighbors.at(1) = my_rank + iproc;
+  }
+  if (my_rank - iproc >= 0) {
+    domain.domain_neighbors.at(3) = my_rank - iproc;
+  }
+
+  std::cout << my_rank << " " << domain.imin << " " << domain.imax << " "
+            << domain.jmin << " " << domain.jmax << " "
+            << domain.domain_neighbors.at(0) << " "
+            << domain.domain_neighbors.at(1) << " "
+            << domain.domain_neighbors.at(2) << " "
+            << domain.domain_neighbors.at(3) << "\n";
 }

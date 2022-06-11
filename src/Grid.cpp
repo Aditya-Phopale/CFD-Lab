@@ -25,14 +25,23 @@ Grid::Grid(std::string geom_name, Domain &domain, int my_rank) {
     parse_geometry_file(geom_name, geometry_data);
     check_geometry_file(geometry_data, my_rank);
     assign_cell_types(geometry_data);
-    geometry_excluding_ghosts.resize(_domain.domain_size_x,
-                                     std::vector<int>(_domain.domain_size_y));
-    for (int j = _domain.imin; j < jmax(); j++) {
-      for (int i = _domain.jmin; i < imax(); i++) {
-        geometry_excluding_ghosts.at(i).at(j) =
-            geometry_data.at(i + 1).at(j + 1);
+    geometry_excluding_ghosts.resize(_domain.size_x,
+                                     std::vector<int>(_domain.size_y));
+    for (int j = 1; j < _domain.size_y + 1; j++) {
+      for (int i = 1; i < _domain.size_x + 1; i++) {
+        geometry_excluding_ghosts.at(i - 1).at(j - 1) =
+            geometry_data.at(i + domain.imin).at(j + domain.jmin);
       }
     }
+
+    // if (my_rank == 2) {
+    //   for (int j = _domain.size_y; j > 0; j--) {
+    //     for (int i = 1; i < _domain.size_x + 1; i++) {
+    //       std::cout << geometry_excluding_ghosts.at(i - 1).at(j - 1) << " ";
+    //     }
+    //     std::cout << "\n";
+    //   }
+    // }
 
   } else {
     build_lid_driven_cavity();
@@ -56,11 +65,13 @@ void Grid::build_lid_driven_cavity() {
       }
     }
   }
+
   assign_cell_types(geometry_data);
+
   geometry_excluding_ghosts.resize(_domain.domain_size_x,
                                    std::vector<int>(_domain.domain_size_y));
-  for (int j = 0; j < jmax(); j++) {
-    for (int i = 0; i < imax(); i++) {
+  for (int j = _domain.jmin; j < jmax(); j++) {
+    for (int i = _domain.imin; i < imax(); i++) {
       geometry_excluding_ghosts.at(i).at(j) = geometry_data.at(i + 1).at(j + 1);
     }
   }
@@ -69,7 +80,6 @@ void Grid::build_lid_driven_cavity() {
 void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
   int i = 0;
   int j = 0;
-
   for (int j_geom = _domain.jmin; j_geom < _domain.jmax; ++j_geom) {
     { i = 0; }
     for (int i_geom = _domain.imin; i_geom < _domain.imax; ++i_geom) {
@@ -342,10 +352,6 @@ void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data,
 
         if (sum <= 5) {
           geometry_data.at(i).at(j) = 0;
-          if (my_rank == 0) {
-            std::cout << "Illegal Geometry detetcted.. Changed illegal cell to "
-                         "Fluid. \n";
-          }
         }
       }
     }
