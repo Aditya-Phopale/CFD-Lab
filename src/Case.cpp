@@ -387,10 +387,7 @@ void Case::output_vtk(int timestep, int rank) {
       if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
-        std::cout << i << " " << j << "\n";
-        pointVisibility.push_back(i + _grid.domain().imin +
-                                  (j + _grid.domain().jmin) *
-                                      _grid.domain().size_x);
+        pointVisibility.push_back(i + (j) * _grid.domain().size_x);
       }
     }
   }

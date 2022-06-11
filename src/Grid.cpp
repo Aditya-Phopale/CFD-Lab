@@ -34,15 +34,6 @@ Grid::Grid(std::string geom_name, Domain &domain, int my_rank) {
       }
     }
 
-    // if (my_rank == 2) {
-    //   for (int j = _domain.size_y; j > 0; j--) {
-    //     for (int i = 1; i < _domain.size_x + 1; i++) {
-    //       std::cout << geometry_excluding_ghosts.at(i - 1).at(j - 1) << " ";
-    //     }
-    //     std::cout << "\n";
-    //   }
-    // }
-
   } else {
     build_lid_driven_cavity();
   }
