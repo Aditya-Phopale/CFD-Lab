@@ -159,6 +159,9 @@ Case::Case(std::string file_name, int argn, char **args, int my_rank,
   _max_iter = itermax;
   _tolerance = eps;
 
+  if (my_rank == 0) {
+    std::cout << _grid.fluid_buffer().size();
+  }
   // // Constructing boundaries
 
   if (not _grid.moving_wall_cells().empty()) {
@@ -387,7 +390,7 @@ void Case::output_vtk(int timestep, int rank) {
       if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
           _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
-        pointVisibility.push_back(i + (j) * _grid.domain().size_x);
+        pointVisibility.push_back(i + (j)*_grid.domain().size_x);
       }
     }
   }

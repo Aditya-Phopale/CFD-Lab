@@ -76,7 +76,13 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
     for (int i_geom = _domain.imin; i_geom < _domain.imax; ++i_geom) {
       if (geometry_data.at(i_geom).at(j_geom) == cellID::fluid) {
         _cells(i, j) = Cell(i_geom, j_geom, cell_type::FLUID);
-        _fluid_cells.push_back(&_cells(i, j));
+        if (i_geom == _domain.imin || i_geom == _domain.imax - 1 ||
+            j_geom == _domain.jmin || j_geom == _domain.jmax - 1) {
+          _fluid_buffer.push_back(&_cells(i, j));
+        } else {
+          _fluid_cells.push_back(&_cells(i, j));
+        }
+
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
         _cells(i, j) = Cell(i_geom, j_geom, cell_type::FIXED_WALL3,
                             geometry_data.at(i_geom).at(j_geom));
@@ -380,6 +386,8 @@ const std::vector<Cell *> &Grid::outlet_cells() const { return _outlet_cells; }
 const std::vector<Cell *> &Grid::adiabatic_cells() const {
   return _adiabatic_cells;
 }
+
+const std::vector<Cell *> &Grid::fluid_buffer() const { return _fluid_buffer; }
 
 const std::vector<std::vector<int>> &Grid::get_geometry_excluding_ghosts()
     const {
