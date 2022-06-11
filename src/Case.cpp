@@ -315,6 +315,11 @@ void Case::set_file_names(std::string file_name) {
 //       if (iter >= _max_iter) {
 //         std::cout << "Pressure poisson solver did not converge to the given "
 //                      "tolerance...\n";
+//         std::cout << "Timestep size: " << setw(10) << dt << " | "
+//                 << "Time: " << setw(8) << t << setw(3) << " | "
+//                 << "Residual: " << setw(11) << res << setw(3) << " | "
+//                 << "Pressure Poisson Iterations: " << setw(3) << iter <<
+//                 '\n';
 //         break;
 //       }
 //       for (int i = 0; i < _boundaries.size(); i++) {
