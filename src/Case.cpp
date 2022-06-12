@@ -208,6 +208,7 @@ Case::Case(std::string file_name, int argn, char **args) {
   if (not _grid.moving_wall_cells().empty()) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
+        
   }
   if (not _grid.inlet_cells().empty()) {
     _boundaries.push_back(
@@ -327,23 +328,28 @@ void Case::simulate() {
   std::ofstream logfile;
   // logfile.open("log.txt");
 
-  for (int i = 0; i < _boundaries.size(); i++) {
-    _boundaries[i]->apply(_field);
-  }
+  // for (int i = 0; i < _boundaries.size(); i++) {
+     _boundaries[1]->apply(_field);
+  // }
 
-  output_vtk(timestep);
-  Communication::communicate(_field.f());
+  output_vtk(timestep,Communication::rank);
+  
   // Following is the actual loop that runs till the defined time limit.
+  //Communication::communicate(_field.f_matrix(), _grid.domain());
+  while (t <= 1) {
+    t = t+1;
+    // Calculating timestep for advancement to the next iteration.
+    //dt = _field.calculate_dt(_grid);
+    //dt = Communication::reduce_min(dt);
 
-  // while (t <= 1) {
-  //   // Calculating timestep for advancement to the next iteration.
-  //   t = t + 1;
-  //   dt = _field.calculate_dt(_grid);
+    if(Communication::rank == 0){
+      std::cout<<'\n'<<dt<<'\n';
+    }
 
-  //   // Calculate new Temperatures
-  //   if (_field.energy_eq()) {
-  //     _field.calculate_temperature(_grid);
-  //   }
+    // Calculate new Temperatures
+    // if (_field.energy_eq()) {
+    //   _field.calculate_temperature(_grid);
+    // }
 
   //   // Calculating Fluxes (_F and _G) for velocities in X and Y direction
   //   // respectively.
@@ -403,6 +409,7 @@ void Case::simulate() {
   // }
 
   // logfile.close();
+  }
 }
 
 // // Following is the pre-defined function for writing the output files.
