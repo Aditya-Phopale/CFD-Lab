@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Boundary.hpp"
+#include "Communication.hpp"
 #include "Discretization.hpp"
 #include "Domain.hpp"
 #include "Fields.hpp"
@@ -25,7 +26,7 @@ class Case {
    *
    * @param[in] Input file name
    */
-  Case(std::string file_name, int argn, char **args, int my_rank, int my_size);
+  Case(std::string file_name, int argn, char **args);
 
   /**
    * @brief Main function to simulate the flow until the end time.
@@ -47,8 +48,6 @@ class Case {
   std::string _geom_name{"NONE"};
   /// Relative input file path
   std::string _prefix;
-  int my_rank = 0;
-  int my_size = 0;
 
   /// Simulation time
   double _t_end;

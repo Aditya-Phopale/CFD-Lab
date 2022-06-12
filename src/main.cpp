@@ -11,11 +11,10 @@ date file is provided.
 #include "Communication.hpp"
 
 int main(int argn, char **args) {
-  int rank, size;
-  Communication::init_parallel(argn, args, rank, size);
+  Communication::init_parallel(argn, args);
   if (argn > 1) {
     std::string file_name{args[1]};
-    Case problem(file_name, argn, args, rank, size);
+    Case problem(file_name, argn, args);
     // problem.simulate();
   } else {
     std::cout << "Error: No input file is provided to fluidchen." << std::endl;

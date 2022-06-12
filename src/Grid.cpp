@@ -12,7 +12,7 @@ grid based on where the fluid lies relative to the cell.
 
 #include "Enums.hpp"
 
-Grid::Grid(std::string geom_name, Domain &domain, int my_rank) {
+Grid::Grid(std::string geom_name, Domain &domain) {
   _domain = domain;
 
   _cells = Matrix<Cell>(_domain.size_x + 2, _domain.size_y + 2);
@@ -23,7 +23,7 @@ Grid::Grid(std::string geom_name, Domain &domain, int my_rank) {
         std::vector<int>(_domain.domain_size_y + 2,
                          0));  //! use domain.size_x instead
     parse_geometry_file(geom_name, geometry_data);
-    check_geometry_file(geometry_data, my_rank);
+    check_geometry_file(geometry_data);
     assign_cell_types(geometry_data);
     geometry_excluding_ghosts.resize(_domain.size_x,
                                      std::vector<int>(_domain.size_y));
@@ -337,8 +337,7 @@ void Grid::parse_geometry_file(std::string filedoc,
   infile.close();
 }
 
-void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data,
-                               int my_rank) {
+void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
   for (int j = _domain.jmin + 1; j < _domain.jmax - 1; ++j) {
     for (int i = _domain.imin + 1; i < _domain.imax - 1; ++i) {
       if (geometry_data.at(i).at(j) == 3 || geometry_data.at(i).at(j) == 4 ||
