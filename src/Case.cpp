@@ -208,6 +208,7 @@ Case::Case(std::string file_name, int argn, char **args) {
   if (not _grid.moving_wall_cells().empty()) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
+        //std::cout<<_grid.moving_wall_cells().size()<<" "<<Communication::rank<<'\n';
         
   }
   if (not _grid.inlet_cells().empty()) {
@@ -222,6 +223,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (!boolenergy_eq) {
       _boundaries.push_back(
           std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+          //std::cout<<_grid.fixed_wall_cells().size()<<" "<<Communication::rank<<'\n';
     } else {
       _boundaries.push_back(std::make_unique<FixedWallBoundary>(
           _grid.fixed_wall_cells(), wall_temp));
@@ -328,9 +330,9 @@ void Case::simulate() {
   std::ofstream logfile;
   // logfile.open("log.txt");
 
-  // for (int i = 0; i < _boundaries.size(); i++) {
-     _boundaries[1]->apply(_field);
-  // }
+  for (int i = 0; i < _boundaries.size(); i++) {
+    _boundaries[i]->apply(_field);
+  }
 
   output_vtk(timestep,Communication::rank);
   
@@ -339,8 +341,8 @@ void Case::simulate() {
   while (t <= 1) {
     t = t+1;
     // Calculating timestep for advancement to the next iteration.
-    //dt = _field.calculate_dt(_grid);
-    //dt = Communication::reduce_min(dt);
+    dt = _field.calculate_dt(_grid);
+    dt = Communication::reduce_min(dt);
 
     if(Communication::rank == 0){
       std::cout<<'\n'<<dt<<'\n';

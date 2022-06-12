@@ -12,6 +12,6 @@ class Communication {
   static void init_parallel(int argn, char **args);
   static void finalize();
   static void communicate(Matrix<double> &A, Domain domain);
-  static double reduce_min(double &dt);
+  static double reduce_min(double dt);
   static double reduce_sum();
 };

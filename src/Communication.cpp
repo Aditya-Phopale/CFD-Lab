@@ -12,7 +12,7 @@ void Communication::init_parallel(int argn, char **args) {
 
 void Communication::finalize() { MPI_Finalize(); }
 
-double Communication::reduce_min(double &dt) {
+double Communication::reduce_min(double dt) {
    return MPI_Reduce(&Communication::rank, &dt, 1, MPI_DOUBLE, MPI_MIN, Communication::root_rank, MPI_COMM_WORLD);
 }
 

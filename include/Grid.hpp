@@ -83,7 +83,7 @@ class Grid {
 
   const std::vector<Cell *> &adiabatic_cells() const;
 
-  const std::vector<Cell *> &fluid_buffer() const;
+  const std::vector<Cell *> &buffer() const;
 
   const std::vector<std::vector<int>> &get_geometry_excluding_ghosts() const;
 
@@ -112,7 +112,7 @@ class Grid {
   std::vector<Cell *> _inlet_cells;
   std::vector<Cell *> _outlet_cells;
   std::vector<Cell *> _adiabatic_cells;
-  std::vector<Cell *> _fluid_buffer;
+  std::vector<Cell *> _buffer;
 
   Domain _domain;
 

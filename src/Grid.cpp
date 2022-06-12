@@ -75,39 +75,60 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
     { i = 0; }
     for (int i_geom = _domain.imin; i_geom < _domain.imax; ++i_geom) {
       if (geometry_data.at(i_geom).at(j_geom) == cellID::fluid) {
-        _cells(i, j) = Cell(i_geom, j_geom, cell_type::FLUID);
+        _cells(i, j) = Cell(i, j, cell_type::FLUID);
         if (i_geom == _domain.imin || i_geom == _domain.imax - 1 ||
             j_geom == _domain.jmin || j_geom == _domain.jmax - 1) {
-          _fluid_buffer.push_back(&_cells(i, j));
+          _buffer.push_back(&_cells(i, j));
         } else {
           _fluid_cells.push_back(&_cells(i, j));
         }
 
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
-        _cells(i, j) = Cell(i_geom, j_geom, cell_type::FIXED_WALL3,
+        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
                             geometry_data.at(i_geom).at(j_geom));
-        _fixed_wall_cells.push_back(&_cells(i, j));
+        if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
+          _buffer.push_back(&_cells(i,j));
+        }
+        else{
+          _fixed_wall_cells.push_back(&_cells(i, j));
+        }
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_4) {
-        _cells(i, j) = Cell(i_geom, j_geom, cell_type::FIXED_WALL4,
+        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL4,
                             geometry_data.at(i_geom).at(j_geom));
-        _fixed_wall_cells.push_back(&_cells(i, j));
+        if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
+          _buffer.push_back(&_cells(i,j));
+        }
+        else{
+          _fixed_wall_cells.push_back(&_cells(i, j));
+        }
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_5) {
-        _cells(i, j) = Cell(i_geom, j_geom, cell_type::ADIABATIC_WALL,
+        _cells(i, j) = Cell(i, j, cell_type::ADIABATIC_WALL,
                             geometry_data.at(i_geom).at(j_geom));
-        _adiabatic_cells.push_back(&_cells(i, j));
+        if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
+          _buffer.push_back(&_cells(i,j));
+        }
+        else{
+          _adiabatic_cells.push_back(&_cells(i, j));
+        }
+        //_adiabatic_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::inflow) {
-        _cells(i, j) = Cell(i_geom, j_geom, cell_type::INLET,
+        _cells(i, j) = Cell(i, j, cell_type::INLET,
                             geometry_data.at(i_geom).at(j_geom));
         _inlet_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::outflow) {
-        _cells(i, j) = Cell(i_geom, j_geom, cell_type::OUTLET,
+        _cells(i, j) = Cell(i, j, cell_type::OUTLET,
                             geometry_data.at(i_geom).at(j_geom));
         _outlet_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) ==
                  LidDrivenCavity::moving_wall_id) {
-        _cells(i, j) = Cell(i_geom, j_geom, cell_type::MOVING_WALL,
+        _cells(i, j) = Cell(i, j, cell_type::MOVING_WALL,
                             geometry_data.at(i_geom).at(j_geom));
+         if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
+          _buffer.push_back(&_cells(i,j));
+        }
+        else{
         _moving_wall_cells.push_back(&_cells(i, j));
+        }
       }
       ++i;
     }
@@ -116,8 +137,8 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
 
   // Corner cell neighbour assigment
   // Bottom-Left Corner
-  i = 0;
-  j = 0;
+  i = _domain.imin;
+  j = _domain.jmin;
   _cells(i, j).set_neighbour(&_cells(i, j + 1), border_position::TOP);
   _cells(i, j).set_neighbour(&_cells(i + 1, j), border_position::RIGHT);
   if (_cells(i, j).neighbour(border_position::TOP)->type() ==
@@ -129,7 +150,7 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
     _cells(i, j).add_border(border_position::RIGHT);
   }
   // Top-Left Corner
-  i = 0;
+  i = _domain.imin;
   j = _domain.size_y + 1;
   _cells(i, j).set_neighbour(&_cells(i, j - 1), border_position::BOTTOM);
   _cells(i, j).set_neighbour(&_cells(i + 1, j), border_position::RIGHT);
@@ -158,7 +179,7 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
 
   // Bottom-Right Corner
   i = Grid::_domain.size_x + 1;
-  j = 0;
+  j = _domain.jmin;
   _cells(i, j).set_neighbour(&_cells(i, j + 1), border_position::TOP);
   _cells(i, j).set_neighbour(&_cells(i - 1, j), border_position::LEFT);
   if (_cells(i, j).neighbour(border_position::TOP)->type() ==
@@ -170,7 +191,7 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
     _cells(i, j).add_border(border_position::LEFT);
   }
   // Bottom cells
-  j = 0;
+  j = _domain.jmin;
   for (int i = 1; i < _domain.size_x + 1; ++i) {
     _cells(i, j).set_neighbour(&_cells(i + 1, j), border_position::RIGHT);
     _cells(i, j).set_neighbour(&_cells(i - 1, j), border_position::LEFT);
@@ -211,7 +232,7 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
   }
 
   // Left Cells
-  i = 0;
+  i = _domain.imin;
   for (int j = 1; j < _domain.size_y + 1; ++j) {
     _cells(i, j).set_neighbour(&_cells(i + 1, j), border_position::RIGHT);
     _cells(i, j).set_neighbour(&_cells(i, j - 1), border_position::BOTTOM);
@@ -386,7 +407,7 @@ const std::vector<Cell *> &Grid::adiabatic_cells() const {
   return _adiabatic_cells;
 }
 
-const std::vector<Cell *> &Grid::fluid_buffer() const { return _fluid_buffer; }
+const std::vector<Cell *> &Grid::buffer() const { return _buffer; }
 
 const std::vector<std::vector<int>> &Grid::get_geometry_excluding_ghosts()
     const {
