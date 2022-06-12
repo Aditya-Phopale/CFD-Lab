@@ -120,13 +120,12 @@ double Fields::calculate_dt(Grid &grid) {
   double dx2 = grid.dx() * grid.dx();
   double dy2 = grid.dy() * grid.dy();
 
-  double u_max = 0.0;
-  double v_max = 0.0;
+  double u_max;
+  double v_max;
 
-  int i, j;
   for (auto cell : grid.fluid_cells()) {
-    i = cell->i();
-    j = cell->j();
+    int i = cell->i();
+    int j = cell->j();
     u_max = std::max(u_max, fabs(_U(i, j)));
     v_max = std::max(v_max, fabs(_V(i, j)));
   }

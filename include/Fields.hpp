@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Communication.hpp"
 #include "Datastructures.hpp"
 #include "Discretization.hpp"
 #include "Grid.hpp"
@@ -108,7 +109,6 @@ class Fields {
   Matrix<double> &f_matrix();
   Matrix<double> &g_matrix();
   Matrix<double> &rs_matrix();
-  
 
  private:
   /// x-velocity matrix

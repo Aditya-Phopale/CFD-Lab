@@ -46,8 +46,8 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = 0.0;
-      field.u(i-1,j) = -field.u(i-1,j+1);
-      field.v(i,j-1) = -field.v(i+1,j-1);
+      field.u(i - 1, j) = -field.u(i - 1, j + 1);
+      field.v(i, j - 1) = -field.v(i + 1, j - 1);
       field.g(i, j) = field.v(i, j);
       field.f(i, j) = field.u(i, j);
       if (energy_flag) {
@@ -59,8 +59,8 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = 0.0;
-      field.u(i,j) = -field.u(i,j+1);
-      field.v(i,j-1) = -field.v(i-1,j-1);
+      field.u(i, j) = -field.u(i, j + 1);
+      field.v(i, j - 1) = -field.v(i - 1, j - 1);
       field.g(i, j) = field.v(i, j);
       field.f(i - 1, j) = field.u(i - 1, j);
       if (energy_flag) {
@@ -72,8 +72,8 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      field.u(i,j) = -field.u(i,j-1);
-      field.v(i,j) = -field.v(i-1,j);
+      field.u(i, j) = -field.u(i, j - 1);
+      field.v(i, j) = -field.v(i - 1, j);
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i - 1, j) = field.u(i - 1, j);
       if (energy_flag) {
@@ -85,8 +85,8 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      field.u(i-1,j) = -field.u(i-1,j-1);
-      field.v(i,j) = -field.v(i+1,j);
+      field.u(i - 1, j) = -field.u(i - 1, j - 1);
+      field.v(i, j) = -field.v(i + 1, j);
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i, j) = field.u(i, j);
       if (energy_flag) {
@@ -205,6 +205,9 @@ void MovingWallBoundary::apply(Fields &field) {
       field.u(i, j) =
           (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
           field.u(i, j - 1);
+      field.u(i - 1, j) =
+          (2.0) * (_wall_velocity[LidDrivenCavity::moving_wall_id]) -
+          field.u(i - 1, j - 1);
       field.v(i, j - 1) = 0.0;
       field.g(i, j - 1) = field.v(i, j - 1);
       continue;
@@ -403,8 +406,8 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = 0.0;
-      field.u(i-1,j) = -field.u(i-1,j+1);
-      field.v(i,j-1) = -field.v(i+1,j-1);
+      field.u(i - 1, j) = -field.u(i - 1, j + 1);
+      field.v(i, j - 1) = -field.v(i + 1, j - 1);
       field.g(i, j) = field.v(i, j);
       field.f(i, j) = field.u(i, j);
       field.t(i, j) = (field.t(i, j + 1) + field.t(i + 1, j)) / 2;
@@ -413,8 +416,8 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::NORTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = 0.0;
-      field.u(i,j) = -field.u(i,j+1);
-      field.v(i,j-1) = -field.v(i-1,j-1);
+      field.u(i, j) = -field.u(i, j + 1);
+      field.v(i, j - 1) = -field.v(i - 1, j - 1);
       field.g(i, j) = field.v(i, j);
       field.f(i - 1, j) = field.u(i - 1, j);
       field.t(i, j) = (field.t(i, j + 1) + field.t(i - 1, j)) / 2;
@@ -423,8 +426,8 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHWEST)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      field.u(i,j) = -field.u(i,j-1);
-      field.v(i,j) = -field.v(i-1,j);
+      field.u(i, j) = -field.u(i, j - 1);
+      field.v(i, j) = -field.v(i - 1, j);
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i - 1, j) = field.u(i - 1, j);
       field.t(i, j) = (field.t(i, j - 1) + field.t(i - 1, j)) / 2;
@@ -433,8 +436,8 @@ void AdiabaticBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::SOUTHEAST)) {
       field.u(i, j) = 0.0;
       field.v(i, j - 1) = 0.0;
-      field.u(i-1,j) = -field.u(i-1,j-1);
-      field.v(i,j) = -field.v(i+1,j);
+      field.u(i - 1, j) = -field.u(i - 1, j - 1);
+      field.v(i, j) = -field.v(i + 1, j);
       field.g(i, j - 1) = field.v(i, j - 1);
       field.f(i, j) = field.u(i, j);
       field.t(i, j) = (field.t(i, j - 1) + field.t(i + 1, j)) / 2;

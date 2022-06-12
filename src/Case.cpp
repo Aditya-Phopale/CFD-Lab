@@ -183,12 +183,13 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
 
-  std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
-            << " " << domain.jmin << " " << domain.jmax << " "
-            << domain.domain_neighbors.at(0) << " "
-            << domain.domain_neighbors.at(1) << " "
-            << domain.domain_neighbors.at(2) << " "
-            << domain.domain_neighbors.at(3) << "\n";
+  // std::cout << Communication::rank << " " << domain.imin << " " <<
+  // domain.imax
+  //           << " " << domain.jmin << " " << domain.jmax << " "
+  //           << domain.domain_neighbors.at(0) << " "
+  //           << domain.domain_neighbors.at(1) << " "
+  //           << domain.domain_neighbors.at(2) << " "
+  //           << domain.domain_neighbors.at(3) << "\n";
 
   _grid = Grid(_geom_name, domain);
 
@@ -208,8 +209,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   if (not _grid.moving_wall_cells().empty()) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
-        //std::cout<<_grid.moving_wall_cells().size()<<" "<<Communication::rank<<'\n';
-        
+    // std::cout<<_grid.moving_wall_cells().size()<<"
+    // "<<Communication::rank<<'\n';
   }
   if (not _grid.inlet_cells().empty()) {
     _boundaries.push_back(
@@ -223,7 +224,8 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (!boolenergy_eq) {
       _boundaries.push_back(
           std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
-          //std::cout<<_grid.fixed_wall_cells().size()<<" "<<Communication::rank<<'\n';
+      // std::cout<<_grid.fixed_wall_cells().size()<<"
+      // "<<Communication::rank<<'\n';
     } else {
       _boundaries.push_back(std::make_unique<FixedWallBoundary>(
           _grid.fixed_wall_cells(), wall_temp));
@@ -334,84 +336,86 @@ void Case::simulate() {
     _boundaries[i]->apply(_field);
   }
 
-  output_vtk(timestep,Communication::rank);
-  
+  output_vtk(timestep, Communication::rank);
+
   // Following is the actual loop that runs till the defined time limit.
-  //Communication::communicate(_field.f_matrix(), _grid.domain());
-  while (t <= 1) {
-    t = t+1;
+  // Communication::communicate(_field.f_matrix(), _grid.domain());
+  while (t < _t_end) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
     dt = Communication::reduce_min(dt);
 
-    if(Communication::rank == 0){
-      std::cout<<'\n'<<dt<<'\n';
+    // Calculate new Temperatures
+    if (_field.energy_eq()) {
+      _field.calculate_temperature(_grid);
+      Communication::communicate(_field.t_matrix(), _grid.domain());
     }
 
-    // Calculate new Temperatures
-    // if (_field.energy_eq()) {
-    //   _field.calculate_temperature(_grid);
-    // }
+    //   // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+    //   // respectively.
+    _field.calculate_fluxes(_grid);
+    Communication::communicate(_field.f_matrix(), _grid.domain());
+    Communication::communicate(_field.g_matrix(), _grid.domain());
 
-  //   // Calculating Fluxes (_F and _G) for velocities in X and Y direction
-  //   // respectively.
-  //   _field.calculate_fluxes(_grid);
+    // //   Communication::communicate();
+    // //   // Calculating RHS for pressure poisson equation
+    _field.calculate_rs(_grid);
 
-  //   Communication::communicate();
-  //   // Calculating RHS for pressure poisson equation
-  //   _field.calculate_rs(_grid);
+    iter = 0;  // Pressure poisson solver iteration initialization
+    res = std::numeric_limits<double>::max();  // Any value greatrer than
+    // //                                              // tolerance.
 
-  //   iter = 0;  // Pressure poisson solver iteration initialization
-  //   res = std::numeric_limits<double>::max();  // Any value greatrer than
-  //                                              // tolerance.
+    while (res > _tolerance) {
+      if (iter >= _max_iter) {
+        std::cout << "Pressure poisson solver did not converge to the given "
+                     "tolerance...\n ";
+        std::cout << "Timestep size: " << setw(10) << dt << " | "
+                  << "Time: " << setw(8) << t << setw(3) << " | "
+                  << "Residual: " << setw(11) << res << setw(3) << " | "
+                  << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+        break;
+      }
+      for (int i = 0; i < _boundaries.size(); i++) {
+        _boundaries[i]->apply_pressure(_field);
+      }
+      res = _pressure_solver->solve(_field, _grid, _boundaries);
+      Communication::communicate(_field.p_matrix(), _grid.domain());
+      res = Communication::reduce_sum(res);
+      iter++;
+      total_iter++;
+      logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
+    }
 
-  //   while (res > _tolerance) {
-  //     if (iter >= _max_iter) {
-  //       std::cout << "Pressure poisson solver did not converge to the given "
-  //                    "tolerance...\n ";
-  //       std::cout << "Timestep size: " << setw(10) << dt << " | "
-  //                 << "Time: " << setw(8) << t << setw(3) << " | "
-  //                 << "Residual: " << setw(11) << res << setw(3) << " | "
-  //                 << "Pressure Poisson Iterations: " << setw(3) << iter <<
-  //                 '\n';
-  //       break;
-  //     }
-  //     for (int i = 0; i < _boundaries.size(); i++) {
-  //       _boundaries[i]->apply_pressure(_field);
-  //     }
-  //     res = _pressure_solver->solve(_field, _grid, _boundaries);
-  //     iter++;
-  //     total_iter++;
-  //     logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
-  //   }
+    // //   // Calculating updated velocities using pressure calculated in the
+    // //   // pressure poisson equation
+    _field.calculate_velocities(_grid);
+    Communication::communicate(_field.u_matrix(), _grid.domain());
+    Communication::communicate(_field.v_matrix(), _grid.domain());
 
-  //   // Calculating updated velocities using pressure calculated in the
-  //   // pressure poisson equation
-  //   _field.calculate_velocities(_grid);
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
+    // //   // Updating t for the next step
+    t += dt;
+    timestep++;
 
-  //   for (int i = 0; i < _boundaries.size(); i++) {
-  //     _boundaries[i]->apply(_field);
-  //   }
-  //   // Updating t for the next step
-  //   t += dt;
-  //   timestep++;
+    // //   // Printing Data in the terminal
+    if (Communication::rank == 0) {
+      if (timestep % 100 == 0) {
+        std::cout << "Timestep size: " << setw(10) << dt << " | "
+                  << "Time: " << setw(8) << t << setw(3) << " | "
+                  << "Residual: " << setw(11) << res << setw(3) << " | "
+                  << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+      }
+    }
 
-  //   // Printing Data in the terminal
-  //   if (timestep % 100 == 0) {
-  //     std::cout << "Timestep size: " << setw(10) << dt << " | "
-  //               << "Time: " << setw(8) << t << setw(3) << " | "
-  //               << "Residual: " << setw(11) << res << setw(3) << " | "
-  //               << "Pressure Poisson Iterations: " << setw(3) << iter <<
-  //               '\n';
-  //   }
-  //   if (t >= _output_freq) {
-  //     output_vtk(timestep);
-  //     _output_freq = _output_freq + output_counter;
-  //   }
-  // }
+    if (t >= _output_freq) {
+      output_vtk(timestep, Communication::rank);
+      _output_freq = _output_freq + output_counter;
+    }
+  }
 
   // logfile.close();
-  }
 }
 
 // // Following is the pre-defined function for writing the output files.
