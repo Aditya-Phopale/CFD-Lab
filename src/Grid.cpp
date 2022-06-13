@@ -86,49 +86,36 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
         _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
                             geometry_data.at(i_geom).at(j_geom));
-        if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
-          _buffer.push_back(&_cells(i,j));
-        }
-        else{
-          _fixed_wall_cells.push_back(&_cells(i, j));
-        }
+
+        _fixed_wall_cells.push_back(&_cells(i, j));
+
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_4) {
         _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL4,
                             geometry_data.at(i_geom).at(j_geom));
-        if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
-          _buffer.push_back(&_cells(i,j));
-        }
-        else{
-          _fixed_wall_cells.push_back(&_cells(i, j));
-        }
+
+        _fixed_wall_cells.push_back(&_cells(i, j));
+
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_5) {
         _cells(i, j) = Cell(i, j, cell_type::ADIABATIC_WALL,
                             geometry_data.at(i_geom).at(j_geom));
-        if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
-          _buffer.push_back(&_cells(i,j));
-        }
-        else{
-          _adiabatic_cells.push_back(&_cells(i, j));
-        }
-        //_adiabatic_cells.push_back(&_cells(i, j));
+        _adiabatic_cells.push_back(&_cells(i, j));
+
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::inflow) {
-        _cells(i, j) = Cell(i, j, cell_type::INLET,
-                            geometry_data.at(i_geom).at(j_geom));
+        _cells(i, j) =
+            Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
         _inlet_cells.push_back(&_cells(i, j));
+
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::outflow) {
-        _cells(i, j) = Cell(i, j, cell_type::OUTLET,
-                            geometry_data.at(i_geom).at(j_geom));
+        _cells(i, j) =
+            Cell(i, j, cell_type::OUTLET, geometry_data.at(i_geom).at(j_geom));
         _outlet_cells.push_back(&_cells(i, j));
+
       } else if (geometry_data.at(i_geom).at(j_geom) ==
                  LidDrivenCavity::moving_wall_id) {
         _cells(i, j) = Cell(i, j, cell_type::MOVING_WALL,
                             geometry_data.at(i_geom).at(j_geom));
-         if((_domain.domain_neighbors.at(0)!=-1 && i_geom == _domain.imax - 1) || (_domain.domain_neighbors.at(1)!=-1 && j_geom == _domain.jmax - 1) || (_domain.domain_neighbors.at(2)!=-1 && i_geom == _domain.imin) || (_domain.domain_neighbors.at(3)!=-1 && j_geom == _domain.jmin)){
-          _buffer.push_back(&_cells(i,j));
-        }
-        else{
+
         _moving_wall_cells.push_back(&_cells(i, j));
-        }
       }
       ++i;
     }

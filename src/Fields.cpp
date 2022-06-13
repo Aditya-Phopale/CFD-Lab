@@ -130,6 +130,9 @@ double Fields::calculate_dt(Grid &grid) {
     v_max = std::max(v_max, fabs(_V(i, j)));
   }
 
+  u_max = Communication::reduce_max(u_max);
+  v_max = Communication::reduce_max(v_max);
+
   CFLu = grid.dx() / u_max;
   CFLv = grid.dy() / v_max;
   CFLnu = (0.5 / _nu) * (1.0 / (1.0 / dx2 + 1.0 / dy2));

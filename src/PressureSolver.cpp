@@ -42,10 +42,10 @@ double SOR::solve(Fields &field, Grid &grid,
         Discretization::laplacian(field.p_matrix(), i, j) - field.rs(i, j);
     rloc += (val * val);
   }
-  // {
-  //   res = rloc / (grid.fluid_cells().size());
-  //   res = std::sqrt(res);
-  // }
+  {
+    res = rloc / (grid.fluid_cells().size());
+    res = std::sqrt(res);
+  }
 
-  return rloc;
+  return res;
 }

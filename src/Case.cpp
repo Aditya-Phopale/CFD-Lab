@@ -183,13 +183,12 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
 
-  // std::cout << Communication::rank << " " << domain.imin << " " <<
-  // domain.imax
-  //           << " " << domain.jmin << " " << domain.jmax << " "
-  //           << domain.domain_neighbors.at(0) << " "
-  //           << domain.domain_neighbors.at(1) << " "
-  //           << domain.domain_neighbors.at(2) << " "
-  //           << domain.domain_neighbors.at(3) << "\n";
+  std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
+            << " " << domain.jmin << " " << domain.jmax << " "
+            << domain.domain_neighbors.at(0) << " "
+            << domain.domain_neighbors.at(1) << " "
+            << domain.domain_neighbors.at(2) << " "
+            << domain.domain_neighbors.at(3) << "\n";
 
   _grid = Grid(_geom_name, domain);
 
@@ -200,9 +199,6 @@ Case::Case(std::string file_name, int argn, char **args) {
   _pressure_solver = std::make_unique<SOR>(omg);
   _max_iter = itermax;
   _tolerance = eps;
-
-  // if (my_rank == 0) {
-  //   std::cout << _grid.fluid_buffer().size();
 
   //   // // Constructing boundaries
 
@@ -341,21 +337,22 @@ void Case::simulate() {
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
-    // Calculating timestep for advancement to the next iteration.
+    //   // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
+    // std::cout << Communication::rank << " " << dt << "\n";
 
     dt = Communication::reduce_min(dt);
 
     // std::cout << Communication::rank << " " << dt << "\n";
 
-    // Calculate new Temperatures
+    //   // Calculate new Temperatures
     if (_field.energy_eq()) {
       _field.calculate_temperature(_grid);
       Communication::communicate(_field.t_matrix(), _grid.domain());
     }
 
-    // Calculating Fluxes (_F and _G) for velocities in X and Y direction
-    // respectively.
+    //   // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+    //   // respectively.
     _field.calculate_fluxes(_grid);
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
@@ -369,12 +366,15 @@ void Case::simulate() {
 
     while (res > _tolerance) {
       if (iter >= _max_iter) {
-        std::cout << "Pressure poisson solver did not converge to the given "
-                     "tolerance...\n ";
-        std::cout << "Timestep size: " << setw(10) << dt << " | "
-                  << "Time: " << setw(8) << t << setw(3) << " | "
-                  << "Residual: " << setw(11) << res << setw(3) << " | "
-                  << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+        if (Communication::rank == 0) {
+          std::cout << "Pressure poisson solver did not converge to the given "
+                       "tolerance...\n ";
+          std::cout << "Timestep size: " << setw(10) << dt << " | "
+                    << "Time: " << setw(8) << t << setw(3) << " | "
+                    << "Residual: " << setw(11) << res << setw(3) << " | "
+                    << "Pressure Poisson Iterations: " << setw(3) << iter
+                    << '\n';
+        }
         break;
       }
       for (int i = 0; i < _boundaries.size(); i++) {
@@ -382,21 +382,23 @@ void Case::simulate() {
       }
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       Communication::communicate(_field.p_matrix(), _grid.domain());
-      res = Communication::reduce_sum(res);
+      double squared_res = res * res * num_fluid_cells;
+      res = Communication::reduce_sum(squared_res);
       num_fluid_cells = Communication::reduce_sum(num_fluid_cells);
       res = res / num_fluid_cells;
       res = std::sqrt(res);
-
-      // std::cout << Communication::rank << " "
-      //           << "Timestep size: " << setw(10) << dt << " | "
-      //           << "Time: " << setw(8) << t << setw(3) << " | "
-      //           << "Residual: " << setw(11) << res << setw(3) << " | "
-      //           << "Pressure Poisson Iterations: " << setw(3) << iter <<
-      //           '\n';
+      // if (Communication::rank == 0) {
+      //   std::cout << Communication::rank << " "
+      //             << "Timestep size: " << setw(10) << dt << " | "
+      //             << "Time: " << setw(8) << t << setw(3) << " | "
+      //             << "Residual: " << setw(11) << res << setw(3) << " | "
+      //             << "Pressure Poisson Iterations: " << setw(3) << iter <<
+      //             '\n';
+      // }
 
       iter++;
       total_iter++;
-      // logfile << "Residual: " << res << " Iteration:" << total_iter << '\n';
+      // logfile << "Residual: " << res << " Iteration:" << total_iter <<
     }
 
     // Calculating updated velocities using pressure calculated in the
@@ -539,8 +541,8 @@ void Case::output_vtk(int timestep, int rank) {
 
   // Create Filename
   std::string outputname = _dict_name + '/' + _case_name + "_" +
-                           std::to_string(timestep) + "_" +
-                           std::to_string(rank) + ".vtk";
+                           std::to_string(rank) + "_" +
+                           std::to_string(timestep) + ".vtk";
 
   writer->SetFileName(outputname.c_str());
   writer->SetInputData(structuredGrid);
