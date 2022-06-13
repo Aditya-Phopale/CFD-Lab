@@ -14,22 +14,22 @@ void Communication::finalize() { MPI_Finalize(); }
 
 double Communication::reduce_min(double &dt) {
   double result = 0;
-  MPI_Reduce(&dt, &result, 1, MPI_DOUBLE, MPI_MIN, Communication::root_rank,
-             MPI_COMM_WORLD);
+  MPI_Allreduce(&dt, &result, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+
   return result;
 }
 
 double Communication::reduce_max(double &vel) {
   double result = 0;
-  MPI_Reduce(&vel, &result, 1, MPI_DOUBLE, MPI_MAX, Communication::root_rank,
-             MPI_COMM_WORLD);
+  MPI_Allreduce(&vel, &result, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
   return result;
 }
 
 double Communication::reduce_sum(double &res) {
   double result = 0;
-  MPI_Reduce(&res, &result, 1, MPI_DOUBLE, MPI_SUM, Communication::root_rank,
-             MPI_COMM_WORLD);
+
+  MPI_Allreduce(&res, &result, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
   return result;
 }
 
