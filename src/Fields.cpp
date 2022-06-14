@@ -120,8 +120,8 @@ double Fields::calculate_dt(Grid &grid) {
   double dx2 = grid.dx() * grid.dx();
   double dy2 = grid.dy() * grid.dy();
 
-  double u_max;
-  double v_max;
+  double u_max = 0;
+  double v_max = 0;
 
   for (auto cell : grid.fluid_cells()) {
     int i = cell->i();

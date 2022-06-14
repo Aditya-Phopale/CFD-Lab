@@ -159,7 +159,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (curr_rank % iproc - 1 >= 0) {
       domain.domain_neighbors.at(2) = curr_rank - 1;
     }
-    if (curr_rank + iproc < iproc * jproc - 1) {
+    if (curr_rank + iproc <= iproc * jproc - 1) {
       domain.domain_neighbors.at(1) = curr_rank + iproc;
     }
     if (curr_rank - iproc >= 0) {
@@ -182,6 +182,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(1) = rec_data.at(8);
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
+  std::cout<<Communication::rank<<" "<<domain.imin<<" "<<domain.imax<<" "<<domain.jmin<<" "<<domain.jmax<<" "<<domain.size_x<<" "<<domain.size_y<<'\n';
 
   // std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
   //           << " " << domain.jmin << " " << domain.jmax << " "
@@ -191,7 +192,6 @@ Case::Case(std::string file_name, int argn, char **args) {
   //           << domain.domain_neighbors.at(3) << "\n";
 
   _grid = Grid(_geom_name, domain);
-
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
                   _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
 
@@ -339,11 +339,6 @@ void Case::simulate() {
   while (t <= _t_end) {
     //   // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
-    // std::cout << Communication::rank << " " << dt << "\n";
-
-    dt = Communication::reduce_max(dt);
-
-    // std::cout << Communication::rank << " " << dt << "\n";
 
     //   // Calculate new Temperatures
     if (_field.energy_eq()) {
@@ -557,13 +552,24 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain,
     data.push_back(imin);
     int jmin = (curr_rank / iproc) % jproc * (jmax_domain / jproc);
     data.push_back(jmin);
-    int imax = (curr_rank % iproc + 1) * (imax_domain / iproc) + 2;
+    int imax = 0;
+    if(curr_rank%iproc != (iproc-1)) {
+      imax = (curr_rank % iproc + 1) * (imax_domain / iproc) + 2;
+    } else {
+      imax = imax_domain + 2;
+    }
     data.push_back(imax);
-    int jmax = ((curr_rank / iproc) % jproc + 1) * (jmax_domain / jproc) + 2;
+    int jmax = 0;
+    if(curr_rank/iproc != (jproc-1)) {
+      jmax = ((curr_rank / iproc) % jproc + 1) * (jmax_domain / jproc) + 2;
+    } else{
+      jmax = jmax_domain + 2;
+    }
     data.push_back(jmax);
-    int size_x = imax_domain / iproc;
+    
+    int size_x = imax - imin - 2;
     data.push_back(size_x);
-    int size_y = jmax_domain / jproc;
+    int size_y = jmax - jmin - 2;
     data.push_back(size_y);
 
     if (curr_rank % iproc + 1 < iproc) {
