@@ -182,16 +182,21 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(1) = rec_data.at(8);
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
-  std::cout<<Communication::rank<<" "<<domain.imin<<" "<<domain.imax<<" "<<domain.jmin<<" "<<domain.jmax<<" "<<domain.size_x<<" "<<domain.size_y<<'\n';
+  std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
+            << " " << domain.jmin << " " << domain.jmax << " " << domain.size_x
+            << " " << domain.size_y << '\n';
 
-  // std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
+  // std::cout << Communication::rank << " " << domain.imin << " " <<
+  // domain.imax
   //           << " " << domain.jmin << " " << domain.jmax << " "
   //           << domain.domain_neighbors.at(0) << " "
   //           << domain.domain_neighbors.at(1) << " "
   //           << domain.domain_neighbors.at(2) << " "
   //           << domain.domain_neighbors.at(3) << "\n";
-
+  // if (Communication::rank == 2) {
   _grid = Grid(_geom_name, domain);
+  //}
+
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
                   _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
 
@@ -205,8 +210,6 @@ Case::Case(std::string file_name, int argn, char **args) {
   if (not _grid.moving_wall_cells().empty()) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
-    // std::cout<<_grid.moving_wall_cells().size()<<"
-    // "<<Communication::rank<<'\n';
   }
   if (not _grid.inlet_cells().empty()) {
     _boundaries.push_back(
@@ -346,7 +349,7 @@ void Case::simulate() {
       Communication::communicate(_field.t_matrix(), _grid.domain());
     }
 
-    //   // Calculating Fluxes (_F and _G) for velocities in X and Y direction
+    //   // Calculating Fluxes (_F and _G) for velocities in X and Y
     //   // respectively.
     _field.calculate_fluxes(_grid);
     Communication::communicate(_field.f_matrix(), _grid.domain());
@@ -424,7 +427,7 @@ void Case::simulate() {
       _output_freq = _output_freq + output_counter;
     }
   }
-  // logfile.close();
+  logfile.close();
 }
 
 // // Following is the pre-defined function for writing the output files.
@@ -553,20 +556,20 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain,
     int jmin = (curr_rank / iproc) % jproc * (jmax_domain / jproc);
     data.push_back(jmin);
     int imax = 0;
-    if(curr_rank%iproc != (iproc-1)) {
+    if (curr_rank % iproc != (iproc - 1)) {
       imax = (curr_rank % iproc + 1) * (imax_domain / iproc) + 2;
     } else {
       imax = imax_domain + 2;
     }
     data.push_back(imax);
     int jmax = 0;
-    if(curr_rank/iproc != (jproc-1)) {
+    if (curr_rank / iproc != (jproc - 1)) {
       jmax = ((curr_rank / iproc) % jproc + 1) * (jmax_domain / jproc) + 2;
-    } else{
+    } else {
       jmax = jmax_domain + 2;
     }
     data.push_back(jmax);
-    
+
     int size_x = imax - imin - 2;
     data.push_back(size_x);
     int size_y = jmax - jmin - 2;

@@ -34,16 +34,8 @@ double Communication::reduce_sum(double &res) {
 }
 
 void Communication::communicate(Matrix<double> &A, Domain domain) {
-  // int count_v = domain.jmax - domain.jmin - 2;
-  // int count_h = domain.imax - domain.imin - 2;
-
   if (domain.domain_neighbors.at(2) != -1) {
-    // for (int k = 1; k <= count_v; k++) {
-    //   buffer_send_v.at(k - 1) = A(1, k);
-    // }
-    // std::vector<double> buffer_send_v;
     std::vector<double> buffer_recv_v(A.get_col(domain.size_x).size());
-    // buffer_send_v = A.get_col(1);
     if (domain.domain_neighbors.at(0) != -1) {
       MPI_Status status;
       MPI_Sendrecv(A.get_col(1).data(), A.get_col(1).size(), MPI_DOUBLE,
