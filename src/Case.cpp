@@ -183,12 +183,12 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
 
-  std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
-            << " " << domain.jmin << " " << domain.jmax << " "
-            << domain.domain_neighbors.at(0) << " "
-            << domain.domain_neighbors.at(1) << " "
-            << domain.domain_neighbors.at(2) << " "
-            << domain.domain_neighbors.at(3) << "\n";
+  // std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
+  //           << " " << domain.jmin << " " << domain.jmax << " "
+  //           << domain.domain_neighbors.at(0) << " "
+  //           << domain.domain_neighbors.at(1) << " "
+  //           << domain.domain_neighbors.at(2) << " "
+  //           << domain.domain_neighbors.at(3) << "\n";
 
   _grid = Grid(_geom_name, domain);
 
