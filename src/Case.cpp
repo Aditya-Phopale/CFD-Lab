@@ -341,7 +341,7 @@ void Case::simulate() {
     dt = _field.calculate_dt(_grid);
     // std::cout << Communication::rank << " " << dt << "\n";
 
-    dt = Communication::reduce_min(dt);
+    dt = Communication::reduce_max(dt);
 
     // std::cout << Communication::rank << " " << dt << "\n";
 
