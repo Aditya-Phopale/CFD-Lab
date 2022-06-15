@@ -335,13 +335,15 @@ void Case::simulate() {
     _boundaries[i]->apply(_field);
   }
 
-  output_vtk(timestep, Communication::rank);
-
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
     //   // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
+
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
 
     //   // Calculate new Temperatures
     if (_field.energy_eq()) {
@@ -405,9 +407,6 @@ void Case::simulate() {
     Communication::communicate(_field.u_matrix(), _grid.domain());
     Communication::communicate(_field.v_matrix(), _grid.domain());
 
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
     // Updating t for the next step
     t += dt;
     timestep++;
