@@ -317,10 +317,6 @@ void Case::simulate() {
   std::ofstream logfile;
   // logfile.open("log.txt");
 
-  for (int i = 0; i < _boundaries.size(); i++) {
-    _boundaries[i]->apply(_field);
-  }
-
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
@@ -363,11 +359,11 @@ void Case::simulate() {
         }
         break;
       }
+      Communication::communicate(_field.p_matrix(), _grid.domain());
       for (int i = 0; i < _boundaries.size(); i++) {
         _boundaries[i]->apply_pressure(_field);
       }
       res = _pressure_solver->solve(_field, _grid, _boundaries);
-      Communication::communicate(_field.p_matrix(), _grid.domain());
 
       iter++;
       total_iter++;

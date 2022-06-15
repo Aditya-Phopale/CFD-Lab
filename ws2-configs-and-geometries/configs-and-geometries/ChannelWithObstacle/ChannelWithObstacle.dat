@@ -15,7 +15,7 @@ ylength      2
 imax         100
 jmax         20
 iproc        1
-jproc        4
+jproc        1
 
 #--------------------------------------------
 #               time steps
