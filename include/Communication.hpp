@@ -18,4 +18,5 @@ class Communication {
   static double reduce_min(double &dt);
   static double reduce_max(double &vel);
   static double reduce_sum(double &res);
+  static int reduce_sum_integer(int &res);
 };

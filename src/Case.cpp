@@ -182,20 +182,8 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(1) = rec_data.at(8);
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
-  std::cout << Communication::rank << " " << domain.imin << " " << domain.imax
-            << " " << domain.jmin << " " << domain.jmax << " " << domain.size_x
-            << " " << domain.size_y << '\n';
-
-  // std::cout << Communication::rank << " " << domain.imin << " " <<
-  // domain.imax
-  //           << " " << domain.jmin << " " << domain.jmax << " "
-  //           << domain.domain_neighbors.at(0) << " "
-  //           << domain.domain_neighbors.at(1) << " "
-  //           << domain.domain_neighbors.at(2) << " "
-  //           << domain.domain_neighbors.at(3) << "\n";
-  // if (Communication::rank == 2) {
+  
   _grid = Grid(_geom_name, domain);
-  //}
 
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
                   _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
@@ -205,7 +193,7 @@ Case::Case(std::string file_name, int argn, char **args) {
   _max_iter = itermax;
   _tolerance = eps;
 
-  //   // // Constructing boundaries
+  // Constructing boundaries
 
   if (not _grid.moving_wall_cells().empty()) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
@@ -223,8 +211,6 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (!boolenergy_eq) {
       _boundaries.push_back(
           std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
-      // std::cout<<_grid.fixed_wall_cells().size()<<"
-      // "<<Communication::rank<<'\n';
     } else {
       _boundaries.push_back(std::make_unique<FixedWallBoundary>(
           _grid.fixed_wall_cells(), wall_temp));
@@ -319,8 +305,8 @@ void Case::set_file_names(std::string file_name) {
 //  * files.
 //  */
 void Case::simulate() {
-  // Defining parameters for running of the loop
 
+  // Defining parameters for running of the loop
   double t = 0.0;
   double dt = _field.dt();
   int timestep = 0;
@@ -338,21 +324,21 @@ void Case::simulate() {
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
-    //   // Calculating timestep for advancement to the next iteration.
+
+    // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
     }
 
-    //   // Calculate new Temperatures
+    // Calculate new Temperatures
     if (_field.energy_eq()) {
       _field.calculate_temperature(_grid);
       Communication::communicate(_field.t_matrix(), _grid.domain());
     }
 
-    //   // Calculating Fluxes (_F and _G) for velocities in X and Y
-    //   // respectively.
+    // Calculating Fluxes (_F and _G) for velocities in X and Y directions respectively.
     _field.calculate_fluxes(_grid);
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
@@ -382,19 +368,6 @@ void Case::simulate() {
       }
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       Communication::communicate(_field.p_matrix(), _grid.domain());
-      double squared_res = res * res * num_fluid_cells;
-      res = Communication::reduce_sum(squared_res);
-      num_fluid_cells = Communication::reduce_sum(num_fluid_cells);
-      res = res / num_fluid_cells;
-      res = std::sqrt(res);
-      // if (Communication::rank == 0) {
-      //   std::cout << Communication::rank << " "
-      //             << "Timestep size: " << setw(10) << dt << " | "
-      //             << "Time: " << setw(8) << t << setw(3) << " | "
-      //             << "Residual: " << setw(11) << res << setw(3) << " | "
-      //             << "Pressure Poisson Iterations: " << setw(3) << iter <<
-      //             '\n';
-      // }
 
       iter++;
       total_iter++;
@@ -429,7 +402,7 @@ void Case::simulate() {
   logfile.close();
 }
 
-// // Following is the pre-defined function for writing the output files.
+// Following is the pre-defined function for writing the output files.
 
 void Case::output_vtk(int timestep, int rank) {
   // Creating a new structured grid
@@ -601,11 +574,4 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain,
 
     MPI_Send(data.data(), 10, MPI_INT, curr_rank, curr_rank, MPI_COMM_WORLD);
   }
-
-  // std::cout << my_rank << " " << domain.imin << " " << domain.imax << " "
-  //           << domain.jmin << " " << domain.jmax << " "
-  //           << domain.domain_neighbors.at(0) << " "
-  //           << domain.domain_neighbors.at(1) << " "
-  //           << domain.domain_neighbors.at(2) << " "
-  //           << domain.domain_neighbors.at(3) << "\n";
 }

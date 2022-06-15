@@ -42,8 +42,11 @@ double SOR::solve(Fields &field, Grid &grid,
         Discretization::laplacian(field.p_matrix(), i, j) - field.rs(i, j);
     rloc += (val * val);
   }
+  rloc = Communication::reduce_sum(rloc);
+  int fluid_cells_size = grid.fluid_cells().size();
+  fluid_cells_size = Communication::reduce_sum_integer(fluid_cells_size);
   {
-    res = rloc / (grid.fluid_cells().size());
+    res = rloc / fluid_cells_size;
     res = std::sqrt(res);
   }
 
