@@ -80,7 +80,6 @@ void Communication::communicate(Matrix<double> &A, Domain domain) {
                domain.domain_neighbors.at(3), 0, buffer_recv_h.data(),
                buffer_recv_h.size(), MPI_DOUBLE, domain.domain_neighbors.at(1),
                0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  A.set_row(buffer_recv_h, domain.size_y + 1);
   if (domain.domain_neighbors.at(1) != MPI_PROC_NULL) {
     A.set_row(buffer_recv_h, domain.size_y + 1);
   }
