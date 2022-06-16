@@ -37,5 +37,5 @@ struct Domain {
   int domain_size_y{-1};
 
   // east, north, west, south
-  std::vector<int> domain_neighbors = std::vector<int>(4, -1);
+  std::vector<int> domain_neighbors = std::vector<int>(4, MPI_PROC_NULL);
 };
