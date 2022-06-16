@@ -316,17 +316,16 @@ void Case::simulate() {
   int total_iter = 1;
   std::ofstream logfile;
   // logfile.open("log.txt");
+  for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+  }
 
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
 
     // Calculating timestep for advancement to the next iteration.
-    dt = _field.calculate_dt(_grid);
-
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
+    dt = _field.calculate_dt(_grid);   
 
     // Calculate new Temperatures
     if (_field.energy_eq()) {
@@ -373,9 +372,14 @@ void Case::simulate() {
     // Calculating updated velocities using pressure calculated in the
     // pressure poisson equation
     _field.calculate_velocities(_grid);
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
+
     Communication::communicate(_field.u_matrix(), _grid.domain());
     Communication::communicate(_field.v_matrix(), _grid.domain());
 
+    
     // Updating t for the next step
     t += dt;
     timestep++;
