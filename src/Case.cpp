@@ -182,7 +182,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(1) = rec_data.at(8);
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
-  
+
   _grid = Grid(_geom_name, domain);
 
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
@@ -305,7 +305,6 @@ void Case::set_file_names(std::string file_name) {
 //  * files.
 //  */
 void Case::simulate() {
-
   // Defining parameters for running of the loop
   double t = 0.0;
   double dt = _field.dt();
@@ -323,7 +322,6 @@ void Case::simulate() {
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
-
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);   
 
@@ -333,7 +331,8 @@ void Case::simulate() {
       Communication::communicate(_field.t_matrix(), _grid.domain());
     }
 
-    // Calculating Fluxes (_F and _G) for velocities in X and Y directions respectively.
+    // Calculating Fluxes (_F and _G) for velocities in X and Y directions
+    // respectively.
     _field.calculate_fluxes(_grid);
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
@@ -551,25 +550,29 @@ void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain,
       int domain_neighbor_e = curr_rank + 1;
       data.push_back(domain_neighbor_e);
     } else {
-      data.push_back(-1);
+      // data.push_back(-1);
+      data.push_back(MPI_PROC_NULL);
     }
     if (curr_rank % iproc - 1 >= 0) {
       int domain_neighbor_w = curr_rank - 1;
       data.push_back(domain_neighbor_w);
     } else {
-      data.push_back(-1);
+      // data.push_back(-1);
+      data.push_back(MPI_PROC_NULL);
     }
     if (curr_rank + iproc < iproc * jproc) {
       int domain_neighbor_n = curr_rank + iproc;
       data.push_back(domain_neighbor_n);
     } else {
-      data.push_back(-1);
+      // data.push_back(-1);
+      data.push_back(MPI_PROC_NULL);
     }
     if (curr_rank - iproc >= 0) {
       int domain_neighbor_s = curr_rank - iproc;
       data.push_back(domain_neighbor_s);
     } else {
-      data.push_back(-1);
+      // data.push_back(-1);
+      data.push_back(MPI_PROC_NULL);
     }
 
     MPI_Send(data.data(), 10, MPI_INT, curr_rank, curr_rank, MPI_COMM_WORLD);

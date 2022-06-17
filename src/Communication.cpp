@@ -42,82 +42,45 @@ int Communication::reduce_sum_integer(int &res) {
 }
 
 void Communication::communicate(Matrix<double> &A, Domain domain) {
-  if (domain.domain_neighbors.at(2) != -1) {
-    std::vector<double> buffer_recv_v(A.get_col(domain.size_x).size());
-    if (domain.domain_neighbors.at(0) != -1) {
-      MPI_Status status;
-      MPI_Sendrecv(A.get_col(1).data(), A.get_col(1).size(), MPI_DOUBLE,
-                   domain.domain_neighbors.at(2), 0, buffer_recv_v.data(),
-                   buffer_recv_v.size(), MPI_DOUBLE,
-                   domain.domain_neighbors.at(0), 0, MPI_COMM_WORLD, &status);
-      A.set_col(buffer_recv_v, domain.size_x + 1);
-    } else {
-      MPI_Send(A.get_col(1).data(), A.get_col(1).size(), MPI_DOUBLE,
-               domain.domain_neighbors.at(2), 0, MPI_COMM_WORLD);
-      MPI_Recv(buffer_recv_v.data(), buffer_recv_v.size(), MPI_DOUBLE,
+  std::vector<double> buffer_recv_v(A.get_col(domain.size_x).size());
+  // Communicate left
+  MPI_Sendrecv(A.get_col(1).data(), A.get_col(1).size(), MPI_DOUBLE,
+               domain.domain_neighbors.at(2), 0, buffer_recv_v.data(),
+               buffer_recv_v.size(), MPI_DOUBLE, domain.domain_neighbors.at(0),
+               0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  if (domain.domain_neighbors.at(0) != MPI_PROC_NULL) {
+    A.set_col(buffer_recv_v, domain.size_x + 1);
+  }
+
+  // Communicate right
+  buffer_recv_v.resize(A.get_col(1).size());
+  MPI_Sendrecv(A.get_col(domain.size_x).data(), A.get_col(domain.size_x).size(),
+               MPI_DOUBLE, domain.domain_neighbors.at(0), 0,
+               buffer_recv_v.data(), buffer_recv_v.size(), MPI_DOUBLE,
                domain.domain_neighbors.at(2), 0, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
-      A.set_col(buffer_recv_v, 0);
-    }
+  if (domain.domain_neighbors.at(2) != MPI_PROC_NULL) {
+    A.set_col(buffer_recv_v, 0);
   }
 
-  if (domain.domain_neighbors.at(0) != -1) {
-    std::vector<double> buffer_recv_v(A.get_col(1));
-    if (domain.domain_neighbors.at(2) != -1) {
-      MPI_Status status;
-      MPI_Sendrecv(A.get_col(domain.size_x).data(),
-                   A.get_col(domain.size_x).size(), MPI_DOUBLE,
-                   domain.domain_neighbors.at(0), 0, buffer_recv_v.data(),
-                   buffer_recv_v.size(), MPI_DOUBLE,
-                   domain.domain_neighbors.at(2), 0, MPI_COMM_WORLD, &status);
-      A.set_col(buffer_recv_v, 0);
-    } else {
-      MPI_Recv(buffer_recv_v.data(), buffer_recv_v.size(), MPI_DOUBLE,
-               domain.domain_neighbors.at(0), 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      MPI_Send(A.get_col(domain.size_x).data(), A.get_col(domain.size_x).size(),
-               MPI_DOUBLE, domain.domain_neighbors.at(0), 0, MPI_COMM_WORLD);
-      A.set_col(buffer_recv_v, domain.size_x + 1);
-    }
-  }
-
-  if (domain.domain_neighbors.at(1) != -1) {
-    std::vector<double> buffer_recv_h(A.get_row(1));
-    if (domain.domain_neighbors.at(3) != -1) {
-      MPI_Status status;
-      MPI_Sendrecv(
-          A.get_row(domain.size_y).data(), A.get_row(domain.size_y).size(),
-          MPI_DOUBLE, domain.domain_neighbors.at(1), 0, buffer_recv_h.data(),
-          buffer_recv_h.size(), MPI_DOUBLE, domain.domain_neighbors.at(3), 0,
-          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      A.set_row(buffer_recv_h, 0);
-    } else {
-      MPI_Send(A.get_row(domain.size_y).data(), A.get_row(domain.size_y).size(),
-               MPI_DOUBLE, domain.domain_neighbors.at(1), 0, MPI_COMM_WORLD);
-      MPI_Recv(buffer_recv_h.data(), buffer_recv_h.size(), MPI_DOUBLE,
-               domain.domain_neighbors.at(1), 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      A.set_row(buffer_recv_h, domain.size_y + 1);
-    }
-  }
-
-  if (domain.domain_neighbors.at(3) != -1) {
-    std::vector<double> buffer_recv_h(A.get_row(domain.size_y));
-    if (domain.domain_neighbors.at(1) != -1) {
-      MPI_Status status;
-      MPI_Sendrecv(A.get_row(1).data(), A.get_row(1).size(), MPI_DOUBLE,
-                   domain.domain_neighbors.at(3), 0, buffer_recv_h.data(),
-                   buffer_recv_h.size(), MPI_DOUBLE,
-                   domain.domain_neighbors.at(1), 0, MPI_COMM_WORLD,
-                   MPI_STATUS_IGNORE);
-      A.set_row(buffer_recv_h, domain.size_y + 1);
-    } else {
-      MPI_Recv(buffer_recv_h.data(), buffer_recv_h.size(), MPI_DOUBLE,
+  // Communicate Top
+  std::vector<double> buffer_recv_h(A.get_row(1).size());
+  MPI_Sendrecv(A.get_row(domain.size_y).data(), A.get_row(domain.size_y).size(),
+               MPI_DOUBLE, domain.domain_neighbors.at(1), 0,
+               buffer_recv_h.data(), buffer_recv_h.size(), MPI_DOUBLE,
                domain.domain_neighbors.at(3), 0, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
-      MPI_Send(A.get_row(1).data(), A.get_row(1).size(), MPI_DOUBLE,
-               domain.domain_neighbors.at(3), 0, MPI_COMM_WORLD);
-      A.set_row(buffer_recv_h, 0);
-    }
+  if (domain.domain_neighbors.at(3) != MPI_PROC_NULL) {
+    A.set_row(buffer_recv_h, 0);
+  }
+
+  // Communicate Bottom
+  buffer_recv_h.resize(A.get_row(domain.size_y).size());
+  MPI_Sendrecv(A.get_row(1).data(), A.get_row(1).size(), MPI_DOUBLE,
+               domain.domain_neighbors.at(3), 0, buffer_recv_h.data(),
+               buffer_recv_h.size(), MPI_DOUBLE, domain.domain_neighbors.at(1),
+               0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  if (domain.domain_neighbors.at(1) != MPI_PROC_NULL) {
+    A.set_row(buffer_recv_h, domain.size_y + 1);
   }
 }
