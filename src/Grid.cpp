@@ -22,7 +22,17 @@ Grid::Grid(std::string geom_name, Domain &domain) {
         _domain.domain_size_x + 2,
         std::vector<int>(_domain.domain_size_y + 2, 0));
     parse_geometry_file(geom_name, geometry_data);
+    check_geometry_file(geometry_data);
     assign_cell_types(geometry_data);
+    geometry_excluding_ghosts.resize(_domain.domain_size_x,
+                                     std::vector<int>(_domain.domain_size_y));
+    for (int j = 0; j < jmax(); j++) {
+      for (int i = 0; i < imax(); i++) {
+        geometry_excluding_ghosts.at(i).at(j) =
+            geometry_data.at(i + 1).at(j + 1);
+      }
+    }
+
   } else {
     build_lid_driven_cavity();
   }
@@ -46,6 +56,13 @@ void Grid::build_lid_driven_cavity() {
     }
   }
   assign_cell_types(geometry_data);
+  geometry_excluding_ghosts.resize(_domain.domain_size_x,
+                                   std::vector<int>(_domain.domain_size_y));
+  for (int j = 0; j < jmax(); j++) {
+    for (int i = 0; i < imax(); i++) {
+      geometry_excluding_ghosts.at(i).at(j) = geometry_data.at(i + 1).at(j + 1);
+    }
+  }
 }
 
 void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
@@ -55,24 +72,35 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
   for (int j_geom = _domain.jmin; j_geom < _domain.jmax; ++j_geom) {
     { i = 0; }
     for (int i_geom = _domain.imin; i_geom < _domain.imax; ++i_geom) {
-      if (geometry_data.at(i_geom).at(j_geom) == 0) {
+      if (geometry_data.at(i_geom).at(j_geom) == cellID::fluid) {
         _cells(i, j) = Cell(i, j, cell_type::FLUID);
         _fluid_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
+        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
+                            geometry_data.at(i_geom).at(j_geom));
+        _fixed_wall_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_4) {
+        _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL4,
+                            geometry_data.at(i_geom).at(j_geom));
+        _fixed_wall_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_5) {
+        _cells(i, j) = Cell(i, j, cell_type::ADIABATIC_WALL,
+                            geometry_data.at(i_geom).at(j_geom));
+        _adiabatic_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::inflow) {
+        _cells(i, j) =
+            Cell(i, j, cell_type::INLET, geometry_data.at(i_geom).at(j_geom));
+        _inlet_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::outflow) {
+        _cells(i, j) =
+            Cell(i, j, cell_type::OUTLET, geometry_data.at(i_geom).at(j_geom));
+        _outlet_cells.push_back(&_cells(i, j));
       } else if (geometry_data.at(i_geom).at(j_geom) ==
                  LidDrivenCavity::moving_wall_id) {
         _cells(i, j) = Cell(i, j, cell_type::MOVING_WALL,
                             geometry_data.at(i_geom).at(j_geom));
         _moving_wall_cells.push_back(&_cells(i, j));
-      } else {
-        if (i == 0 or j == 0 or i == _domain.size_x + 1 or
-            j == _domain.size_y + 1) {
-          // Outer walls
-          _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL,
-                              geometry_data.at(i_geom).at(j_geom));
-          _fixed_wall_cells.push_back(&_cells(i, j));
-        }
       }
-
       ++i;
     }
     ++j;
@@ -223,6 +251,30 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
 
       if (_cells(i, j).type() != cell_type::FLUID) {
         if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::FLUID) {
+          _cells(i, j).add_border(border_position::NORTHWEST);
+        }
+        if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::FLUID) {
+          _cells(i, j).add_border(border_position::NORTHEAST);
+        }
+        if (_cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::FLUID) {
+          _cells(i, j).add_border(border_position::SOUTHEAST);
+        }
+        if (_cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::FLUID &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::FLUID) {
+          _cells(i, j).add_border(border_position::SOUTHWEST);
+        }
+        if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
             cell_type::FLUID) {
           _cells(i, j).add_border(border_position::LEFT);
         }
@@ -277,6 +329,25 @@ void Grid::parse_geometry_file(std::string filedoc,
   infile.close();
 }
 
+void Grid::check_geometry_file(std::vector<std::vector<int>> &geometry_data) {
+  for (int j = _domain.jmin + 1; j < _domain.jmax - 1; ++j) {
+    for (int i = _domain.imin + 1; i < _domain.imax - 1; ++i) {
+      if (geometry_data.at(i).at(j) == 3 || geometry_data.at(i).at(j) == 4 ||
+          geometry_data.at(i).at(j) == 5) {
+        int sum = geometry_data.at(i + 1).at(j) +
+                  geometry_data.at(i - 1).at(j) +
+                  geometry_data.at(i).at(j + 1) + geometry_data.at(i).at(j - 1);
+
+        if (sum <= 5) {
+          geometry_data.at(i).at(j) = 0;
+          std::cout << "Illegal Geometry detetcted.. Changed illegal cell to "
+                       "Fluid. \n";
+        }
+      }
+    }
+  }
+}
+
 int Grid::imax() const { return _domain.size_x; }
 int Grid::jmax() const { return _domain.size_y; }
 
@@ -299,4 +370,17 @@ const std::vector<Cell *> &Grid::fixed_wall_cells() const {
 
 const std::vector<Cell *> &Grid::moving_wall_cells() const {
   return _moving_wall_cells;
+}
+
+const std::vector<Cell *> &Grid::inlet_cells() const { return _inlet_cells; }
+
+const std::vector<Cell *> &Grid::outlet_cells() const { return _outlet_cells; }
+
+const std::vector<Cell *> &Grid::adiabatic_cells() const {
+  return _adiabatic_cells;
+}
+
+const std::vector<std::vector<int>> &Grid::get_geometry_excluding_ghosts()
+    const {
+  return geometry_excluding_ghosts;
 }

@@ -19,6 +19,7 @@ saved in the defined output folder.
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <vector>
 #include <limits>
@@ -32,6 +33,7 @@ namespace filesystem = std::experimental::filesystem;
 #include <vtkCellData.h>
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
+// #include <vtkPointVisibilityArray.h>
 #include <vtkPoints.h>
 #include <vtkSmartPointer.h>
 #include <vtkStructuredGrid.h>
@@ -43,22 +45,32 @@ namespace filesystem = std::experimental::filesystem;
 Case::Case(std::string file_name, int argn, char **args) {
   const int MAX_LINE_LENGTH = 1024;
   std::ifstream file(file_name);
-  double nu;      /* viscosity   */
-  double UI;      /* velocity x-direction */
-  double VI;      /* velocity y-direction */
-  double PI;      /* pressure */
-  double GX;      /* gravitation x-direction */
-  double GY;      /* gravitation y-direction */
-  double xlength; /* length of the domain x-dir.*/
-  double ylength; /* length of the domain y-dir.*/
-  double dt;      /* time step */
-  int imax;       /* number of cells x-direction*/
-  int jmax;       /* number of cells y-direction*/
-  double gamma;   /* uppwind differencing factor*/
-  double omg;     /* relaxation factor */
-  double tau;     /* safety factor for time step*/
-  int itermax;    /* max. number of iterations for pressure per time step */
-  double eps;     /* accuracy bound for pressure*/
+  double nu;     /* viscosity   */
+  double UI;     /* velocity x-direction */
+  double VI;     /* velocity y-direction */
+  double TI = 0; /* Initial temperature.*/
+  double UIN;
+  double VIN;
+  double PI;        /* pressure */
+  double GX;        /* gravitation x-direction */
+  double GY;        /* gravitation y-direction */
+  double xlength;   /* length of the domain x-dir.*/
+  double ylength;   /* length of the domain y-dir.*/
+  double dt;        /* time step */
+  int imax;         /* number of cells x-direction*/
+  int jmax;         /* number of cells y-direction*/
+  double gamma;     /* uppwind differencing factor*/
+  double omg;       /* relaxation factor */
+  double tau;       /* safety factor for time step*/
+  int itermax;      /* max. number of iterations for pressure per time step */
+  double eps;       /* accuracy bound for pressure*/
+  double alpha = 0; /* Thermal Diffusivity*/
+  double beta = 0;  /* Thermal expansion coefficient*/
+  int num_walls;
+  std::string energy_eqn;
+  double temp3;
+  double temp4;
+  double temp5;
 
   // Assigning parameters from the file to variables.
 
@@ -69,6 +81,7 @@ Case::Case(std::string file_name, int argn, char **args) {
       if (var[0] == '#') {
         file.ignore(MAX_LINE_LENGTH, '\n');
       } else {
+        if (var == "geo_file") file >> _geom_name;
         if (var == "xlength") file >> xlength;
         if (var == "ylength") file >> ylength;
         if (var == "nu") file >> nu;
@@ -81,16 +94,34 @@ Case::Case(std::string file_name, int argn, char **args) {
         if (var == "dt_value") file >> _output_freq;
         if (var == "UI") file >> UI;
         if (var == "VI") file >> VI;
+        if (var == "TI") file >> TI;
         if (var == "GX") file >> GX;
         if (var == "GY") file >> GY;
         if (var == "PI") file >> PI;
+        if (var == "UIN") file >> UIN;
+        if (var == "VIN") file >> VIN;
         if (var == "itermax") file >> itermax;
         if (var == "imax") file >> imax;
         if (var == "jmax") file >> jmax;
+        if (var == "alpha") file >> alpha;
+        if (var == "beta") file >> beta;
+        if (var == "num_walls") file >> num_walls;
+        if (var == "wall_temp_3") file >> temp3;
+        if (var == "wall_temp_4") file >> temp4;
+        if (var == "wall_temp_5") file >> temp5;
+        if (var == "energy_eq") file >> energy_eqn;
       }
     }
   }
   file.close();
+
+  std::map<int, double> wall_temp;
+  bool boolenergy_eq = false;
+  if (energy_eqn.compare("on") == 0) {
+    boolenergy_eq = true;
+    wall_temp.insert(std::pair<int, double>(cellID::fixed_wall_3, temp3));
+    wall_temp.insert(std::pair<int, double>(cellID::fixed_wall_4, temp4));
+  }
 
   std::map<int, double> wall_vel;
   if (_geom_name.compare("NONE") == 0) {
@@ -113,8 +144,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   build_domain(domain, imax, jmax);
 
   _grid = Grid(_geom_name, domain);
-  _field = Fields(nu, dt, tau, _grid.domain().size_x, _grid.domain().size_y, UI,
-                  VI, PI);
+  _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
+                  _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
 
   _discretization = Discretization(domain.dx, domain.dy, gamma);
   _pressure_solver = std::make_unique<SOR>(omg);
@@ -127,9 +158,26 @@ Case::Case(std::string file_name, int argn, char **args) {
     _boundaries.push_back(std::make_unique<MovingWallBoundary>(
         _grid.moving_wall_cells(), LidDrivenCavity::wall_velocity));
   }
-  if (not _grid.fixed_wall_cells().empty()) {
+  if (not _grid.inlet_cells().empty()) {
     _boundaries.push_back(
-        std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+        std::make_unique<InletBoundary>(_grid.inlet_cells(), UIN, VIN));
+  }
+  if (not _grid.outlet_cells().empty()) {
+    _boundaries.push_back(
+        std::make_unique<OutletBoundary>(_grid.outlet_cells()));
+  }
+  if (not _grid.fixed_wall_cells().empty()) {
+    if (!boolenergy_eq) {
+      _boundaries.push_back(
+          std::make_unique<FixedWallBoundary>(_grid.fixed_wall_cells()));
+    } else {
+      _boundaries.push_back(std::make_unique<FixedWallBoundary>(
+          _grid.fixed_wall_cells(), wall_temp));
+    }
+  }
+  if (not _grid.adiabatic_cells().empty()) {
+    _boundaries.push_back(
+        std::make_unique<AdiabaticBoundary>(_grid.adiabatic_cells()));
   }
 }
 
@@ -221,14 +269,22 @@ void Case::simulate() {
   std::ofstream logfile;
   logfile.open("log.txt");
 
+  for (int i = 0; i < _boundaries.size(); i++) {
+    _boundaries[i]->apply(_field);
+  }
+
+  output_vtk(timestep);
+
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
+
+    // Calculate new Temperatures
+    if (_field.energy_eq()) {
+      _field.calculate_temperature(_grid);
+    }
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y direction
     // respectively.
@@ -237,14 +293,18 @@ void Case::simulate() {
     // Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
 
-    iter = 0;    // Pressure poisson solver iteration initialization
-    res = std::numeric_limits<double>::max();  // Any value greatrer than tolerance.
+    iter = 0;  // Pressure poisson solver iteration initialization
+    res = std::numeric_limits<double>::max();  // Any value greatrer than
+                                               // tolerance.
 
     while (res > _tolerance) {
       if (iter >= _max_iter) {
         std::cout << "Pressure poisson solver did not converge to the given "
                      "tolerance...\n";
         break;
+      }
+      for (int i = 0; i < _boundaries.size(); i++) {
+        _boundaries[i]->apply_pressure(_field);
       }
       res = _pressure_solver->solve(_field, _grid, _boundaries);
       iter++;
@@ -256,15 +316,20 @@ void Case::simulate() {
     // pressure poisson equation
     _field.calculate_velocities(_grid);
 
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
     // Updating t for the next step
     t += dt;
     timestep++;
 
     // Printing Data in the terminal
-    std::cout << "Timestep size: " << setw(10) << dt << " | "
-              << "Time: " << setw(8) << t << setw(3) << " | "
-              << "Residual: " << setw(11) << res << setw(3) << " | "
-              << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+    if (timestep % 100 == 0) {
+      std::cout << "Timestep size: " << setw(10) << dt << " | "
+                << "Time: " << setw(8) << t << setw(3) << " | "
+                << "Residual: " << setw(11) << res << setw(3) << " | "
+                << "Pressure Poisson Iterations: " << setw(3) << iter << '\n';
+    }
     if (t >= _output_freq) {
       output_vtk(timestep);
       _output_freq = _output_freq + output_counter;
@@ -303,12 +368,27 @@ void Case::output_vtk(int timestep, int rank) {
     }
     y += dy;
   }
+  std::vector<vtkIdType> pointVisibility;
+  auto _geom_excl_ghosts = _grid.get_geometry_excluding_ghosts();
+  for (int i = 0; i < _grid.imax(); i++) {
+    for (int j = 0; j < _grid.jmax(); j++) {
+      if (_geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_3 ||
+          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_4 ||
+          _geom_excl_ghosts.at(i).at(j) == cellID::fixed_wall_5) {
+        pointVisibility.push_back(i + j * _grid.imax());
+      }
+    }
+  }
 
   // Specify the dimensions of the grid, addition of 1 to accomodate
   // neighboring cells
   structuredGrid->SetDimensions(_grid.domain().size_x + 1,
                                 _grid.domain().size_y + 1, 1);
   structuredGrid->SetPoints(points);
+
+  for (auto t{0}; t < pointVisibility.size(); t++) {
+    structuredGrid->BlankCell(pointVisibility.at(t));
+  }
 
   // Pressure Array
   vtkDoubleArray *Pressure = vtkDoubleArray::New();
@@ -319,6 +399,21 @@ void Case::output_vtk(int timestep, int rank) {
   vtkDoubleArray *Velocity = vtkDoubleArray::New();
   Velocity->SetName("velocity");
   Velocity->SetNumberOfComponents(3);
+
+  if (_field.energy_eq()) {
+    vtkDoubleArray *Temperature = vtkDoubleArray::New();
+    Temperature->SetName("temperature");
+    Temperature->SetNumberOfComponents(1);
+
+    for (int j = 1; j < _grid.domain().size_y + 1; j++) {
+      for (int i = 1; i < _grid.domain().size_x + 1; i++) {
+        double temperature = _field.t(i, j);
+        Temperature->InsertNextTuple(&temperature);
+      }
+    }
+
+    structuredGrid->GetCellData()->AddArray(Temperature);
+  }
 
   // Print pressure and temperature from bottom to top
   for (int j = 1; j < _grid.domain().size_y + 1; j++) {

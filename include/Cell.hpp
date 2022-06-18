@@ -91,11 +91,11 @@ class Cell {
     /// Cell id (only necessary for walls)
     int _id{0};
 
-    /// Vector of bools that holds border conditions. TOP-BOTTOM-LEFT-RIGHT
-    std::array<bool, 4> _border{false, false, false, false};
+    /// Vector of bools that holds border conditions. TOP-BOTTOM-LEFT-RIGHT-NORTHWEST-SOUTHEAST-NORTHEAST-SOUTHWEST
+    std::array<bool, 8> _border{false, false, false, false, false, false, false, false};
     /// Vector of border positions that holds existing borders
     std::vector<border_position> _borders;
     /// Pointers to neighbours. // TOP -  BOTTOM - LEFT - RIGHT - NORTHWEST -
-    /// SOUTEAST
-    std::array<Cell *, 6> _neighbours;
+    /// SOUTEAST - NORTHEAST - SOUTHWEST
+    std::array<Cell *, 8> _neighbours;
 };
