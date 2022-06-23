@@ -37,6 +37,8 @@ Fields::Fields(double nu, double alpha, double beta, double dt, double tau,
       Matrix<double>(imax + 2, jmax + 2,
                      0.0);  // of the momentum equation for U and V respectively
   _RS = Matrix<double>(imax + 2, jmax + 2, 0.0);
+
+  _VOF = Matrix<double>(imax+2, jmax+2, 0.0);
 }
 
 // Calculating differential data for Explicit Euler Scheme
@@ -109,6 +111,30 @@ void Fields::calculate_velocities(Grid &grid) {
   }
 }
 
+void Fields::calculate_vof(Grid &grid){
+  int i,j;
+  for (auto cell : grid.fluid_cells()) {
+    i = cell->i();
+    j = cell->j();
+
+    _VOF(i, j) = _VOF(i, j) - _dt * (Discretization::convection_T(_U,_V,_VOF,i,j));
+  }
+}
+
+void Fields::initialise_vof(Grid &grid){
+  double radius = 5;
+  int i,j;
+  for (auto cell : grid.fluid_cells()){
+    i = cell->i();
+    j = cell->j();
+
+    if((i-grid.domain().imax/2)*(i-grid.domain().imax/2)+(j-grid.domain().jmax/2)*(j-grid.domain().jmax/2)  < radius*radius ){
+      _VOF(i,j) = 1.0;
+    }
+
+  }
+}
+
 // Calculating dt based on CFL conditions
 
 double Fields::calculate_dt(Grid &grid) {
@@ -160,6 +186,7 @@ double &Fields::f(int i, int j) { return _F(i, j); }
 double &Fields::t(int i, int j) { return _T(i, j); }
 double &Fields::g(int i, int j) { return _G(i, j); }
 double &Fields::rs(int i, int j) { return _RS(i, j); }
+double &Fields::vof(int i, int j) {return _VOF(i,j);}
 bool Fields::energy_eq() { return _energy_eq; }
 
 Matrix<double> &Fields::p_matrix() { return _P; }
@@ -169,5 +196,6 @@ Matrix<double> &Fields::f_matrix() { return _F; }
 Matrix<double> &Fields::t_matrix() { return _T; }
 Matrix<double> &Fields::g_matrix() { return _G; }
 Matrix<double> &Fields::rs_matrix() { return _RS; }
+Matrix<double> &Fields::vof_matrix() { return _VOF; }
 
 double Fields::dt() const { return _dt; }

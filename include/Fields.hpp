@@ -72,7 +72,13 @@ class Fields {
    * @param[in] grid in which the calculations are done
    *
    */
+
+  void calculate_vof(Grid &grid);
+
+  
   double calculate_dt(Grid &grid);
+
+  void initialise_vof(Grid &grid);
 
   /// x-velocity index based access and modify
   double &u(int i, int j);
@@ -95,6 +101,8 @@ class Fields {
   /// y-momentum flux index based access and modify
   double &g(int i, int j);
 
+  double &vof(int i, int j);
+
   bool energy_eq();
 
   /// get timestep size
@@ -109,6 +117,7 @@ class Fields {
   Matrix<double> &f_matrix();
   Matrix<double> &g_matrix();
   Matrix<double> &rs_matrix();
+  Matrix<double> &vof_matrix();
 
  private:
   /// x-velocity matrix
@@ -125,6 +134,8 @@ class Fields {
   Matrix<double> _G;
   /// right hand side matrix
   Matrix<double> _RS;
+  /// Scalar Equation
+  Matrix<double> _VOF;
 
   /// kinematic viscosity
   double _nu;

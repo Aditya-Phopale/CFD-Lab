@@ -188,6 +188,8 @@ Case::Case(std::string file_name, int argn, char **args) {
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
                   _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
 
+  _field.initialise_vof(_grid);
+
   _discretization = Discretization(domain.dx, domain.dy, gamma);
   _pressure_solver = std::make_unique<SOR>(omg);
   _max_iter = itermax;
@@ -316,16 +318,17 @@ void Case::simulate() {
   int total_iter = 1;
   std::ofstream logfile;
   // logfile.open("log.txt");
-  for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-  }
 
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
 
-    // Calculating timestep for advancement to the next iteration.
-    dt = _field.calculate_dt(_grid);   
+    // Calculating timestep for advancement to the next iteration.   
+    dt = _field.calculate_dt(_grid);
+    
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
 
     // Calculate new Temperatures
     if (_field.energy_eq()) {
@@ -343,7 +346,6 @@ void Case::simulate() {
 
     iter = 0;  // Pressure poisson solver iteration initialization
     res = std::numeric_limits<double>::max();
-    double num_fluid_cells = _grid.fluid_cells().size();
 
     while (res > _tolerance) {
       if (iter >= _max_iter) {
@@ -358,12 +360,12 @@ void Case::simulate() {
         }
         break;
       }
-      Communication::communicate(_field.p_matrix(), _grid.domain());
       for (int i = 0; i < _boundaries.size(); i++) {
         _boundaries[i]->apply_pressure(_field);
       }
+      Communication::communicate(_field.p_matrix(), _grid.domain());
       res = _pressure_solver->solve(_field, _grid, _boundaries);
-
+      Communication::communicate(_field.p_matrix(), _grid.domain());      
       iter++;
       total_iter++;
       // logfile << "Residual: " << res << " Iteration:" << total_iter <<
@@ -372,9 +374,9 @@ void Case::simulate() {
     // Calculating updated velocities using pressure calculated in the
     // pressure poisson equation
     _field.calculate_velocities(_grid);
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
+
+
+    _field.calculate_vof(_grid);
 
     Communication::communicate(_field.u_matrix(), _grid.domain());
     Communication::communicate(_field.v_matrix(), _grid.domain());
@@ -458,6 +460,10 @@ void Case::output_vtk(int timestep, int rank) {
   Pressure->SetName("pressure");
   Pressure->SetNumberOfComponents(1);
 
+   vtkDoubleArray *Vof = vtkDoubleArray::New();
+  Vof->SetName("vof");
+  Vof->SetNumberOfComponents(1);
+
   // Velocity Array
   vtkDoubleArray *Velocity = vtkDoubleArray::New();
   Velocity->SetName("velocity");
@@ -482,6 +488,8 @@ void Case::output_vtk(int timestep, int rank) {
   for (int j = 1; j < _grid.domain().size_y + 1; j++) {
     for (int i = 1; i < _grid.domain().size_x + 1; i++) {
       double pressure = _field.p(i, j);
+      double vof = _field.vof(i,j);
+      Vof->InsertNextTuple(&vof);
       Pressure->InsertNextTuple(&pressure);
     }
   }
@@ -501,6 +509,8 @@ void Case::output_vtk(int timestep, int rank) {
 
   // Add Pressure to Structured Grid
   structuredGrid->GetCellData()->AddArray(Pressure);
+
+  structuredGrid->GetCellData()->AddArray(Vof);
 
   // Add Velocity to Structured Grid
   structuredGrid->GetPointData()->AddArray(Velocity);
