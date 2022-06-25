@@ -10,6 +10,7 @@ option(gpp9 "compile with gpp9 filesystem" ON)
 # Definition of the C++ Standard 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "-O3")
 #set(gpp9 True)
 
 # Creating the executable of our project and the required dependencies
