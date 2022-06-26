@@ -67,14 +67,14 @@ double Discretization::convection_T(const Matrix<double> &U,
   double term1 =
       (1 / (2 * _dx)) * (U(i, j) * (T(i, j) + T(i + 1, j)) -
                          U(i - 1, j) * (T(i - 1, j) + T(i, j))) +
-      (_gamma / (2 * _dx)) * (fabs(U(i, j)) * (T(i, j) - T(i + 1, j)) -
-                              fabs(U(i - 1, j)) * (T(i - 1, j) - T(i, j)));
+      (1 / (2 * _dx)) * (fabs(U(i, j)) * (T(i, j) - T(i + 1, j)) -
+                         fabs(U(i - 1, j)) * (T(i - 1, j) - T(i, j)));
 
   double term2 =
       (1 / (2 * _dy)) * (V(i, j) * (T(i, j) + T(i, j + 1)) -
                          V(i, j - 1) * (T(i, j - 1) + T(i, j))) +
-      (_gamma / (2 * _dy)) * (fabs(V(i, j)) * (T(i, j) - T(i, j + 1)) -
-                              fabs(V(i, j - 1)) * (T(i, j - 1) - T(i, j)));
+      (1 / (2 * _dy)) * (fabs(V(i, j)) * (T(i, j) - T(i, j + 1)) -
+                         fabs(V(i, j - 1)) * (T(i, j - 1) - T(i, j)));
 
   return term1 + term2;
 };

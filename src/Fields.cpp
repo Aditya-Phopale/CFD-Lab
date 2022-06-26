@@ -117,63 +117,68 @@ void Fields::calculate_vof(Grid &grid) {
   for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
-    std::vector<double> fluxes(4);  // top,right,bottom,left
+    // std::vector<double> fluxes(4);  // top,right,bottom,left
 
-    if (_U(i, j) > 0)
-      fluxes.at(1) = _VOF(i, j) * _U(i, j);
-    else
-      fluxes.at(1) = _VOF(i + 1, j) * _U(i, j);
+    // if (_U(i, j) > 0)
+    //   fluxes.at(1) = _VOF(i, j) * _U(i, j);
+    // else
+    //   fluxes.at(1) = _VOF(i + 1, j) * _U(i, j);
 
-    if (_U(i - 1, j) > 0)
-      fluxes.at(3) = _VOF(i - 1, j) * _U(i - 1, j);
-    else
-      fluxes.at(3) = _VOF(i, j) * _U(i - 1, j);
+    // if (_U(i - 1, j) > 0)
+    //   fluxes.at(3) = _VOF(i - 1, j) * _U(i - 1, j);
+    // else
+    //   fluxes.at(3) = _VOF(i, j) * _U(i - 1, j);
 
-    if (_V(i, j) > 0)
-      fluxes.at(0) = _VOF(i, j) * _V(i, j);
-    else
-      fluxes.at(0) = _VOF(i, j + 1) * _V(i, j);
+    // if (_V(i, j) > 0)
+    //   fluxes.at(0) = _VOF(i, j) * _V(i, j);
+    // else
+    //   fluxes.at(0) = _VOF(i, j + 1) * _V(i, j);
 
-    if (_V(i, j - 1) > 0)
-      fluxes.at(2) = _VOF(i, j - 1) * _V(i, j - 1);
-    else
-      fluxes.at(2) = _VOF(i, j) * _V(i, j - 1);
+    // if (_V(i, j - 1) > 0)
+    //   fluxes.at(2) = _VOF(i, j - 1) * _V(i, j - 1);
+    // else
+    //   fluxes.at(2) = _VOF(i, j) * _V(i, j - 1);
 
-    if (_VOF(i, j) > 0) {
-      double n_x = (1 / grid.dx()) * (_VOF(i + 1, j + 1) + 2 * _VOF(i + 1, j) +
-                                      _VOF(i + 1, j - 1) - _VOF(i - 1, j + 1) -
-                                      2 * _VOF(i - 1, j) - _VOF(i - 1, j - 1));
+    // if (_VOF(i, j) > 0) {
+    //   double n_x = (1 / grid.dx()) * (_VOF(i + 1, j + 1) + 2 * _VOF(i + 1, j)
+    //   +
+    //                                   _VOF(i + 1, j - 1) - _VOF(i - 1, j + 1)
+    //                                   - 2 * _VOF(i - 1, j) - _VOF(i - 1, j -
+    //                                   1));
 
-      double n_y = (1 / grid.dy()) * (_VOF(i + 1, j + 1) + 2 * _VOF(i, j + 1) +
-                                      _VOF(i - 1, j + 1) - _VOF(i + 1, j - 1) -
-                                      2 * _VOF(i, j - 1) - _VOF(i - 1, j - 1));
+    //   double n_y = (1 / grid.dy()) * (_VOF(i + 1, j + 1) + 2 * _VOF(i, j + 1)
+    //   +
+    //                                   _VOF(i - 1, j + 1) - _VOF(i + 1, j - 1)
+    //                                   - 2 * _VOF(i, j - 1) - _VOF(i - 1, j -
+    //                                   1));
 
-      double angle_beta = atan(-n_x / n_y);
-      double angle_alpha = atan(grid.dx() * tan(angle_beta) / grid.dy());
+    //   double angle_beta = atan(-n_x / n_y);
+    //   double angle_alpha = atan(grid.dx() * tan(angle_beta) / grid.dy());
 
-      int cases = set_case(angle_alpha, _VOF(i, j));
+    //   int cases = set_case(angle_alpha, _VOF(i, j));
 
-      std::vector<double> side_fractions =
-          set_side_vf(cases, angle_alpha, _VOF(i, j));
+    //   std::vector<double> side_fractions =
+    //       set_side_vf(cases, angle_alpha, _VOF(i, j));
 
-      double u_left = _U(i, j);
-      double u_right = _U(i - 1, j);
-      double u_top = _V(i, j);
-      double u_bottom = _V(i, j - 1);
+    //   double u_left = _U(i - 1, j);
+    //   double u_right = _U(i, j);
+    //   double u_top = _V(i, j);
+    //   double u_bottom = _V(i, j - 1);
 
-      calculate_vf_fluxes(fluxes, u_left, u_right, u_top, u_bottom, _VOF(i, j),
-                          side_fractions, angle_beta, cases, grid);
+    //   calculate_vf_fluxes(fluxes, u_left, u_right, u_top, u_bottom, _VOF(i,
+    //   j),
+    //                       side_fractions, angle_beta, cases, grid);
 
-      // _VOF(i, j) =
-      //     _VOF(i, j) - _dt * (Discretization::convection_T(_U, _V, _VOF, i,
-      //     j));
-    }
-
-    _VOF(i, j) = _VOF(i, j) - _dt * ((fluxes.at(1) - fluxes.at(3)) / grid.dx() +
-                                     (fluxes.at(0) - fluxes.at(2)) / grid.dy());
-
-    std::cout << _VOF(50, 50) << "\n";
+    _VOF(i, j) =
+        _VOF(i, j) - _dt * (Discretization::convection_T(_U, _V, _VOF, i, j));
   }
+
+  // _VOF(i, j) = _VOF(i, j) - _dt * ((fluxes.at(1) - fluxes.at(3)) /
+  // grid.dx() +
+  //                                  (fluxes.at(0) - fluxes.at(2)) /
+  //                                  grid.dy());
+
+  // std::cout << _VOF(50, 50) << "\n";
 }
 
 void Fields::initialise_vof(Grid &grid) {
@@ -326,9 +331,9 @@ void Fields::calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
     }
     if (u_bottom < 0) {
       if (u_bottom * _dt >= side_fractions.at(1) * grid.dy())
-        fluxes.at(2) = vf * grid.dx() * grid.dy();
+        fluxes.at(2) = -vf * grid.dx() * grid.dy();
       else
-        fluxes.at(2) = 0.5 * u_bottom * _dt *
+        fluxes.at(2) = -0.5 * u_bottom * _dt *
                        (2 - u_bottom * _dt * grid.dy() / side_fractions.at(1)) *
                        side_fractions.at(2) * grid.dx();
     }
@@ -337,7 +342,7 @@ void Fields::calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
         fluxes.at(3) = 0;
       else
         fluxes.at(3) =
-            0.5 *
+            -0.5 *
             pow((u_left * _dt - (1 - side_fractions.at(3)) * grid.dx()), 2) *
             tan(angle_beta);
     }
@@ -364,17 +369,17 @@ void Fields::calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
     }
     if (u_bottom < 0) {
       if (u_bottom * _dt >= side_fractions.at(3) * grid.dy())
-        fluxes.at(2) = u_bottom * _dt * grid.dx();
+        fluxes.at(2) = -u_bottom * _dt * grid.dx();
       else if (u_bottom * _dt <= side_fractions.at(1) * grid.dy())
         fluxes.at(2) =
-            u_bottom * _dt * grid.dx() -
+            -u_bottom * _dt * grid.dx() -
             0.5 * pow((u_bottom * _dt - side_fractions.at(3) * grid.dy()), 2) /
                 tan(angle_beta);
       else
-        fluxes.at(2) = vf * grid.dx() * grid.dy();
+        fluxes.at(2) = -vf * grid.dx() * grid.dy();
     }
     if (u_left < 0) {
-      fluxes.at(3) = u_left * _dt *
+      fluxes.at(3) = -u_left * _dt *
                      (side_fractions.at(3) * grid.dy() +
                       0.5 * u_left * _dt * tan(angle_beta));
     }
@@ -397,7 +402,7 @@ void Fields::calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
         fluxes.at(1) = vf * grid.dx() * grid.dy();
     }
     if (u_bottom < 0) {
-      fluxes.at(2) = u_bottom * _dt *
+      fluxes.at(2) = -u_bottom * _dt *
                      (side_fractions.at(2) * grid.dx() -
                       0.5 * u_bottom * _dt / tan(angle_beta));
     }
@@ -406,12 +411,12 @@ void Fields::calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
         fluxes.at(3) = 0;
       else if (u_left * _dt <= side_fractions.at(1) * grid.dx())
         fluxes.at(3) =
-            0.5 *
+            -0.5 *
             pow((u_left * _dt - (1 - side_fractions.at(3)) * grid.dx()), 2) *
             tan(angle_beta);
       else
         fluxes.at(3) =
-            u_left * _dt * grid.dy() - (1 - vf) * grid.dx() * grid.dy();
+            -u_left * _dt * grid.dy() - (1 - vf) * grid.dx() * grid.dy();
     }
   }
   if (cases == 4) {
@@ -435,19 +440,19 @@ void Fields::calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
     }
     if (u_bottom < 0) {
       if (u_bottom * _dt <= side_fractions.at(3) * grid.dy())
-        fluxes.at(2) = u_bottom * _dt * grid.dx();
+        fluxes.at(2) = -u_bottom * _dt * grid.dx();
       else
         fluxes.at(2) =
-            u_bottom * _dt * grid.dx() -
+            -u_bottom * _dt * grid.dx() -
             0.5 * pow((u_bottom * _dt - side_fractions.at(3) * grid.dy()), 2) /
                 tan(angle_beta);
     }
     if (u_left < 0) {
       if (u_left * _dt <= (1 - side_fractions.at(0)) * grid.dx())
         fluxes.at(3) =
-            u_left * _dt * grid.dy() - (1 - vf) * grid.dx() * grid.dy();
+            -u_left * _dt * grid.dy() - (1 - vf) * grid.dx() * grid.dy();
       else
-        fluxes.at(3) = u_left * _dt *
+        fluxes.at(3) = -u_left * _dt *
                        (side_fractions.at(3) * grid.dy() +
                         0.5 * u_left * _dt * tan(angle_beta));
     }
