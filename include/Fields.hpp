@@ -153,13 +153,12 @@ class Fields {
 
   bool _energy_eq;
 
-  int set_case(double a);
+  int set_case(double a, double vf);
 
   std::vector<double> set_side_vf(int cases, double angle_alpha, double vf);
 
-  std::vector<double> calculate_vf_fluxes(double u_left, double u_right,
-                                          double u_top, double u_bottom,
-                                          double vf,
-                                          std::vector<double> side_fractions,
-                                          double angle_beta, int cases);
+  void calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
+                           double u_right, double u_top, double u_bottom,
+                           double vf, std::vector<double> side_fractions,
+                           double angle_beta, int cases, Grid &grid);
 };

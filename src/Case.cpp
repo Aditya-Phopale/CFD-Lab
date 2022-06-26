@@ -182,7 +182,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(1) = rec_data.at(8);
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
-  
+
   _grid = Grid(_geom_name, domain);
 
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
@@ -307,7 +307,6 @@ void Case::set_file_names(std::string file_name) {
 //  * files.
 //  */
 void Case::simulate() {
-
   // Defining parameters for running of the loop
   double t = 0.0;
   double dt = _field.dt();
@@ -322,10 +321,9 @@ void Case::simulate() {
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
-
-    // Calculating timestep for advancement to the next iteration.   
+    // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
-    
+
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
     }
@@ -336,7 +334,8 @@ void Case::simulate() {
       Communication::communicate(_field.t_matrix(), _grid.domain());
     }
 
-    // Calculating Fluxes (_F and _G) for velocities in X and Y directions respectively.
+    // Calculating Fluxes (_F and _G) for velocities in X and Y directions
+    // respectively.
     _field.calculate_fluxes(_grid);
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
@@ -365,7 +364,7 @@ void Case::simulate() {
       }
       Communication::communicate(_field.p_matrix(), _grid.domain());
       res = _pressure_solver->solve(_field, _grid, _boundaries);
-      Communication::communicate(_field.p_matrix(), _grid.domain());      
+      Communication::communicate(_field.p_matrix(), _grid.domain());
       iter++;
       total_iter++;
       // logfile << "Residual: " << res << " Iteration:" << total_iter <<
@@ -375,13 +374,11 @@ void Case::simulate() {
     // pressure poisson equation
     _field.calculate_velocities(_grid);
 
-
     _field.calculate_vof(_grid);
 
     Communication::communicate(_field.u_matrix(), _grid.domain());
     Communication::communicate(_field.v_matrix(), _grid.domain());
 
-    
     // Updating t for the next step
     t += dt;
     timestep++;
@@ -460,7 +457,7 @@ void Case::output_vtk(int timestep, int rank) {
   Pressure->SetName("pressure");
   Pressure->SetNumberOfComponents(1);
 
-   vtkDoubleArray *Vof = vtkDoubleArray::New();
+  vtkDoubleArray *Vof = vtkDoubleArray::New();
   Vof->SetName("vof");
   Vof->SetNumberOfComponents(1);
 
@@ -488,7 +485,7 @@ void Case::output_vtk(int timestep, int rank) {
   for (int j = 1; j < _grid.domain().size_y + 1; j++) {
     for (int i = 1; i < _grid.domain().size_x + 1; i++) {
       double pressure = _field.p(i, j);
-      double vof = _field.vof(i,j);
+      double vof = _field.vof(i, j);
       Vof->InsertNextTuple(&vof);
       Pressure->InsertNextTuple(&pressure);
     }

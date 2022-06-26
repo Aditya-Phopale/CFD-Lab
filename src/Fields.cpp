@@ -113,37 +113,66 @@ void Fields::calculate_velocities(Grid &grid) {
 
 void Fields::calculate_vof(Grid &grid) {
   int i, j;
+
   for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
+    std::vector<double> fluxes(4);  // top,right,bottom,left
 
-    double n_x = (1 / grid.dx()) *
-                 (_VOF(i + 1, j + 1) + 2 * _VOF(i + 1, j) + _VOF(i + 1, j - 1) -
-                  _VOF(i - 1, j + 1) - 2 * _VOF(i - 1, j) - _VOF(i - 1, j - 1));
+    if (_U(i, j) > 0)
+      fluxes.at(1) = _VOF(i, j) * _U(i, j);
+    else
+      fluxes.at(1) = _VOF(i + 1, j) * _U(i, j);
 
-    double n_y = (1 / grid.dy()) *
-                 (_VOF(i + 1, j + 1) + 2 * _VOF(i, j + 1) + _VOF(i - 1, j + 1) -
-                  _VOF(i + 1, j - 1) - 2 * _VOF(i, j - 1) - _VOF(i - 1, j - 1));
+    if (_U(i - 1, j) > 0)
+      fluxes.at(3) = _VOF(i - 1, j) * _U(i - 1, j);
+    else
+      fluxes.at(3) = _VOF(i, j) * _U(i - 1, j);
 
-    double angle_beta = atan(-n_x / n_y);
-    double angle_alpha = atan(grid.dx() * tan(angle_beta) / grid.dy());
+    if (_V(i, j) > 0)
+      fluxes.at(0) = _VOF(i, j) * _V(i, j);
+    else
+      fluxes.at(0) = _VOF(i, j + 1) * _V(i, j);
 
-    int cases = set_case(angle_alpha, _VOF(i, j));
+    if (_V(i, j - 1) > 0)
+      fluxes.at(2) = _VOF(i, j - 1) * _V(i, j - 1);
+    else
+      fluxes.at(2) = _VOF(i, j) * _V(i, j - 1);
 
-    std::vector<double> side_fractions =
-        std::vector<double> set_side_vf(cases, angle_alpha, _VOF(i, j));
+    if (_VOF(i, j) > 0) {
+      double n_x = (1 / grid.dx()) * (_VOF(i + 1, j + 1) + 2 * _VOF(i + 1, j) +
+                                      _VOF(i + 1, j - 1) - _VOF(i - 1, j + 1) -
+                                      2 * _VOF(i - 1, j) - _VOF(i - 1, j - 1));
 
-    double u_left = _U(i, j);
-    double u_right = _U(i - 1, j);
-    double u_top = _V(i, j);
-    double u_bottom = _V(i, j - 1);
+      double n_y = (1 / grid.dy()) * (_VOF(i + 1, j + 1) + 2 * _VOF(i, j + 1) +
+                                      _VOF(i - 1, j + 1) - _VOF(i + 1, j - 1) -
+                                      2 * _VOF(i, j - 1) - _VOF(i - 1, j - 1));
 
-    std::vector<double> calculate_vf_fluxes(u_left, u_right, u_top, u_bottom,
-                                            _VOF(i, j), side_fractions,
-                                            angle_beta, cases);
+      double angle_beta = atan(-n_x / n_y);
+      double angle_alpha = atan(grid.dx() * tan(angle_beta) / grid.dy());
 
-    _VOF(i, j) =
-        _VOF(i, j) - _dt * (Discretization::convection_T(_U, _V, _VOF, i, j));
+      int cases = set_case(angle_alpha, _VOF(i, j));
+
+      std::vector<double> side_fractions =
+          set_side_vf(cases, angle_alpha, _VOF(i, j));
+
+      double u_left = _U(i, j);
+      double u_right = _U(i - 1, j);
+      double u_top = _V(i, j);
+      double u_bottom = _V(i, j - 1);
+
+      calculate_vf_fluxes(fluxes, u_left, u_right, u_top, u_bottom, _VOF(i, j),
+                          side_fractions, angle_beta, cases, grid);
+
+      // _VOF(i, j) =
+      //     _VOF(i, j) - _dt * (Discretization::convection_T(_U, _V, _VOF, i,
+      //     j));
+    }
+
+    _VOF(i, j) = _VOF(i, j) - _dt * ((fluxes.at(1) - fluxes.at(3)) / grid.dx() +
+                                     (fluxes.at(0) - fluxes.at(2)) / grid.dy());
+
+    std::cout << _VOF(50, 50) << "\n";
   }
 }
 
@@ -245,7 +274,7 @@ int Fields::set_case(double angle_alpha, double vof) {
   }
 }
 
-std::vector<double>::Fields set_side_vf(int cases, double angle_alpha,
+std::vector<double> Fields::set_side_vf(int cases, double angle_alpha,
                                         double vf) {
   std::vector<double> side_fractions(4);  // top,right,bottom,left
   if (cases == 1) {
@@ -273,12 +302,10 @@ std::vector<double>::Fields set_side_vf(int cases, double angle_alpha,
   return side_fractions;
 }
 
-std::vector<double> calculate_vf_fluxes(double u_left, double u_right,
-                                        double u_top, double u_bottom,
-                                        double vf,
-                                        std::vector<double> side_fractions,
-                                        double angle_beta, int cases) {
-  std::vector<double> fluxes(4);
+void Fields::calculate_vf_fluxes(std::vector<double> &fluxes, double u_left,
+                                 double u_right, double u_top, double u_bottom,
+                                 double vf, std::vector<double> side_fractions,
+                                 double angle_beta, int cases, Grid &grid) {
   if (cases == 1) {
     if (u_top > 0) {
       if (u_top * _dt >= (1 - side_fractions.at(1)) * grid.dy())
@@ -301,10 +328,9 @@ std::vector<double> calculate_vf_fluxes(double u_left, double u_right,
       if (u_bottom * _dt >= side_fractions.at(1) * grid.dy())
         fluxes.at(2) = vf * grid.dx() * grid.dy();
       else
-        fluxes.at(2) =
-            0.5 * u_bottom *
-            _dt(2 - u_bottom * _dt * grid.dy() / side_fractions.at(1)) *
-            side_fractions.at(2) * grid.dx();
+        fluxes.at(2) = 0.5 * u_bottom * _dt *
+                       (2 - u_bottom * _dt * grid.dy() / side_fractions.at(1)) *
+                       side_fractions.at(2) * grid.dx();
     }
     if (u_left < 0) {
       if (u_left * _dt <= (1 - side_fractions.at(2)) * grid.dx())
@@ -333,7 +359,7 @@ std::vector<double> calculate_vf_fluxes(double u_left, double u_right,
     }
     if (u_right > 0) {
       fluxes.at(1) = u_right * _dt *
-                     (side_fractions.at(1).grid.dy() -
+                     (side_fractions.at(1) * grid.dy() -
                       0.5 * u_right * _dt * tan(angle_beta));
     }
     if (u_bottom < 0) {
