@@ -38,7 +38,7 @@ Fields::Fields(double nu, double alpha, double beta, double dt, double tau,
                      0.0);  // of the momentum equation for U and V respectively
   _RS = Matrix<double>(imax + 2, jmax + 2, 0.0);
 
-  _VOF = Matrix<double>(imax+2, jmax+2, 0.0);
+  _VOF = Matrix<double>(imax + 2, jmax + 2, 0.0);
 }
 
 // Calculating differential data for Explicit Euler Scheme
@@ -111,27 +111,54 @@ void Fields::calculate_velocities(Grid &grid) {
   }
 }
 
-void Fields::calculate_vof(Grid &grid){
-  int i,j;
+void Fields::calculate_vof(Grid &grid) {
+  int i, j;
   for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
 
-    _VOF(i, j) = _VOF(i, j) - _dt * (Discretization::convection_T(_U,_V,_VOF,i,j));
+    double n_x = (1 / grid.dx()) *
+                 (_VOF(i + 1, j + 1) + 2 * _VOF(i + 1, j) + _VOF(i + 1, j - 1) -
+                  _VOF(i - 1, j + 1) - 2 * _VOF(i - 1, j) - _VOF(i - 1, j - 1));
+
+    double n_y = (1 / grid.dy()) *
+                 (_VOF(i + 1, j + 1) + 2 * _VOF(i, j + 1) + _VOF(i - 1, j + 1) -
+                  _VOF(i + 1, j - 1) - 2 * _VOF(i, j - 1) - _VOF(i - 1, j - 1));
+
+    double angle_beta = atan(-n_x / n_y);
+    double angle_alpha = atan(grid.dx() * tan(angle_beta) / grid.dy());
+
+    int cases = set_case(angle_alpha, _VOF(i, j));
+
+    std::vector<double> side_fractions =
+        std::vector<double> set_side_vf(cases, angle_alpha, _VOF(i, j));
+
+    double u_left = _U(i, j);
+    double u_right = _U(i - 1, j);
+    double u_top = _V(i, j);
+    double u_bottom = _V(i, j - 1);
+
+    std::vector<double> calculate_vf_fluxes(u_left, u_right, u_top, u_bottom,
+                                            _VOF(i, j), side_fractions,
+                                            angle_beta, cases);
+
+    _VOF(i, j) =
+        _VOF(i, j) - _dt * (Discretization::convection_T(_U, _V, _VOF, i, j));
   }
 }
 
-void Fields::initialise_vof(Grid &grid){
+void Fields::initialise_vof(Grid &grid) {
   double radius = 5;
-  int i,j;
-  for (auto cell : grid.fluid_cells()){
+  int i, j;
+  for (auto cell : grid.fluid_cells()) {
     i = cell->i();
     j = cell->j();
 
-    if((i-grid.domain().imax/2)*(i-grid.domain().imax/2)+(j-grid.domain().jmax/2)*(j-grid.domain().jmax/2)  < radius*radius ){
-      _VOF(i,j) = 1.0;
+    if ((i - grid.domain().imax / 2) * (i - grid.domain().imax / 2) +
+            (j - grid.domain().jmax / 2) * (j - grid.domain().jmax / 2) <
+        radius * radius) {
+      _VOF(i, j) = 1.0;
     }
-
   }
 }
 
@@ -186,7 +213,7 @@ double &Fields::f(int i, int j) { return _F(i, j); }
 double &Fields::t(int i, int j) { return _T(i, j); }
 double &Fields::g(int i, int j) { return _G(i, j); }
 double &Fields::rs(int i, int j) { return _RS(i, j); }
-double &Fields::vof(int i, int j) {return _VOF(i,j);}
+double &Fields::vof(int i, int j) { return _VOF(i, j); }
 bool Fields::energy_eq() { return _energy_eq; }
 
 Matrix<double> &Fields::p_matrix() { return _P; }
@@ -199,3 +226,204 @@ Matrix<double> &Fields::rs_matrix() { return _RS; }
 Matrix<double> &Fields::vof_matrix() { return _VOF; }
 
 double Fields::dt() const { return _dt; }
+
+int Fields::set_case(double angle_alpha, double vof) {
+  if (angle_alpha < M_PI / 4) {
+    if (vof <= 0.5 * tan(angle_alpha))
+      return 1;
+    else if (vof <= 1 - 0.5 * tan(angle_alpha))
+      return 2;
+    else
+      return 4;
+  } else {
+    if (vof <= 0.5 / tan(angle_alpha))
+      return 1;
+    else if (vof <= 1 - 0.5 / tan(angle_alpha))
+      return 3;
+    else
+      return 4;
+  }
+}
+
+std::vector<double>::Fields set_side_vf(int cases, double angle_alpha,
+                                        double vf) {
+  std::vector<double> side_fractions(4);  // top,right,bottom,left
+  if (cases == 1) {
+    side_fractions.at(0) = 0;
+    side_fractions.at(1) = std::sqrt(2 * vf * tan(angle_alpha));
+    side_fractions.at(2) = std::sqrt(2 * vf / tan(angle_alpha));
+    side_fractions.at(3) = 0;
+  } else if (cases == 2) {
+    side_fractions.at(0) = 0;
+    side_fractions.at(1) = vf + 0.5 * tan(angle_alpha);
+    side_fractions.at(2) = 1;
+    side_fractions.at(3) = vf - 0.5 * tan(angle_alpha);
+  } else if (cases == 3) {
+    side_fractions.at(0) = vf - 0.5 / tan(angle_alpha);
+    side_fractions.at(1) = 1;
+    side_fractions.at(2) = vf + 0.5 / tan(angle_alpha);
+    side_fractions.at(3) = 0;
+  } else {
+    side_fractions.at(0) = 1 - std::sqrt(2 * vf / tan(angle_alpha));
+    side_fractions.at(1) = 1;
+    side_fractions.at(2) = 1;
+    side_fractions.at(3) = 1 - std::sqrt(2 * vf * tan(angle_alpha));
+  }
+
+  return side_fractions;
+}
+
+std::vector<double> calculate_vf_fluxes(double u_left, double u_right,
+                                        double u_top, double u_bottom,
+                                        double vf,
+                                        std::vector<double> side_fractions,
+                                        double angle_beta, int cases) {
+  std::vector<double> fluxes(4);
+  if (cases == 1) {
+    if (u_top > 0) {
+      if (u_top * _dt >= (1 - side_fractions.at(1)) * grid.dy())
+        fluxes.at(0) = 0;
+      else
+        fluxes.at(0) =
+            0.5 *
+            pow((u_top * _dt - (1 - side_fractions.at(1)) * grid.dy()), 2) /
+            tan(angle_beta);
+    }
+    if (u_right > 0) {
+      if (u_right * _dt >= side_fractions.at(2) * grid.dy())
+        fluxes.at(1) = vf * grid.dx() * grid.dy();
+      else
+        fluxes.at(1) = 0.5 * u_right * _dt *
+                       (2 - u_right * _dt * grid.dx() / side_fractions.at(2)) *
+                       side_fractions.at(1) * grid.dy();
+    }
+    if (u_bottom < 0) {
+      if (u_bottom * _dt >= side_fractions.at(1) * grid.dy())
+        fluxes.at(2) = vf * grid.dx() * grid.dy();
+      else
+        fluxes.at(2) =
+            0.5 * u_bottom *
+            _dt(2 - u_bottom * _dt * grid.dy() / side_fractions.at(1)) *
+            side_fractions.at(2) * grid.dx();
+    }
+    if (u_left < 0) {
+      if (u_left * _dt <= (1 - side_fractions.at(2)) * grid.dx())
+        fluxes.at(3) = 0;
+      else
+        fluxes.at(3) =
+            0.5 *
+            pow((u_left * _dt - (1 - side_fractions.at(3)) * grid.dx()), 2) *
+            tan(angle_beta);
+    }
+  }
+
+  if (cases == 2) {
+    if (u_top > 0) {
+      if (u_top * _dt >= (1 - side_fractions.at(1)) * grid.dy())
+        fluxes.at(0) = 0;
+      else if (u_top * _dt <= (1 - side_fractions.at(3)) * grid.dy())
+        fluxes.at(0) =
+            0.5 *
+            pow((u_top * _dt - (1 - side_fractions.at(1)) * grid.dy()), 2) /
+            tan(angle_beta);
+      else
+        fluxes.at(0) = u_right * _dt *
+                       (side_fractions.at(1) * grid.dy() -
+                        0.5 * u_right * _dt * tan(angle_beta));
+    }
+    if (u_right > 0) {
+      fluxes.at(1) = u_right * _dt *
+                     (side_fractions.at(1).grid.dy() -
+                      0.5 * u_right * _dt * tan(angle_beta));
+    }
+    if (u_bottom < 0) {
+      if (u_bottom * _dt >= side_fractions.at(3) * grid.dy())
+        fluxes.at(2) = u_bottom * _dt * grid.dx();
+      else if (u_bottom * _dt <= side_fractions.at(1) * grid.dy())
+        fluxes.at(2) =
+            u_bottom * _dt * grid.dx() -
+            0.5 * pow((u_bottom * _dt - side_fractions.at(3) * grid.dy()), 2) /
+                tan(angle_beta);
+      else
+        fluxes.at(2) = vf * grid.dx() * grid.dy();
+    }
+    if (u_left < 0) {
+      fluxes.at(3) = u_left * _dt *
+                     (side_fractions.at(3) * grid.dy() +
+                      0.5 * u_left * _dt * tan(angle_beta));
+    }
+  }
+  if (cases == 3) {
+    if (u_top > 0) {
+      fluxes.at(0) = u_top * _dt *
+                     (side_fractions.at(0) * grid.dx() +
+                      0.5 * u_top * _dt / tan(angle_beta));
+    }
+    if (u_right > 0) {
+      if (u_right * _dt >= side_fractions.at(0) * grid.dx())
+        fluxes.at(1) = u_right * _dt * grid.dy();
+      else if (u_right * _dt <= side_fractions.at(2) * grid.dx())
+        fluxes.at(1) =
+            u_right * _dt * grid.dy() -
+            0.5 * pow((u_right * _dt - side_fractions.at(0) * grid.dx()), 2) *
+                tan(angle_beta);
+      else
+        fluxes.at(1) = vf * grid.dx() * grid.dy();
+    }
+    if (u_bottom < 0) {
+      fluxes.at(2) = u_bottom * _dt *
+                     (side_fractions.at(2) * grid.dx() -
+                      0.5 * u_bottom * _dt / tan(angle_beta));
+    }
+    if (u_left < 0) {
+      if (u_left * _dt <= side_fractions.at(2) * grid.dx())
+        fluxes.at(3) = 0;
+      else if (u_left * _dt <= side_fractions.at(1) * grid.dx())
+        fluxes.at(3) =
+            0.5 *
+            pow((u_left * _dt - (1 - side_fractions.at(3)) * grid.dx()), 2) *
+            tan(angle_beta);
+      else
+        fluxes.at(3) =
+            u_left * _dt * grid.dy() - (1 - vf) * grid.dx() * grid.dy();
+    }
+  }
+  if (cases == 4) {
+    if (u_top > 0) {
+      if (u_top * _dt >= (1 - side_fractions.at(3) * grid.dy()))
+        fluxes.at(0) =
+            u_top * _dt * grid.dx() - (1 - vf) * grid.dx() * grid.dy();
+      else
+        fluxes.at(0) =
+            u_top * _dt *
+            (side_fractions.at(0) * _dt + 0.5 * u_top * _dt / tan(angle_beta));
+    }
+    if (u_right > 0) {
+      if (u_right * _dt >= side_fractions.at(0) * grid.dx())
+        fluxes.at(1) = u_right * _dt * grid.dy();
+      else
+        fluxes.at(1) =
+            u_right * _dt * grid.dy() -
+            0.5 * tan(angle_beta) *
+                pow((u_right * _dt - side_fractions.at(0) * grid.dx()), 2);
+    }
+    if (u_bottom < 0) {
+      if (u_bottom * _dt <= side_fractions.at(3) * grid.dy())
+        fluxes.at(2) = u_bottom * _dt * grid.dx();
+      else
+        fluxes.at(2) =
+            u_bottom * _dt * grid.dx() -
+            0.5 * pow((u_bottom * _dt - side_fractions.at(3) * grid.dy()), 2) /
+                tan(angle_beta);
+    }
+    if (u_left < 0) {
+      if (u_left * _dt <= (1 - side_fractions.at(0)) * grid.dx())
+        fluxes.at(3) =
+            u_left * _dt * grid.dy() - (1 - vf) * grid.dx() * grid.dy();
+      else
+        fluxes.at(3) = u_left * _dt *
+                       (side_fractions.at(3) * grid.dy() +
+                        0.5 * u_left * _dt * tan(angle_beta));
+    }
+  }
+}

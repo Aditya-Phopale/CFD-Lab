@@ -75,7 +75,6 @@ class Fields {
 
   void calculate_vof(Grid &grid);
 
-  
   double calculate_dt(Grid &grid);
 
   void initialise_vof(Grid &grid);
@@ -153,4 +152,14 @@ class Fields {
   double _beta;
 
   bool _energy_eq;
+
+  int set_case(double a);
+
+  std::vector<double> set_side_vf(int cases, double angle_alpha, double vf);
+
+  std::vector<double> calculate_vf_fluxes(double u_left, double u_right,
+                                          double u_top, double u_bottom,
+                                          double vf,
+                                          std::vector<double> side_fractions,
+                                          double angle_beta, int cases);
 };
