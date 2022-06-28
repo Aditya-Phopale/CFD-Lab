@@ -13,14 +13,11 @@ ylength      2
 #            number of cells
 #--------------------------------------------
 imax         100
-jmax         20
-<<<<<<< HEAD
-iproc        6
-jproc        1
-=======
-iproc        2
-jproc        2
->>>>>>> trial2
+jmax         40
+
+iproc        1
+jproc        6
+
 
 #--------------------------------------------
 #               time steps

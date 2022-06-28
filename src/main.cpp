@@ -4,6 +4,7 @@ date file is provided.
 */
 #include <mpi.h>
 
+#include <chrono>
 #include <iostream>
 #include <string>
 
@@ -11,6 +12,7 @@ date file is provided.
 #include "Communication.hpp"
 
 int main(int argn, char **args) {
+  auto start = std::chrono::steady_clock::now();
   Communication::init_parallel(argn, args);
   if (argn > 1) {
     std::string file_name{args[1]};
@@ -22,4 +24,7 @@ int main(int argn, char **args) {
               << std::endl;
   }
   Communication::finalize();
+  auto end = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed_time = end - start;
+  std::cout << "\nElapsed time: " << elapsed_time.count() << "\n";
 }

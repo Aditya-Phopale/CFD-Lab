@@ -10,6 +10,7 @@ saved in the defined output folder.
 #include <algorithm>
 
 #include "Enums.hpp"
+#include "Particle.hpp"
 #ifdef GCC_VERSION_9_OR_HIGHER
 #include <filesystem>
 #else
@@ -74,6 +75,7 @@ Case::Case(std::string file_name, int argn, char **args) {
   double temp5;
   int iproc = 1;
   int jproc = 1;
+  int ppc = 0; /* Particles per cell*/
   // Assigning parameters from the file to variables.
 
   if (file.is_open()) {
@@ -114,6 +116,7 @@ Case::Case(std::string file_name, int argn, char **args) {
         if (var == "energy_eq") file >> energy_eqn;
         if (var == "iproc") file >> iproc;
         if (var == "jproc") file >> jproc;
+        if (var == "ppc") file >> ppc;
       }
     }
   }
@@ -184,6 +187,11 @@ Case::Case(std::string file_name, int argn, char **args) {
   }
 
   _grid = Grid(_geom_name, domain);
+  std::vector<particle> particles;
+
+  if (ppc > 0) {
+    particles = initialize_particles(ppc, _grid);
+  }
 
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
                   _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
@@ -221,7 +229,7 @@ Case::Case(std::string file_name, int argn, char **args) {
         std::make_unique<AdiabaticBoundary>(_grid.adiabatic_cells()));
   }
 
-  output_vtk(0, Communication::rank);
+  // output_vtk(0, Communication::rank);
 }
 
 void Case::set_file_names(std::string file_name) {
@@ -316,14 +324,14 @@ void Case::simulate() {
   std::ofstream logfile;
   // logfile.open("log.txt");
   for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
+    _boundaries[i]->apply(_field);
   }
 
   // Following is the actual loop that runs till the defined time limit.
 
   while (t <= _t_end) {
     // Calculating timestep for advancement to the next iteration.
-    dt = _field.calculate_dt(_grid);   
+    dt = _field.calculate_dt(_grid);
 
     // Calculate new Temperatures
     if (_field.energy_eq()) {
@@ -342,14 +350,14 @@ void Case::simulate() {
 
     iter = 0;  // Pressure poisson solver iteration initialization
     res = std::numeric_limits<double>::max();
-    double num_fluid_cells = _grid.fluid_cells().size();
 
     while (res > _tolerance) {
       if (iter >= _max_iter) {
         if (Communication::rank == 0) {
           std::cout << "Pressure poisson solver did not converge to the given "
                        "tolerance...\n ";
-          std::cout << "Timestep size: " << setw(10) << dt << " | "
+          std::cout << Communication::rank << " "
+                    << "Timestep size: " << setw(10) << dt << " | "
                     << "Time: " << setw(8) << t << setw(3) << " | "
                     << "Residual: " << setw(11) << res << setw(3) << " | "
                     << "Pressure Poisson Iterations: " << setw(3) << iter
@@ -378,7 +386,6 @@ void Case::simulate() {
     Communication::communicate(_field.u_matrix(), _grid.domain());
     Communication::communicate(_field.v_matrix(), _grid.domain());
 
-    
     // Updating t for the next step
     t += dt;
     timestep++;

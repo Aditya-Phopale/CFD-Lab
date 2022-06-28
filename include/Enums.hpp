@@ -17,6 +17,7 @@ const int outflow = 2;
 const int fixed_wall_3 = 3;
 const int fixed_wall_4 = 4;
 const int fixed_wall_5 = 5;
+const int empty = 7;
 }  // namespace cellID
 
 enum class border_position {
@@ -27,7 +28,14 @@ enum class border_position {
   NORTHWEST,
   SOUTHEAST,
   NORTHEAST,
-  SOUTHWEST
+  SOUTHWEST,
+  NORTHSOUTH,
+  EASTWEST,
+  NORTHEASTWEST,
+  NORTHEASTSOUTH,
+  NORTHWESTSOUTH,
+  EASTWESTSOUTH,
+  NORTHEASTWESTSOUTH
 };
 
 namespace border {
@@ -39,6 +47,7 @@ const int RIGHT = 3;
 
 enum class cell_type {
   FLUID,
+  EMPTY,
   FIXED_WALL3,
   FIXED_WALL4,
   MOVING_WALL,

@@ -81,7 +81,7 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
           _buffer.push_back(&_cells(i, j));
         } else {
           _fluid_cells.push_back(&_cells(i, j));
-         }
+        }
 
       } else if (geometry_data.at(i_geom).at(j_geom) == cellID::fixed_wall_3) {
         _cells(i, j) = Cell(i, j, cell_type::FIXED_WALL3,
@@ -116,6 +116,9 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
                             geometry_data.at(i_geom).at(j_geom));
 
         _moving_wall_cells.push_back(&_cells(i, j));
+      } else if (geometry_data.at(i_geom).at(j_geom) == cellID::empty) {
+        _cells(i, j) =
+            Cell(i, j, cell_type::EMPTY, geometry_data.at(i_geom).at(j_geom));
       }
       ++i;
     }
