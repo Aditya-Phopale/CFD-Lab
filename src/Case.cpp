@@ -10,7 +10,7 @@ saved in the defined output folder.
 #include <algorithm>
 
 #include "Enums.hpp"
-#include "Particle.hpp"
+
 #ifdef GCC_VERSION_9_OR_HIGHER
 #include <filesystem>
 #else
@@ -187,10 +187,15 @@ Case::Case(std::string file_name, int argn, char **args) {
   }
 
   _grid = Grid(_geom_name, domain);
-  std::vector<particle> particles;
 
   if (ppc > 0) {
-    particles = initialize_particles(ppc, _grid);
+    _grid.set_particles(ppc);
+  }
+
+  for (auto &elem : _grid.surface_cells()) {
+    _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(),
+                                          _grid.fluid_cells().end(), elem),
+                              _grid.fluid_cells().end());
   }
 
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,

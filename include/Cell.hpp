@@ -72,6 +72,13 @@ class Cell {
    */
   bool is_border(border_position position) const;
 
+  bool operator==(const Cell &rhs) {
+    if (this->_i == rhs._i && this->_j == rhs._j)
+      return true;
+    else
+      return false;
+  }
+
   /// Getter of x index
   int i() const;
   /// Getter of y index
@@ -93,9 +100,9 @@ class Cell {
 
   /// Vector of bools that holds border conditions.
   /// TOP-BOTTOM-LEFT-RIGHT-NORTHWEST-SOUTHEAST-NORTHEAST-SOUTHWEST
-  std::array<bool, 8> _border{false, false, false, false, false,
-                              false, false, false, false, false,
-                              false, false, false, false, false};
+  std::array<bool, 15> _border{false, false, false, false, false,
+                               false, false, false, false, false,
+                               false, false, false, false, false};
   /// Vector of border positions that holds existing borders
   std::vector<border_position> _borders;
   /// Pointers to neighbours. // TOP -  BOTTOM - LEFT - RIGHT - NORTHWEST -

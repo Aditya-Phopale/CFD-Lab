@@ -276,7 +276,8 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
       _cells(i, j).set_neighbour(&_cells(i, j + 1), border_position::TOP);
       _cells(i, j).set_neighbour(&_cells(i, j - 1), border_position::BOTTOM);
 
-      if (_cells(i, j).type() != cell_type::FLUID) {
+      if (_cells(i, j).type() != cell_type::FLUID &&
+          _cells(i, j).type() != cell_type::EMPTY) {
         if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
                 cell_type::FLUID &&
             _cells(i, j).neighbour(border_position::TOP)->type() ==
@@ -323,6 +324,133 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
         if (_cells(i, j).neighbour(border_position::TOP)->type() ==
             cell_type::FLUID) {
           _cells(i, j).add_border(border_position::TOP);
+          continue;
+        }
+      }
+
+      if (_cells(i, j).type() == cell_type::FLUID) {
+        if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::NORTHEASTWESTSOUTH);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::EASTWESTSOUTH);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::NORTHWESTSOUTH);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::NORTHEASTSOUTH);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::NORTHEASTWEST);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::EASTWEST);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::NORTHSOUTH);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::SOUTHWEST);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::NORTHEAST);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::SOUTHEAST);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY &&
+            _cells(i, j).neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::NORTHWEST);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
+            cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::RIGHT);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
+            cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::LEFT);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::TOP)->type() ==
+            cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::TOP);
+          _surface_cells.push_back(&_cells(i, j));
+          continue;
+        }
+        if (_cells(i, j).neighbour(border_position::BOTTOM)->type() ==
+            cell_type::EMPTY) {
+          _cells(i, j).add_border(border_position::BOTTOM);
+          _surface_cells.push_back(&_cells(i, j));
           continue;
         }
       }
@@ -395,7 +523,14 @@ double Grid::dy() const { return _domain.dy; }
 
 const Domain &Grid::domain() const { return _domain; }
 
-const std::vector<Cell *> &Grid::fluid_cells() const { return _fluid_cells; }
+std::vector<Cell *> &Grid::fluid_cells() { return _fluid_cells; }
+
+void Grid::set_particles(int ppc) {
+  _particles = initialize_particles(ppc);
+  // for (auto &elem : p) {
+  //   _particles.push_back(elem);
+  // }
+}
 
 const std::vector<Cell *> &Grid::fixed_wall_cells() const {
   return _fixed_wall_cells;
@@ -411,6 +546,10 @@ const std::vector<Cell *> &Grid::outlet_cells() const { return _outlet_cells; }
 
 const std::vector<Cell *> &Grid::adiabatic_cells() const {
   return _adiabatic_cells;
+}
+
+const std::vector<Cell *> &Grid::surface_cells() const {
+  return _surface_cells;
 }
 
 const std::vector<Cell *> &Grid::buffer() const { return _buffer; }

@@ -10,8 +10,8 @@ ylength      6
 imax         300
 jmax         300
 
-iproc        3
-jproc        2
+iproc        1
+jproc        1
 
 #--------------------------------------------
 #               time steps

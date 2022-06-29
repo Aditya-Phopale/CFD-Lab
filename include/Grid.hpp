@@ -10,6 +10,7 @@
 #include "Datastructures.hpp"
 #include "Domain.hpp"
 #include "Enums.hpp"
+#include "Particle.hpp"
 
 /**
  * @brief Data structure holds cells and related sub-containers
@@ -55,7 +56,7 @@ class Grid {
    *
    * @param[out] vector of fluid cells
    */
-  const std::vector<Cell *> &fluid_cells() const;
+  std::vector<Cell *> &fluid_cells();
 
   /**
    * @brief Access moving wall cells
@@ -85,6 +86,10 @@ class Grid {
 
   const std::vector<Cell *> &buffer() const;
 
+  const std::vector<Cell *> &surface_cells() const;
+
+  void set_particles(int ppc);
+
   const std::vector<std::vector<int>> &get_geometry_excluding_ghosts() const;
 
  private:
@@ -113,6 +118,9 @@ class Grid {
   std::vector<Cell *> _outlet_cells;
   std::vector<Cell *> _adiabatic_cells;
   std::vector<Cell *> _buffer;
+  std::vector<Cell *> _surface_cells;
+
+  std::vector<particle> _particles;
 
   Domain _domain;
 
