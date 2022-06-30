@@ -191,12 +191,13 @@ Case::Case(std::string file_name, int argn, char **args) {
   if (ppc > 0) {
     _grid.set_particles(ppc);
   }
-
+  std::cout<<_grid.fluid_cells().size()<<'\n';
   for (auto &elem : _grid.surface_cells()) {
     _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(),
                                           _grid.fluid_cells().end(), elem),
                               _grid.fluid_cells().end());
   }
+  std::cout<<_grid.fluid_cells().size()<<'\n';
 
   _field = Fields(nu, alpha, beta, dt, tau, _grid.domain().size_x,
                   _grid.domain().size_y, UI, VI, PI, TI, GX, GY, boolenergy_eq);
