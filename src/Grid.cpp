@@ -9,6 +9,7 @@ grid based on where the fluid lies relative to the cell.
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 #include "Enums.hpp"
 
@@ -526,10 +527,31 @@ const Domain &Grid::domain() const { return _domain; }
 std::vector<Cell *> &Grid::fluid_cells() { return _fluid_cells; }
 
 void Grid::set_particles(int ppc) {
-  _particles = initialize_particles(ppc);
+  // _particles = initialize_particles(ppc);
   // for (auto &elem : p) {
   //   _particles.push_back(elem);
   // }
+
+  int i, j;
+  //std::vector<particle> particles;
+  int num_part = std::sqrt(ppc);
+  for (auto &cell : _fluid_cells) {
+    i = cell->i();
+    j = cell->j();
+
+    double startx = i * _dx + 0.5 * _dx / num_part;
+    double starty = j * _dy + 0.5 * _dy / num_part;
+    for (int k{0}; k < num_part; k++) {
+      for (int l{0}; l < num_part; l++) {
+        particle p;
+        p.x = startx + k * _dx / num_part;
+        p.y = starty + l * _dy / num_part;
+
+        _particles.push_back(p);
+      }
+    }
+  }
+  //return particles;
 }
 
 const std::vector<Cell *> &Grid::fixed_wall_cells() const {
@@ -548,7 +570,7 @@ const std::vector<Cell *> &Grid::adiabatic_cells() const {
   return _adiabatic_cells;
 }
 
-const std::vector<Cell *> &Grid::surface_cells() const {
+std::vector<Cell *> &Grid::surface_cells(){
   return _surface_cells;
 }
 

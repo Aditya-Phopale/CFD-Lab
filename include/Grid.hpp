@@ -86,7 +86,7 @@ class Grid {
 
   const std::vector<Cell *> &buffer() const;
 
-  const std::vector<Cell *> &surface_cells() const;
+  std::vector<Cell *> &surface_cells();
 
   void set_particles(int ppc);
 
