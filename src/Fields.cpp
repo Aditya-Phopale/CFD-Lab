@@ -8,9 +8,9 @@ the current timestep will be advanced to the next one
 #include <cmath>
 #include <iostream>
 
-Fields::Fields(double nu, double alpha, double beta, double dt, double tau, int imax, int jmax, double UI, double VI,
-               double PI, double TI, double GX, double GY, bool energy_eq)
-    : _nu(nu), _dt(dt), _tau(tau), _alpha(alpha), _beta(beta), _gx(GX), _gy(GY), _energy_eq(energy_eq) {
+Fields::Fields(double nu, double Re, double alpha, double beta, double dt, double tau, int imax, int jmax, double UI,
+               double VI, double PI, double TI, double GX, double GY, bool energy_eq)
+    : _nu(nu), _Re(Re), _dt(dt), _tau(tau), _alpha(alpha), _beta(beta), _gx(GX), _gy(GY), _energy_eq(energy_eq) {
     _U = Matrix<double>(imax + 2, jmax + 2,
                         UI); // Matrix for velocity along the X-direction
     _V = Matrix<double>(imax + 2, jmax + 2,
@@ -71,33 +71,37 @@ void Fields::calculate_fluxes(Grid &grid) {
                 _G(i, j) = _G(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i, j + 1)) * _gy;
             }
         } else if (cell->neighbour(border_position::NORTHWEST)->type() == cell_type::EMPTY ||
-                   cell->neighbour(border_position::TOP)->type() == cell_type::EMPTY) {
+                   cell->neighbour(border_position::TOP)->type() == cell_type::EMPTY ||
+                   cell->neighbour(border_position::NORTHWESTSOUTH)->type() == cell_type::EMPTY) {
             _F(i, j) = _U(i, j) +
                        _dt * (_nu * Discretization::diffusion(_U, i, j) - Discretization::convection_u(_U, _V, i, j));
             if (_energy_eq) {
                 _F(i, j) = _F(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i + 1, j)) * _gx;
             }
         } else if (cell->neighbour(border_position::SOUTHEAST)->type() == cell_type::EMPTY ||
-                   cell->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY) {
+                   cell->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY ||
+                   cell->neighbour(border_position::EASTWESTSOUTH)->type() == cell_type::EMPTY) {
             _G(i, j) = _V(i, j) +
                        _dt * (_nu * Discretization::diffusion(_V, i, j) - Discretization::convection_v(_U, _V, i, j));
 
             if (_energy_eq) {
                 _G(i, j) = _G(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i, j + 1)) * _gy;
             }
-        } else if (cell->neighbour(border_position::NORTHWESTSOUTH)->type() == cell_type::EMPTY) {
-            _F(i, j) = _U(i, j) +
-                       _dt * (_nu * Discretization::diffusion(_U, i, j) - Discretization::convection_u(_U, _V, i, j));
-            if (_energy_eq) {
-                _F(i, j) = _F(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i + 1, j)) * _gx;
-            }
-        } else if (cell->neighbour(border_position::EASTWESTSOUTH)->type() == cell_type::EMPTY) {
-            _G(i, j) = _V(i, j) +
-                       _dt * (_nu * Discretization::diffusion(_V, i, j) - Discretization::convection_v(_U, _V, i, j));
+            // } else if (cell->neighbour(border_position::NORTHWESTSOUTH)->type() == cell_type::EMPTY) {
+            //     _F(i, j) = _U(i, j) +
+            //                _dt * (_nu * Discretization::diffusion(_U, i, j) - Discretization::convection_u(_U, _V, i,
+            //                j));
+            //     if (_energy_eq) {
+            //         _F(i, j) = _F(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i + 1, j)) * _gx;
+            //     }
+            // } else if (cell->neighbour(border_position::EASTWESTSOUTH)->type() == cell_type::EMPTY) {
+            //     _G(i, j) = _V(i, j) +
+            //                _dt * (_nu * Discretization::diffusion(_V, i, j) - Discretization::convection_v(_U, _V, i,
+            //                j));
 
-            if (_energy_eq) {
-                _G(i, j) = _G(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i, j + 1)) * _gy;
-            }
+            //     if (_energy_eq) {
+            //         _G(i, j) = _G(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i, j + 1)) * _gy;
+            //     }
         }
     }
 }
@@ -139,6 +143,33 @@ void Fields::calculate_velocities(Grid &grid) {
         if (cell->neighbour(border_position::TOP)->type() == cell_type::FLUID) {
             _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
         }
+    }
+
+    for (auto cell : grid.surface_cells()) {
+        i = cell->i();
+        j = cell->j();
+        if (cell->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY ||
+            cell->neighbour(border_position::SOUTHWEST)->type() == cell_type::EMPTY ||
+            cell->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+            _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
+            _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
+
+        } else if (cell->neighbour(border_position::NORTHWEST)->type() == cell_type::EMPTY ||
+                   cell->neighbour(border_position::TOP)->type() == cell_type::EMPTY ||
+                   cell->neighbour(border_position::NORTHWESTSOUTH)->type() == cell_type::EMPTY) {
+            _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
+
+        } else if (cell->neighbour(border_position::SOUTHEAST)->type() == cell_type::EMPTY ||
+                   cell->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY ||
+                   cell->neighbour(border_position::EASTWESTSOUTH)->type() == cell_type::EMPTY) {
+            _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
+
+            // } else if (cell->neighbour(border_position::NORTHWESTSOUTH)->type() == cell_type::EMPTY) {
+            //     _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
+
+        } // } else if (cell->neighbour(border_position::EASTWESTSOUTH)->type() == cell_type::EMPTY) {
+          //     _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
+          // }
     }
 }
 
@@ -204,3 +235,5 @@ Matrix<double> &Fields::g_matrix() { return _G; }
 Matrix<double> &Fields::rs_matrix() { return _RS; }
 
 double Fields::dt() const { return _dt; }
+
+double Fields::Re() const { return _Re; }

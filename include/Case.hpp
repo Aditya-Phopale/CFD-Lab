@@ -60,6 +60,7 @@ class Case {
   Discretization _discretization;
   std::unique_ptr<PressureSolver> _pressure_solver;
   std::vector<std::unique_ptr<Boundary>> _boundaries;
+  std::vector<std::unique_ptr<Boundary>> _surface_boundaries;
 
   /// Solver convergence tolerance
   double _tolerance;

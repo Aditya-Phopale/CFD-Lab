@@ -4,6 +4,7 @@
 
 #include "Cell.hpp"
 #include "Fields.hpp"
+#include "Grid.hpp"
 
 /**
  * @brief Abstact of boundary conditions.
@@ -98,6 +99,18 @@ class AdiabaticBoundary : public Boundary {
   virtual ~AdiabaticBoundary() = default;
   virtual void apply(Fields &field);
   virtual void apply_pressure(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+};
+
+class FreeSurfaceBoundary : public Boundary {
+ public:
+  FreeSurfaceBoundary(std::vector<Cell *> cells);
+  virtual ~FreeSurfaceBoundary() = default;
+  virtual void apply_black(Fields &field, Grid &grid);
+  virtual void apply_pressure(Fields &field, Grid &grid);
+  virtual void apply_grey(Fields &field, Grid &grid);
 
  private:
   std::vector<Cell *> _cells;

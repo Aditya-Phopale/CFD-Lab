@@ -26,7 +26,7 @@ class Fields {
    * @param[in] initial pressure
    *
    */
-  Fields(double _nu, double alpha, double beta, double _dt, double _tau,
+  Fields(double _nu, double Re, double alpha, double beta, double _dt, double _tau,
          int imax, int jmax, double UI, double VI, double PI, double TI,
          double GX, double GY, bool energy_eqn);
 
@@ -100,6 +100,8 @@ class Fields {
   /// get timestep size
   double dt() const;
 
+  double Re() const;
+
   /// pressure matrix access and modify
   Matrix<double> &p_matrix();
 
@@ -128,6 +130,8 @@ class Fields {
 
   /// kinematic viscosity
   double _nu;
+
+  double _Re;
   /// gravitional accelearation in x direction
   double _gx{0.0};
   /// gravitional accelearation in y direction
