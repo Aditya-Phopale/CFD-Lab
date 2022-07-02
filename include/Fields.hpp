@@ -26,9 +26,9 @@ class Fields {
    * @param[in] initial pressure
    *
    */
-  Fields(double _nu, double Re, double alpha, double beta, double _dt, double _tau,
-         int imax, int jmax, double UI, double VI, double PI, double TI,
-         double GX, double GY, bool energy_eqn);
+  Fields(double _nu, double Re, double alpha, double beta, double _dt,
+         double _tau, int imax, int jmax, double UI, double VI, double PI,
+         double TI, double GX, double GY, bool energy_eqn);
 
   /**
    * @brief Calculates the convective and diffusive fluxes in x and y
@@ -101,6 +101,10 @@ class Fields {
   double dt() const;
 
   double Re() const;
+
+  double gx() const;
+
+  double gy() const;
 
   /// pressure matrix access and modify
   Matrix<double> &p_matrix();
