@@ -51,7 +51,7 @@ void Fields::calculate_fluxes(Grid &grid) {
 
     if (cell->neighbour(border_position::RIGHT)->type() == cell_type::FLUID) {
       _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
-                                   Discretization::convection_u(_U, _V, i, j));
+                                   Discretization::convection_u(_U, _V, i, j) + _gx);
       if (_energy_eq) {
         _F(i, j) =
             _F(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i + 1, j)) * _gx;
@@ -59,7 +59,7 @@ void Fields::calculate_fluxes(Grid &grid) {
     }
     if (cell->neighbour(border_position::TOP)->type() == cell_type::FLUID) {
       _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
-                                   Discretization::convection_v(_U, _V, i, j));
+                                   Discretization::convection_v(_U, _V, i, j) + _gy);
 
       if (_energy_eq) {
         _G(i, j) =
@@ -75,13 +75,13 @@ void Fields::calculate_fluxes(Grid &grid) {
             cell_type::EMPTY ||
         cell->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
       _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
-                                   Discretization::convection_u(_U, _V, i, j));
+                                   Discretization::convection_u(_U, _V, i, j) + _gx);
       if (_energy_eq) {
         _F(i, j) =
             _F(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i + 1, j)) * _gx;
       }
       _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
-                                   Discretization::convection_v(_U, _V, i, j));
+                                   Discretization::convection_v(_U, _V, i, j) + _gy);
 
       if (_energy_eq) {
         _G(i, j) =
@@ -94,7 +94,7 @@ void Fields::calculate_fluxes(Grid &grid) {
                cell->neighbour(border_position::NORTHWESTSOUTH)->type() ==
                    cell_type::EMPTY) {
       _F(i, j) = _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
-                                   Discretization::convection_u(_U, _V, i, j));
+                                   Discretization::convection_u(_U, _V, i, j) + _gx);
       if (_energy_eq) {
         _F(i, j) =
             _F(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i + 1, j)) * _gx;
@@ -106,7 +106,7 @@ void Fields::calculate_fluxes(Grid &grid) {
                cell->neighbour(border_position::EASTWESTSOUTH)->type() ==
                    cell_type::EMPTY) {
       _G(i, j) = _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
-                                   Discretization::convection_v(_U, _V, i, j));
+                                   Discretization::convection_v(_U, _V, i, j) + _gy);
 
       if (_energy_eq) {
         _G(i, j) =

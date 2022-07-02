@@ -104,13 +104,13 @@ class AdiabaticBoundary : public Boundary {
   std::vector<Cell *> _cells;
 };
 
-class FreeSurfaceBoundary : public Boundary {
+class FreeSurfaceBoundary {
  public:
   FreeSurfaceBoundary(std::vector<Cell *> cells);
-  virtual ~FreeSurfaceBoundary() = default;
-  virtual void apply_black(Fields &field, Grid &grid);
-  virtual void apply_pressure(Fields &field, Grid &grid);
-  virtual void apply_grey(Fields &field, Grid &grid);
+  ~FreeSurfaceBoundary() = default;
+  void apply_black(Fields &field, Grid &grid);
+  void apply_pressure(Fields &field, Grid &grid);
+  void apply_grey(Fields &field, Grid &grid);
 
  private:
   std::vector<Cell *> _cells;

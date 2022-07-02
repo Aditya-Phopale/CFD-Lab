@@ -47,7 +47,7 @@ namespace filesystem = std::experimental::filesystem;
 Case::Case(std::string file_name, int argn, char **args) {
     const int MAX_LINE_LENGTH = 1024;
     std::ifstream file(file_name);
-    double nu;     /* viscosity   */
+    double nu; /* viscosity   */
     double Re;
     double UI;     /* velocity x-direction */
     double VI;     /* velocity y-direction */
@@ -191,12 +191,12 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (ppc > 0) {
         _grid.set_particles(ppc);
     }
-    // std::cout<<_grid.fluid_cells().size()<<'\n';
+    std::cout << _grid.fluid_cells().size() << '\n';
     for (auto &elem : _grid.surface_cells()) {
         _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(), _grid.fluid_cells().end(), elem),
                                   _grid.fluid_cells().end());
     }
-    // std::cout<<_grid.fluid_cells().size()<<'\n';
+    std::cout << _grid.fluid_cells().size() << '\n';
 
     _field = Fields(nu, Re, alpha, beta, dt, tau, _grid.domain().size_x, _grid.domain().size_y, UI, VI, PI, TI, GX, GY,
                     boolenergy_eq);
@@ -230,7 +230,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     }
 
     if (not _grid.surface_cells().empty()) {
-        _surface_boundaries.push_back(std::make_unique<FreeSurfaceBoundary>(_grid.adiabatic_cells()));
+        _surface_boundaries = std::make_unique<FreeSurfaceBoundary>(_grid.surface_cells());
     }
 
     // output_vtk(0, Communication::rank);
@@ -331,9 +331,13 @@ void Case::simulate() {
         _boundaries[i]->apply(_field);
     }
 
+    // _surface_boundaries->apply_black(_field, _grid);
+    // _surface_boundaries->apply_pressure(_field, _grid);
+    // _surface_boundaries->apply_grey(_field, _grid);
+
     // Following is the actual loop that runs till the defined time limit.
 
-    while (t <= _t_end) {
+    while (t <= 0) {
         // Calculating timestep for advancement to the next iteration.
         dt = _field.calculate_dt(_grid);
 
@@ -348,7 +352,7 @@ void Case::simulate() {
         _field.calculate_fluxes(_grid);
         Communication::communicate(_field.f_matrix(), _grid.domain());
         Communication::communicate(_field.g_matrix(), _grid.domain());
-
+        std::cout << "Zopaycha hota he karnacha aadhi\n";
         // Calculating RHS for pressure poisson equation
         _field.calculate_rs(_grid);
 
