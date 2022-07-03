@@ -270,8 +270,8 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
   }
 
   // Inner cells
-  for (int i = 1; i < _domain.size_x + 1; ++i) {
-    for (int j = 1; j < _domain.size_y + 1; ++j) {
+  for (int j = 1; j < _domain.size_y + 1; ++j) {
+    for (int i = 1; i < _domain.size_x + 1; ++i) {
       _cells(i, j).set_neighbour(&_cells(i + 1, j), border_position::RIGHT);
       _cells(i, j).set_neighbour(&_cells(i - 1, j), border_position::LEFT);
       _cells(i, j).set_neighbour(&_cells(i, j + 1), border_position::TOP);

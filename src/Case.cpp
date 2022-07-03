@@ -70,7 +70,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     double alpha = 0; /* Thermal Diffusivity*/
     double beta = 0;  /* Thermal expansion coefficient*/
     int num_walls;
-    std::string energy_eqn;
+    std::string energy_eqn = "off";
     double temp3;
     double temp4;
     double temp5;
@@ -191,12 +191,12 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (ppc > 0) {
         _grid.set_particles(ppc);
     }
-    std::cout << _grid.fluid_cells().size() << '\n';
+    //std::cout << _grid.surface_cells().size() << '\n';
     for (auto &elem : _grid.surface_cells()) {
         _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(), _grid.fluid_cells().end(), elem),
                                   _grid.fluid_cells().end());
     }
-    std::cout << _grid.fluid_cells().size() << '\n';
+    //std::cout << _grid.surface_cells().size() << '\n';
 
     _field = Fields(nu, Re, alpha, beta, dt, tau, _grid.domain().size_x, _grid.domain().size_y, UI, VI, PI, TI, GX, GY,
                     boolenergy_eq);
@@ -352,7 +352,7 @@ void Case::simulate() {
         _field.calculate_fluxes(_grid);
         Communication::communicate(_field.f_matrix(), _grid.domain());
         Communication::communicate(_field.g_matrix(), _grid.domain());
-        std::cout << "Zopaycha hota he karnacha aadhi\n";
+        //std::cout << "Zopaycha hota he karnacha aadhi\n";
         // Calculating RHS for pressure poisson equation
         _field.calculate_rs(_grid);
 
