@@ -526,6 +526,8 @@ const Domain &Grid::domain() const { return _domain; }
 
 std::vector<Cell *> &Grid::fluid_cells() { return _fluid_cells; }
 
+std::vector<Particle *> &Grid::particle() { return _particles; }
+
 void Grid::set_particles(int ppc) {
   // _particles = initialize_particles(ppc);
   // for (auto &elem : p) {
@@ -543,11 +545,11 @@ void Grid::set_particles(int ppc) {
     double starty = j * _dy + 0.5 * _dy / num_part;
     for (int k{0}; k < num_part; k++) {
       for (int l{0}; l < num_part; l++) {
-        particle p;
-        p.x = startx + k * _dx / num_part;
-        p.y = starty + l * _dy / num_part;
+        Particle p;
+        p.x_pos() = startx + k * _dx / num_part;
+        p.y_pos() = starty + l * _dy / num_part;
 
-        _particles.push_back(p);
+        _particles.push_back(&p);
       }
     }
   }

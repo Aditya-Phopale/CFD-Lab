@@ -191,12 +191,12 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (ppc > 0) {
         _grid.set_particles(ppc);
     }
-    //std::cout << _grid.surface_cells().size() << '\n';
+    // std::cout << _grid.surface_cells().size() << '\n';
     for (auto &elem : _grid.surface_cells()) {
         _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(), _grid.fluid_cells().end(), elem),
                                   _grid.fluid_cells().end());
     }
-    //std::cout << _grid.surface_cells().size() << '\n';
+    // std::cout << _grid.surface_cells().size() << '\n';
 
     _field = Fields(nu, Re, alpha, beta, dt, tau, _grid.domain().size_x, _grid.domain().size_y, UI, VI, PI, TI, GX, GY,
                     boolenergy_eq);
@@ -341,6 +341,10 @@ void Case::simulate() {
         // Calculating timestep for advancement to the next iteration.
         dt = _field.calculate_dt(_grid);
 
+        _surface_boundaries->apply_black(_field, _grid);
+        _surface_boundaries->apply_pressure(_field, _grid);
+        _surface_boundaries->apply_grey(_field, _grid);
+
         // Calculate new Temperatures
         if (_field.energy_eq()) {
             _field.calculate_temperature(_grid);
@@ -352,8 +356,8 @@ void Case::simulate() {
         _field.calculate_fluxes(_grid);
         Communication::communicate(_field.f_matrix(), _grid.domain());
         Communication::communicate(_field.g_matrix(), _grid.domain());
-        //std::cout << "Zopaycha hota he karnacha aadhi\n";
-        // Calculating RHS for pressure poisson equation
+        // std::cout << "Zopaycha hota he karnacha aadhi\n";
+        //  Calculating RHS for pressure poisson equation
         _field.calculate_rs(_grid);
 
         iter = 0; // Pressure poisson solver iteration initialization
@@ -386,9 +390,35 @@ void Case::simulate() {
         // Calculating updated velocities using pressure calculated in the
         // pressure poisson equation
         _field.calculate_velocities(_grid);
+
         for (int i = 0; i < _boundaries.size(); i++) {
             _boundaries[i]->apply(_field);
         }
+
+        _surface_boundaries->apply_black(_field, _grid);
+        _surface_boundaries->apply_pressure(_field, _grid);
+        _surface_boundaries->apply_grey(_field, _grid);
+        {
+            double dx = _grid.dx();
+            double dy = _grid.dy(); 
+            for (auto &particle : _grid.particle()) {
+                particle->calculate_velocities(dx, dy, _field.u_matrix(), _field.v_matrix());
+                particle->advance_particle(dt);
+            }
+        }
+        for(auto i=std::begin(_grid.particle()); i!=std::end(_grid.particle()); ) {
+            if((*i)->y_pos() < (_grid.domain().jmin + 1) * _grid.dy() ||
+                (*i)->x_pos() < (_grid.domain().imin + 1) * _grid.dx() ||
+                (*i)->y_pos() > _grid.domain().jmax * _grid.dy() || (*i)->x_pos() > _grid.domain().imax * _grid.dx()){
+                    i = _grid.particle().erase(i);
+                }
+            else{
+                i++;
+            }
+        }
+
+        //Assign particle
+        
 
         Communication::communicate(_field.u_matrix(), _grid.domain());
         Communication::communicate(_field.v_matrix(), _grid.domain());
