@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <map>
 #include <memory>
@@ -93,6 +94,8 @@ class Grid {
   void set_particles(int ppc);
 
   const std::vector<std::vector<int>> &get_geometry_excluding_ghosts() const;
+
+  void reset_fluid_cells();
 
  private:
   /**@brief Default lid driven cavity case generator

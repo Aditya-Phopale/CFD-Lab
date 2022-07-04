@@ -5,11 +5,11 @@ grid based on where the fluid lies relative to the cell.
 #include "Grid.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <cmath>
 
 #include "Enums.hpp"
 
@@ -459,6 +459,130 @@ void Grid::assign_cell_types(std::vector<std::vector<int>> &geometry_data) {
   }
 }
 
+void Grid::reset_fluid_cells() {
+  for (auto &cells : _fluid_cells) {
+    cells->set_cell_type(cell_type::EMPTY);
+  }
+  _fluid_cells.clear();
+
+  for (auto &particle : _particles) {
+    int i = particle->x_pos() / _dx;
+    int j = particle->y_pos() / _dy;
+
+    if (_cells(i, j).type() != cell_type::FLUID) {
+      _cells(i, j).set_cell_type(cell_type::FLUID);
+      _cells(i, j).reset_border();
+      _fluid_cells.push_back(&_cells(i, j));
+    }
+  }
+  std::sort(_fluid_cells.begin(), _fluid_cells.end(),
+            [this](Cell *lhs, Cell *rhs) {
+              return lhs->i() * _domain.imax + lhs->j() >
+                     rhs->i() * _domain.imax + lhs->j();
+            });
+  _surface_cells.clear();
+  for (auto &cells : _fluid_cells) {
+    if (cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::NORTHEASTWESTSOUTH);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::EASTWESTSOUTH);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::NORTHWESTSOUTH);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::NORTHEASTSOUTH);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::NORTHEASTWEST);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::EASTWEST);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::NORTHSOUTH);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::SOUTHWEST);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::NORTHEAST);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::SOUTHEAST);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY &&
+        cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::NORTHWEST);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::RIGHT);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::LEFT);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::TOP);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+    if (cells->neighbour(border_position::BOTTOM)->type() == cell_type::EMPTY) {
+      cells->add_border(border_position::BOTTOM);
+      _surface_cells.push_back(cells);
+      continue;
+    }
+  }
+
+  for (auto &elem : _surface_cells) {
+    _fluid_cells.erase(
+        std::remove(_fluid_cells.begin(), _fluid_cells.end(), elem),
+        _fluid_cells.end());
+  }
+}
+
 void Grid::parse_geometry_file(std::string filedoc,
                                std::vector<std::vector<int>> &geometry_data) {
   int numcols, numrows, depth;
@@ -535,7 +659,7 @@ void Grid::set_particles(int ppc) {
   // }
 
   int i, j;
-  //std::vector<particle> particles;
+  // std::vector<particle> particles;
   int num_part = std::sqrt(ppc);
   for (auto &cell : _fluid_cells) {
     i = cell->i();
@@ -553,7 +677,6 @@ void Grid::set_particles(int ppc) {
       }
     }
   }
-  //return particles;
 }
 
 const std::vector<Cell *> &Grid::fixed_wall_cells() const {
@@ -572,9 +695,7 @@ const std::vector<Cell *> &Grid::adiabatic_cells() const {
   return _adiabatic_cells;
 }
 
-std::vector<Cell *> &Grid::surface_cells(){
-  return _surface_cells;
-}
+std::vector<Cell *> &Grid::surface_cells() { return _surface_cells; }
 
 const std::vector<Cell *> &Grid::buffer() const { return _buffer; }
 

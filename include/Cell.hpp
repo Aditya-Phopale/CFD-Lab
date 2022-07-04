@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <vector>
 
@@ -87,6 +88,10 @@ class Cell {
   cell_type type() const;
   /// Getter of cell id
   int wall_id() const;
+
+  void set_cell_type(cell_type type);
+
+  void reset_border();
 
  private:
   /// x index
