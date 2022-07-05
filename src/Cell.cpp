@@ -38,6 +38,9 @@ cell_type Cell::type() const { return _type; }
 
 void Cell::set_cell_type(cell_type type) { _type = type; }
 
-void Cell::reset_border() { std::fill(_border.begin(), _border.end(), false); }
+void Cell::reset_border() {
+  std::fill(_border.begin(), _border.end(), false);
+  _borders.clear();
+}
 
 int Cell::wall_id() const { return _id; }

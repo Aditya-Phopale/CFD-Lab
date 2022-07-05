@@ -2,6 +2,8 @@
 
 #include <vector>
 
+Particle::Particle(double x, double y) : x{x}, y{y}, vel_u{0}, vel_v{0} {}
+
 void Particle::advance_particle(double &dt) {
   this->x += this->vel_u * dt;
   this->y += this->vel_v * dt;

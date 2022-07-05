@@ -18,6 +18,8 @@ class Particle {
 
   double &v();
 
+  Particle(double x, double y);
+
  private:
   double x;
   double y;

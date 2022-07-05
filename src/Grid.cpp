@@ -465,9 +465,18 @@ void Grid::reset_fluid_cells() {
   }
   _fluid_cells.clear();
 
+  for (auto &cells : _surface_cells) {
+    int i, j;
+    i = cells->i();
+    j = cells->j();
+    _cells(i, j).reset_border();
+    cells->set_cell_type(cell_type::EMPTY);
+  }
+  _surface_cells.clear();
+
   for (auto &particle : _particles) {
-    int i = particle->x_pos() / _dx;
-    int j = particle->y_pos() / _dy;
+    int i = particle.x_pos() / dx();
+    int j = particle.y_pos() / dy();
 
     if (_cells(i, j).type() != cell_type::FLUID) {
       _cells(i, j).set_cell_type(cell_type::FLUID);
@@ -477,10 +486,10 @@ void Grid::reset_fluid_cells() {
   }
   std::sort(_fluid_cells.begin(), _fluid_cells.end(),
             [this](Cell *lhs, Cell *rhs) {
-              return lhs->i() * _domain.imax + lhs->j() >
-                     rhs->i() * _domain.imax + lhs->j();
+              return lhs->i() * _domain.imax + lhs->j() <
+                     rhs->i() * _domain.imax + rhs->j();
             });
-  _surface_cells.clear();
+
   for (auto &cells : _fluid_cells) {
     if (cells->neighbour(border_position::LEFT)->type() == cell_type::EMPTY &&
         cells->neighbour(border_position::TOP)->type() == cell_type::EMPTY &&
@@ -650,7 +659,7 @@ const Domain &Grid::domain() const { return _domain; }
 
 std::vector<Cell *> &Grid::fluid_cells() { return _fluid_cells; }
 
-std::vector<Particle *> &Grid::particle() { return _particles; }
+std::vector<Particle> &Grid::particle() { return _particles; }
 
 void Grid::set_particles(int ppc) {
   // _particles = initialize_particles(ppc);
@@ -665,15 +674,17 @@ void Grid::set_particles(int ppc) {
     i = cell->i();
     j = cell->j();
 
-    double startx = i * _dx + 0.5 * _dx / num_part;
-    double starty = j * _dy + 0.5 * _dy / num_part;
+    double startx = static_cast<double>(i) * dx() + 0.5 * dx() / num_part;
+    double starty = static_cast<double>(j) * dy() + 0.5 * dy() / num_part;
+    double x, y;
     for (int k{0}; k < num_part; k++) {
       for (int l{0}; l < num_part; l++) {
-        Particle p;
-        p.x_pos() = startx + k * _dx / num_part;
-        p.y_pos() = starty + l * _dy / num_part;
+        x = startx + k * dx() / num_part;
+        y = starty + l * dy() / num_part;
 
-        _particles.push_back(&p);
+        Particle p(x, y);
+
+        _particles.push_back(p);
       }
     }
   }

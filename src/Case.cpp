@@ -346,7 +346,7 @@ void Case::simulate() {
 
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t <= _t_end) {
+  while (t <= 0.2) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
@@ -354,7 +354,6 @@ void Case::simulate() {
     _surface_boundaries->apply_pressure(_field, _grid);
     _surface_boundaries->apply_grey(_field, _grid);
 
-    
     // output_vtk(0, Communication::rank);
 
     // Calculate new Temperatures
@@ -363,13 +362,9 @@ void Case::simulate() {
       Communication::communicate(_field.t_matrix(), _grid.domain());
     }
 
-    
-
     // Calculating Fluxes (_F and _G) for velocities in X and Y directions
     // respectively.
     _field.calculate_fluxes(_grid);
-
-    
 
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
@@ -405,19 +400,19 @@ void Case::simulate() {
       // logfile << "Residual: " << res << " Iteration:" << total_iter <<
     }
 
-    
-
     // Calculating updated velocities using pressure calculated in the
     // pressure poisson equation
     _field.calculate_velocities(_grid);
     //
 
-    // for (int j = _grid.jmax(); j >= 0; j--) {
-    //   for (int i = 0; i < _grid.imax(); i++) {
-    //     std::cout << _field.v(i, j) << " ";
-    //   }
-    //   std::cout << "\n";
-    // }
+    for (int j = _grid.jmax(); j >= 0; j--) {
+      for (int i = 0; i < _grid.imax(); i++) {
+        std::cout << _field.u(i, j) << " ";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
 
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
@@ -430,17 +425,17 @@ void Case::simulate() {
       double dx = _grid.dx();
       double dy = _grid.dy();
       for (auto &particle : _grid.particle()) {
-        particle->calculate_velocities(dx, dy, _field.u_matrix(),
-                                       _field.v_matrix());
-        particle->advance_particle(dt);
+        particle.calculate_velocities(dx, dy, _field.u_matrix(),
+                                      _field.v_matrix());
+        particle.advance_particle(dt);
       }
     }
     for (auto i = std::begin(_grid.particle());
          i != std::end(_grid.particle());) {
-      if ((*i)->y_pos() < (_grid.domain().jmin + 1) * _grid.dy() ||
-          (*i)->x_pos() < (_grid.domain().imin + 1) * _grid.dx() ||
-          (*i)->y_pos() > _grid.domain().jmax * _grid.dy() ||
-          (*i)->x_pos() > _grid.domain().imax * _grid.dx()) {
+      if ((*i).y_pos() < (_grid.domain().jmin + 1) * _grid.dy() ||
+          (*i).x_pos() < (_grid.domain().imin + 1) * _grid.dx() ||
+          (*i).y_pos() > _grid.domain().jmax * _grid.dy() ||
+          (*i).x_pos() > _grid.domain().imax * _grid.dx()) {
         i = _grid.particle().erase(i);
       } else {
         i++;
@@ -448,9 +443,9 @@ void Case::simulate() {
     }
 
     // Assign particle
-    std::cout<<_grid.fluid_cells().size()<<'\n';
+    // std::cout<<_grid.fluid_cells().size()<<'\n';
     _grid.reset_fluid_cells();
-    std::cout<<_grid.fluid_cells().size()<<'\n';
+    // std::cout<<_grid.fluid_cells().size()<<'\n';
 
     Communication::communicate(_field.u_matrix(), _grid.domain());
     Communication::communicate(_field.v_matrix(), _grid.domain());
@@ -469,11 +464,11 @@ void Case::simulate() {
       }
     }
 
-    output_vtk(1, Communication::rank);
-    if (t >= _output_freq) {
-      output_vtk(timestep, Communication::rank);
-      _output_freq = _output_freq + output_counter;
-    }
+    // output_vtk(1, Communication::rank);
+    // if (t >= _output_freq) {
+    output_vtk(timestep, Communication::rank);
+    _output_freq = _output_freq + output_counter;
+    //}
   }
   logfile.close();
 }
@@ -571,10 +566,10 @@ void Case::output_vtk(int timestep, int rank) {
     for (int i = 0; i < _grid.domain().size_x + 1; i++) {
       vel[0] = (_field.u(i, j) + _field.u(i, j + 1)) * 0.5;
       vel[1] = (_field.v(i, j) + _field.v(i + 1, j)) * 0.5;
-      //std::cout << vel[0] << " ";
+      // std::cout << vel[0] << " ";
       Velocity->InsertNextTuple(vel);
     }
-    //std::cout << "\n";
+    // std::cout << "\n";
   }
 
   // Add Pressure to Structured Grid

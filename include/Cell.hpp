@@ -112,5 +112,5 @@ class Cell {
   std::vector<border_position> _borders;
   /// Pointers to neighbours. // TOP -  BOTTOM - LEFT - RIGHT - NORTHWEST -
   /// SOUTEAST - NORTHEAST - SOUTHWEST
-  std::array<Cell *, 8> _neighbours;
+  std::array<Cell *, 4> _neighbours;
 };

@@ -89,7 +89,7 @@ class Grid {
 
   std::vector<Cell *> &surface_cells();
 
-  std::vector<Particle *> &particle();
+  std::vector<Particle> &particle();
 
   void set_particles(int ppc);
 
@@ -125,12 +125,12 @@ class Grid {
   std::vector<Cell *> _buffer;
   std::vector<Cell *> _surface_cells;
 
-  std::vector<Particle *> _particles;
+  std::vector<Particle> _particles;
 
   Domain _domain;
 
   std::vector<std::vector<int>> geometry_excluding_ghosts;
 
-  double _dx;
-  double _dy;
+  // double _dx;
+  // double _dy;
 };
