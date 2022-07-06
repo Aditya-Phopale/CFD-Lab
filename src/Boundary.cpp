@@ -501,21 +501,42 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
         if (cells->is_border(border_position::RIGHT)) {
             field.u(i, j) = field.u(i - 1, j) - grid.dx() * (field.v(i, j) - field.v(i, j - 1)) / grid.dy();
             field.f(i, j) = field.u(i, j);
+            if (cells->neighbour(border_position::RIGHT)->neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+                field.v(i + 1, j - 1) = field.v(i, j - 1) - grid.dx() * (field.u(i, j) - field.u(i, j - 1)) / grid.dy();
+                field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::TOP)) {
             field.v(i, j) = field.v(i, j - 1) - grid.dy() * (field.u(i, j) - field.u(i - 1, j)) / grid.dx();
             field.g(i, j) = field.v(i, j);
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+                field.u(i - 1, j + 1) = field.u(i - 1, j) - grid.dy() * (field.v(i, j) - field.v(i - 1, j)) / grid.dx();
+                field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::LEFT)) {
             field.u(i - 1, j) = field.u(i, j) + grid.dx() * (field.v(i, j) - field.v(i, j - 1)) / grid.dy();
             field.f(i, j) = field.u(i, j);
+            if (cells->neighbour(border_position::LEFT)->neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+                field.v(i - 1, j - 1) =
+                    field.v(i, j - 1) + grid.dx() * (field.u(i - 1, j) - field.u(i - 1, j - 1)) / grid.dy();
+                field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::BOTTOM)) {
             field.v(i, j - 1) = field.v(i, j) + grid.dy() * (field.u(i, j) - field.u(i - 1, j)) / grid.dx();
             field.g(i, j - 1) = field.v(i, j - 1);
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i - 1, j - 1) =
+                    field.u(i - 1, j) + grid.dy() * (field.v(i, j - 1) - field.v(i - 1, j - 1)) / grid.dx();
+                field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::SOUTHEAST)) {
@@ -523,6 +544,16 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.v(i, j - 1) = field.v(i, j);
             field.g(i, j - 1) = field.v(i, j - 1);
             field.f(i, j) = field.u(i, j);
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i - 1, j - 1) =
+                    field.u(i - 1, j) + grid.dy() * (field.v(i, j - 1) - field.v(i - 1, j - 1)) / grid.dx();
+                field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+            }
+            field.u(i, j - 1) = field.u(i, j);
+            field.v(i + 1, j - 1) = field.v(i, j - 1);
+            field.f(i, j - 1) = field.u(i, j - 1);
+            field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
             continue;
         }
 
@@ -531,6 +562,19 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.v(i, j) = field.v(i, j - 1);
             field.g(i, j) = field.v(i, j);
             field.f(i, j) = field.u(i, j);
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+                field.u(i - 1, j + 1) = field.u(i - 1, j) - grid.dy() * (field.v(i, j) - field.v(i - 1, j)) / grid.dx();
+                field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+            }
+            if (cells->neighbour(border_position::RIGHT)->neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+                field.v(i + 1, j - 1) = field.v(i, j - 1) - grid.dx() * (field.u(i, j) - field.u(i, j - 1)) / grid.dy();
+                field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
+            }
+            field.u(i, j + 1) = field.u(i, j);
+            field.v(i + 1, j) = field.v(i, j);
+            field.f(i, j + 1) = field.u(i, j + 1);
+            field.g(i + 1, j) = field.v(i + 1, j);
             continue;
         }
         if (cells->is_border(border_position::SOUTHWEST)) {
@@ -538,6 +582,10 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.v(i, j - 1) = field.v(i, j);
             field.g(i, j - 1) = field.v(i, j - 1);
             field.f(i - 1, j) = field.u(i - 1, j);
+            field.u(i - 1, j - 1) = field.u(i - 1, j);
+            field.v(i - 1, j - 1) = field.v(i, j - 1);
+            field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+            field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
             continue;
         }
         if (cells->is_border(border_position::NORTHWEST)) {
@@ -545,6 +593,16 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.v(i, j) = field.v(i, j - 1);
             field.f(i - 1, j) = field.u(i - 1, j);
             field.g(i, j) = field.v(i, j);
+            if (cells->neighbour(border_position::LEFT)->neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+                field.v(i - 1, j - 1) =
+                    field.v(i, j - 1) + grid.dx() * (field.u(i - 1, j) - field.u(i - 1, j - 1)) / grid.dy();
+                field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
+            }
+            field.u(i - 1, j + 1) = field.u(i - 1, j);
+            field.v(i - 1, j) = field.v(i, j);
+            field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+            field.g(i - 1, j) = field.v(i - 1, j);
             continue;
         }
         if (cells->is_border(border_position::NORTHSOUTH)) {
@@ -552,6 +610,16 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.v(i, j - 1) = field.v(i, j - 1) + field.gy() * field.dt();
             field.g(i, j) = field.v(i, j);
             field.g(i, j - 1) = field.v(i, j - 1);
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+                field.u(i - 1, j + 1) = field.u(i - 1, j) - grid.dy() * (field.v(i, j) - field.v(i - 1, j)) / grid.dx();
+                field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+            }
+            if (cells->neighbour(border_position::LEFT)->neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+                field.u(i - 1, j - 1) =
+                    field.u(i - 1, j) + grid.dy() * (field.v(i, j - 1) - field.v(i - 1, j - 1)) / grid.dx();
+                field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::EASTWEST)) {
@@ -559,6 +627,17 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.u(i - 1, j) = field.u(i - 1, j) + field.gx() * field.dt();
             field.f(i, j) = field.u(i, j);
             field.f(i - 1, j) = field.u(i - 1, j);
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.v(i - 1, j - 1) =
+                    field.v(i, j - 1) + grid.dx() * (field.u(i - 1, j) - field.u(i - 1, j - 1)) / grid.dy();
+                field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
+            }
+            if (cells->neighbour(border_position::RIGHT)->neighbour(border_position::BOTTOM)->type() ==
+                cell_type::EMPTY) {
+                field.v(i + 1, j - 1) = field.v(i, j - 1) + grid.dx() * (field.u(i, j) - field.u(i, j - 1)) / grid.dy();
+                field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::NORTHEASTWEST)) {
@@ -568,6 +647,28 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.f(i, j) = field.u(i, j);
             field.f(i - 1, j) = field.u(i - 1, j);
             field.g(i, j) = field.v(i, j);
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+                field.u(i - 1, j + 1) = field.u(i - 1, j);
+                field.v(i - 1, j) = field.v(i, j);
+                field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+                field.g(i - 1, j) = field.v(i - 1, j);
+            }
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY) {
+                field.u(i, j + 1) = field.u(i, j);
+                field.v(i + 1, j) = field.v(i, j);
+                field.f(i, j + 1) = field.u(i, j + 1);
+                field.g(i + 1, j) = field.v(i + 1, j);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.v(i - 1, j - 1) = field.v(i, j - 1);
+                field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY) {
+                field.v(i + 1, j - 1) = field.v(i, j - 1);
+                field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::EASTWESTSOUTH)) {
@@ -577,6 +678,20 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.f(i, j) = field.u(i, j);
             field.f(i - 1, j) = field.u(i - 1, j);
             field.g(i, j) = field.v(i, j);
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i - 1, j - 1) = field.u(i - 1, j);
+                field.v(i - 1, j - 1) = field.v(i, j - 1);
+                field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+                field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i, j - 1) = field.u(i, j);
+                field.v(i + 1, j - 1) = field.v(i, j - 1);
+                field.f(i, j - 1) = field.u(i, j - 1);
+                field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::NORTHEASTSOUTH)) {
@@ -586,6 +701,28 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.g(i, j) = field.v(i, j);
             field.g(i, j - 1) = field.v(i, j - 1);
             field.f(i, j) = field.u(i, j);
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY) {
+                field.u(i, j + 1) = field.u(i, j);
+                field.v(i + 1, j) = field.v(i, j);
+                field.f(i, j + 1) = field.u(i, j + 1);
+                field.g(i + 1, j) = field.v(i + 1, j);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i, j - 1) = field.u(i, j);
+                field.v(i + 1, j - 1) = field.v(i, j - 1);
+                field.f(i, j - 1) = field.u(i, j - 1);
+                field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i - 1, j - 1) = field.u(i - 1, j);
+                field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+            }
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+                field.u(i - 1, j + 1) = field.u(i - 1, j);
+                field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::NORTHWESTSOUTH)) {
@@ -595,6 +732,19 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.g(i, j) = field.v(i, j);
             field.g(i, j - 1) = field.v(i, j - 1);
             field.f(i - 1, j) = field.u(i - 1, j);
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+                field.u(i - 1, j + 1) = field.u(i - 1, j);
+                field.v(i - 1, j) = field.v(i, j);
+                field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+                field.g(i - 1, j) = field.v(i - 1, j);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i - 1, j - 1) = field.u(i - 1, j);
+                field.v(i - 1, j - 1) = field.v(i, j - 1);
+                field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+                field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
+            }
             continue;
         }
         if (cells->is_border(border_position::NORTHEASTWESTSOUTH)) {
@@ -606,6 +756,32 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
             field.g(i, j - 1) = field.v(i, j - 1);
             field.f(i, j) = field.u(i, j);
             field.f(i - 1, j) = field.u(i - 1, j);
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::LEFT)->type() == cell_type::EMPTY) {
+                field.u(i - 1, j + 1) = field.u(i - 1, j);
+                field.v(i - 1, j) = field.v(i, j);
+                field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
+                field.g(i - 1, j) = field.v(i - 1, j);
+            }
+            if (cells->neighbour(border_position::TOP)->neighbour(border_position::RIGHT)->type() == cell_type::EMPTY) {
+                field.u(i, j + 1) = field.u(i, j);
+                field.v(i + 1, j) = field.v(i, j);
+                field.f(i, j + 1) = field.u(i, j + 1);
+                field.g(i + 1, j) = field.v(i + 1, j);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::LEFT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i - 1, j - 1) = field.u(i - 1, j);
+                field.v(i - 1, j - 1) = field.v(i, j - 1);
+                field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
+                field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
+            }
+            if (cells->neighbour(border_position::BOTTOM)->neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY) {
+                field.u(i, j - 1) = field.u(i, j);
+                field.v(i + 1, j - 1) = field.v(i, j - 1);
+                field.f(i, j - 1) = field.u(i, j - 1);
+                field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
+            }
             continue;
         }
     }

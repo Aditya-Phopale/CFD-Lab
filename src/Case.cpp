@@ -352,7 +352,7 @@ void Case::simulate() {
 
     _surface_boundaries->apply_black(_field, _grid);
     _surface_boundaries->apply_pressure(_field, _grid);
-    _surface_boundaries->apply_grey(_field, _grid);
+    //_surface_boundaries->apply_grey(_field, _grid);
 
     // output_vtk(0, Communication::rank);
 
@@ -366,11 +366,22 @@ void Case::simulate() {
     // respectively.
     _field.calculate_fluxes(_grid);
 
+    
+
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
     // std::cout << "Zopaycha hota he karnacha aadhi\n";
     //  Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
+
+    for (int j = _grid.jmax(); j >= 0; j--) {
+      for (int i = 0; i < _grid.imax(); i++) {
+        std::cout << _field.g(i, j) << " ";
+      }
+      std::cout << "\n";
+    }
+    std::cout << t << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
 
     iter = 0;  // Pressure poisson solver iteration initialization
     res = std::numeric_limits<double>::max();
@@ -405,14 +416,7 @@ void Case::simulate() {
     _field.calculate_velocities(_grid);
     //
 
-    for (int j = _grid.jmax(); j >= 0; j--) {
-      for (int i = 0; i < _grid.imax(); i++) {
-        std::cout << _field.u(i, j) << " ";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
+    
 
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
@@ -420,7 +424,7 @@ void Case::simulate() {
 
     _surface_boundaries->apply_black(_field, _grid);
     _surface_boundaries->apply_pressure(_field, _grid);
-    _surface_boundaries->apply_grey(_field, _grid);
+    //_surface_boundaries->apply_grey(_field, _grid);
     {
       double dx = _grid.dx();
       double dy = _grid.dy();

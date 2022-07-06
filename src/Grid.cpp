@@ -486,8 +486,8 @@ void Grid::reset_fluid_cells() {
   }
   std::sort(_fluid_cells.begin(), _fluid_cells.end(),
             [this](Cell *lhs, Cell *rhs) {
-              return lhs->i() * _domain.imax + lhs->j() <
-                     rhs->i() * _domain.imax + rhs->j();
+              return lhs->i() + lhs->j() * _domain.imax  <
+                     rhs->i() + rhs->j() * _domain.imax ;
             });
 
   for (auto &cells : _fluid_cells) {
