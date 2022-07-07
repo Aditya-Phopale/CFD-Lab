@@ -346,12 +346,16 @@ void Case::simulate() {
 
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t <= 0.2) {
+  while (t <= 0.6) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
+    _grid.reset_fluid_cells();
+
+    _surface_boundaries->update_cells(_grid.surface_cells());
+
     _surface_boundaries->apply_black(_field, _grid);
-    _surface_boundaries->apply_pressure(_field, _grid);
+    // _surface_boundaries->apply_pressure(_field, _grid);
     //_surface_boundaries->apply_grey(_field, _grid);
 
     // output_vtk(0, Communication::rank);
@@ -364,15 +368,19 @@ void Case::simulate() {
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y directions
     // respectively.
+    for (int j = _grid.jmax(); j >= 0; j--) {
+      for (int i = 0; i < _grid.imax(); i++) {
+        std::cout << _field.g(i, j) << " ";
+      }
+      std::cout << "\n";
+    }
+    std::cout
+        << t
+        << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+           "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
+    std::cout << _field.g(31, 12) << "\n";
     _field.calculate_fluxes(_grid);
-
-    
-
-    Communication::communicate(_field.f_matrix(), _grid.domain());
-    Communication::communicate(_field.g_matrix(), _grid.domain());
-    // std::cout << "Zopaycha hota he karnacha aadhi\n";
-    //  Calculating RHS for pressure poisson equation
-    _field.calculate_rs(_grid);
+    std::cout << _field.g(31, 12) << "\n";
 
     for (int j = _grid.jmax(); j >= 0; j--) {
       for (int i = 0; i < _grid.imax(); i++) {
@@ -380,8 +388,16 @@ void Case::simulate() {
       }
       std::cout << "\n";
     }
-    std::cout << t << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
+    std::cout
+        << t
+        << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+           "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
+
+    Communication::communicate(_field.f_matrix(), _grid.domain());
+    Communication::communicate(_field.g_matrix(), _grid.domain());
+    // std::cout << "Zopaycha hota he karnacha aadhi\n";
+    //  Calculating RHS for pressure poisson equation
+    _field.calculate_rs(_grid);
 
     iter = 0;  // Pressure poisson solver iteration initialization
     res = std::numeric_limits<double>::max();
@@ -416,7 +432,16 @@ void Case::simulate() {
     _field.calculate_velocities(_grid);
     //
 
-    
+    // for (int j = _grid.jmax(); j >= 0; j--) {
+    //   for (int i = 0; i < _grid.imax(); i++) {
+    //     std::cout << _field.p(i, j) << " ";
+    //   }
+    //   std::cout << "\n";
+    // }
+    // std::cout
+    //     << t
+    //     << " xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    //        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
 
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
@@ -425,6 +450,7 @@ void Case::simulate() {
     _surface_boundaries->apply_black(_field, _grid);
     _surface_boundaries->apply_pressure(_field, _grid);
     //_surface_boundaries->apply_grey(_field, _grid);
+
     {
       double dx = _grid.dx();
       double dy = _grid.dy();
@@ -448,7 +474,7 @@ void Case::simulate() {
 
     // Assign particle
     // std::cout<<_grid.fluid_cells().size()<<'\n';
-    _grid.reset_fluid_cells();
+    // _grid.reset_fluid_cells();
     // std::cout<<_grid.fluid_cells().size()<<'\n';
 
     Communication::communicate(_field.u_matrix(), _grid.domain());
@@ -486,6 +512,8 @@ void Case::output_vtk(int timestep, int rank) {
 
   // Creating grid
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+
+  auto pts = vtkPoints::New();
 
   double dx = _grid.dx();
   double dy = _grid.dy();

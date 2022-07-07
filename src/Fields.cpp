@@ -12,7 +12,7 @@ Fields::Fields(double nu, double Re, double alpha, double beta, double dt,
                double tau, int imax, int jmax, double UI, double VI, double PI,
                double TI, double GX, double GY, bool energy_eq)
     : _nu(nu),
-      _Re(Re),
+      _Re(1 / nu),
       _dt(dt),
       _tau(tau),
       _alpha(alpha),
@@ -62,6 +62,9 @@ void Fields::calculate_fluxes(Grid &grid) {
       _G(i, j) =
           _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
                             Discretization::convection_v(_U, _V, i, j) + _gy);
+      if (i == 31 && j == 12) {
+        std::cout << _G(i, j) << "\n";
+      }
 
       if (_energy_eq) {
         _G(i, j) =

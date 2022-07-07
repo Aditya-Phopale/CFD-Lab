@@ -111,6 +111,7 @@ class FreeSurfaceBoundary {
   void apply_black(Fields &field, Grid &grid);
   void apply_pressure(Fields &field, Grid &grid);
   void apply_grey(Fields &field, Grid &grid);
+  void update_cells(std::vector<Cell *> cells);
 
  private:
   std::vector<Cell *> _cells;
