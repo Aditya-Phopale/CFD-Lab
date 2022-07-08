@@ -11,8 +11,8 @@ void Particle::advance_particle(double &dt) {
 
 void Particle::calculate_velocities(double &dx, double &dy, Matrix<double> &u,
                                     Matrix<double> &v) {
-  int i = x / dx + 1;
-  int j = (y + dy / 2) / dy + 1;
+  int i = x / dx;
+  int j = (y + dy / 2) / dy ;
 
   double x1, x2, y1, y2;
   x1 = (i - 1) * dx;
@@ -25,8 +25,8 @@ void Particle::calculate_velocities(double &dx, double &dy, Matrix<double> &u,
            (x2 - x) * (y - y1) * u(i - 1, j) + (x - x1) * (y - y1) * u(i, j)) /
           (dx * dy);
 
-  i = (x + dx / 2) / dx + 1;
-  j = y / dy + 1;
+  i = (x + dx / 2) / dx;
+  j = y / dy;
 
   x1 = ((i - 1) - 0.5) * dx;
   x2 = (i - 0.5) * dx;

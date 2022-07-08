@@ -346,7 +346,7 @@ void Case::simulate() {
 
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t <= 0.6) {
+  while (t <= 2.5) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
@@ -368,19 +368,19 @@ void Case::simulate() {
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y directions
     // respectively.
-    for (int j = _grid.jmax(); j >= 0; j--) {
-      for (int i = 0; i < _grid.imax(); i++) {
-        std::cout << _field.g(i, j) << " ";
-      }
-      std::cout << "\n";
-    }
-    std::cout
-        << t
-        << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-           "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
-    std::cout << _field.g(31, 12) << "\n";
+    // for (int j = _grid.jmax(); j >= 0; j--) {
+    //   for (int i = 0; i < _grid.imax(); i++) {
+    //     std::cout << _field.g(i, j) << " ";
+    //   }
+    //   std::cout << "\n";
+    // }
+    // std::cout
+    //     << t
+    //     << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    //        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
+    // std::cout << _field.g(31, 12) << "\n";
     _field.calculate_fluxes(_grid);
-    std::cout << _field.g(31, 12) << "\n";
+    // std::cout << _field.g(31, 12) << "\n";
 
     for (int j = _grid.jmax(); j >= 0; j--) {
       for (int i = 0; i < _grid.imax(); i++) {
@@ -458,8 +458,11 @@ void Case::simulate() {
         particle.calculate_velocities(dx, dy, _field.u_matrix(),
                                       _field.v_matrix());
         particle.advance_particle(dt);
+        //std::cout<<setw(8)<<particle.x_pos()<<setw(10)<<particle.y_pos()<<setw(8)<<particle.u()<<setw(12)<<particle.v()<<'\n';
       }
     }
+    //std::cout<<t<<"*******************************************\n";
+
     for (auto i = std::begin(_grid.particle());
          i != std::end(_grid.particle());) {
       if ((*i).y_pos() < (_grid.domain().jmin + 1) * _grid.dy() ||
