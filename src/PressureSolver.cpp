@@ -18,8 +18,6 @@ double SOR::solve(Fields &field, Grid &grid,
       _omega /
       (2.0 * (1.0 / (dx * dx) +
               1.0 / (dy * dy)));  // = _omega * h^2 / 4.0, if dx == dy == h
-  
-
 
   for (auto currentCell : grid.fluid_cells()) {
     int i = currentCell->i();
@@ -30,8 +28,6 @@ double SOR::solve(Fields &field, Grid &grid,
         coeff * (Discretization::sor_helper(field.p_matrix(), i, j) -
                  field.rs(i, j));
   }
-
-  
 
   double res = 0.0;
   double rloc = 0.0;
@@ -46,11 +42,11 @@ double SOR::solve(Fields &field, Grid &grid,
         Discretization::laplacian(field.p_matrix(), i, j) - field.rs(i, j);
     rloc += (val * val);
   }
-  //std::cout<<rloc<<"\n";
+  // std::cout<<rloc<<"\n";
   rloc = Communication::reduce_sum(rloc);
   int fluid_cells_size = grid.fluid_cells().size();
 
-  ///std::cout<<grid.fluid_cells().size();
+  /// std::cout<<grid.fluid_cells().size();
   fluid_cells_size = Communication::reduce_sum_integer(fluid_cells_size);
   {
     res = rloc / fluid_cells_size;

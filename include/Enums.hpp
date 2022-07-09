@@ -48,6 +48,7 @@ const int RIGHT = 3;
 enum class cell_type {
   FLUID,
   EMPTY,
+  SURFACE,
   FIXED_WALL3,
   FIXED_WALL4,
   MOVING_WALL,

@@ -345,18 +345,20 @@ void Case::simulate() {
   // _surface_boundaries->apply_black(_field, _grid);
   // _surface_boundaries->apply_pressure(_field, _grid);
   // _surface_boundaries->apply_grey(_field, _grid);
+  output_vtk(0, 0);
 
   // Following is the actual loop that runs till the defined time limit.
 
-  while (t <= 2.5) {
+  while (t <= _t_end) {
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
-    _grid.reset_fluid_cells();
+    if (_grid.particle().size() > 0) {
+      _grid.reset_fluid_cells();
+      _surface_boundaries->update_cells(_grid.surface_cells());
+      _surface_boundaries->apply_black(_field, _grid);
+    }
 
-    _surface_boundaries->update_cells(_grid.surface_cells());
-
-    _surface_boundaries->apply_black(_field, _grid);
     // _surface_boundaries->apply_pressure(_field, _grid);
     //_surface_boundaries->apply_grey(_field, _grid);
 
@@ -370,30 +372,7 @@ void Case::simulate() {
 
     // Calculating Fluxes (_F and _G) for velocities in X and Y directions
     // respectively.
-    // for (int j = _grid.jmax(); j >= 0; j--) {
-    //   for (int i = 0; i < _grid.imax(); i++) {
-    //     std::cout << _field.g(i, j) << " ";
-    //   }
-    //   std::cout << "\n";
-    // }
-    // std::cout
-    //     << t
-    //     << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    //        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
-    // std::cout << _field.g(31, 12) << "\n";
     _field.calculate_fluxes(_grid);
-    // std::cout << _field.g(31, 12) << "\n";
-
-    // for (int j = _grid.jmax(); j >= 0; j--) {
-    //   for (int i = 0; i < _grid.imax(); i++) {
-    //     std::cout << _field.g(i, j) << " ";
-    //   }
-    //   std::cout << "\n";
-    // }
-    // std::cout
-    //     << t
-    //     << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    //        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
 
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
@@ -433,10 +412,53 @@ void Case::simulate() {
     // pressure poisson equation
     _field.calculate_velocities(_grid);
     //
+    // for (int j = _grid.jmax() + 1; j >= 0; j--) {
+    //   for (int i = 0; i < _grid.imax() + 1; i++) {
+    //     std::cout << _field.u(i, j) << " ";
+    //   }
+    //   std::cout << "\n";
+    // }
+    // std::cout
+    //     << t
+    //     << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    //        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
+    // output_vtk(2, 0);
+
+    for (int i = 0; i < _boundaries.size(); i++) {
+      _boundaries[i]->apply(_field);
+    }
+
+    if (_grid.particle().size() > 0) {
+      _surface_boundaries->apply_black(_field, _grid);
+      _surface_boundaries->apply_pressure(_field, _grid);
+      {
+        double dx = _grid.dx();
+        double dy = _grid.dy();
+        for (auto &particle : _grid.particle()) {
+          particle.calculate_velocities(dx, dy, _field.u_matrix(),
+                                        _field.v_matrix());
+          particle.advance_particle(dt);
+          // std::cout<<setw(8)<<particle.x_pos()<<setw(10)<<particle.y_pos()<<setw(8)<<particle.u()<<setw(12)<<particle.v()<<'\n';
+        }
+      }
+      for (auto i = std::begin(_grid.particle());
+           i != std::end(_grid.particle());) {
+        if ((*i).y_pos() < (_grid.domain().jmin + 1) * _grid.dy() ||
+            (*i).x_pos() < (_grid.domain().imin + 1) * _grid.dx() ||
+            (*i).y_pos() > (_grid.domain().jmax - 1) * _grid.dy() ||
+            (*i).x_pos() > (_grid.domain().imax - 1) * _grid.dx()) {
+          i = _grid.particle().erase(i);
+        } else {
+          i++;
+        }
+      }
+    }
+
+    //_surface_boundaries->apply_grey(_field, _grid);
 
     // for (int j = _grid.jmax(); j >= 0; j--) {
     //   for (int i = 0; i < _grid.imax(); i++) {
-    //     std::cout << _field.p(i, j) << " ";
+    //     std::cout << _field.u(i, j) << " ";
     //   }
     //   std::cout << "\n";
     // }
@@ -445,37 +467,7 @@ void Case::simulate() {
     //     << " xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     //        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
 
-    for (int i = 0; i < _boundaries.size(); i++) {
-      _boundaries[i]->apply(_field);
-    }
-
-    _surface_boundaries->apply_black(_field, _grid);
-    _surface_boundaries->apply_pressure(_field, _grid);
-    //_surface_boundaries->apply_grey(_field, _grid);
-
-    {
-      double dx = _grid.dx();
-      double dy = _grid.dy();
-      for (auto &particle : _grid.particle()) {
-        particle.calculate_velocities(dx, dy, _field.u_matrix(),
-                                      _field.v_matrix());
-        particle.advance_particle(dt);
-        // std::cout<<setw(8)<<particle.x_pos()<<setw(10)<<particle.y_pos()<<setw(8)<<particle.u()<<setw(12)<<particle.v()<<'\n';
-      }
-    }
     // std::cout<<t<<"*******************************************\n";
-
-    for (auto i = std::begin(_grid.particle());
-         i != std::end(_grid.particle());) {
-      if ((*i).y_pos() < (_grid.domain().jmin + 1) * _grid.dy() ||
-          (*i).x_pos() < (_grid.domain().imin + 1) * _grid.dx() ||
-          (*i).y_pos() > _grid.domain().jmax * _grid.dy() ||
-          (*i).x_pos() > _grid.domain().imax * _grid.dx()) {
-        i = _grid.particle().erase(i);
-      } else {
-        i++;
-      }
-    }
 
     // Assign particle
     // std::cout<<_grid.fluid_cells().size()<<'\n';
@@ -491,7 +483,7 @@ void Case::simulate() {
 
     // Printing Data in the terminal
     if (Communication::rank == 0) {
-      if (timestep % 100 == 0) {
+      if (timestep % 5 == 0) {
         std::cout << "Timestep size: " << setw(10) << dt << " | "
                   << "Time: " << setw(8) << t << setw(3) << " | "
                   << "Residual: " << setw(11) << res << setw(3) << " | "
@@ -500,10 +492,10 @@ void Case::simulate() {
     }
 
     // output_vtk(1, Communication::rank);
-    // if (t >= _output_freq) {
-    output_vtk(timestep, Communication::rank);
-    _output_freq = _output_freq + output_counter;
-    //}
+    if (t >= _output_freq) {
+      output_vtk(timestep, Communication::rank);
+      _output_freq = _output_freq + output_counter;
+    }
   }
   logfile.close();
 }
@@ -643,7 +635,8 @@ void Case::output_vtk(int timestep, int rank) {
   for (auto &particle : _grid.particle()) {
     pos[0] = particle.x_pos();
     pos[1] = particle.y_pos();
-    pos[3] = particle.v();
+    pos[3] =
+        std::sqrt(particle.u() * particle.u() + particle.v() * particle.v());
 
     particle_writer << pos[0] << "," << pos[1] << "," << pos[2] << "," << pos[3]
                     << "\n";

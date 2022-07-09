@@ -98,7 +98,9 @@ void FixedWallBoundary::apply(Fields &field) {
 
     if (cells->is_border(border_position::TOP)) {
       field.u(i, j) = -field.u(i, j + 1);
-      // field.u(i - 1, j) = -field.u(i - 1, j + 1);
+      field.f(i, j) = field.u(i, j);
+      field.u(i - 1, j) = -field.u(i - 1, j + 1);
+      field.f(i - 1, j) = field.u(i, j);
       field.v(i, j) = 0.0;
       field.g(i, j) = field.v(i, j);
       if (energy_flag) {
@@ -108,7 +110,9 @@ void FixedWallBoundary::apply(Fields &field) {
     }
     if (cells->is_border(border_position::BOTTOM)) {
       field.u(i, j) = -field.u(i, j - 1);
-      // field.u(i - 1, j) = -field.u(i - 1, j - 1);
+      field.f(i, j) = field.u(i, j);
+      field.u(i - 1, j) = -field.u(i - 1, j - 1);
+      field.f(i - 1, j) = field.u(i - 1, j);
       field.v(i, j - 1) = 0.0;
       field.g(i, j - 1) = field.v(i, j - 1);
       if (energy_flag) {
@@ -119,8 +123,10 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::RIGHT)) {
       field.u(i, j) = 0.0;
       field.v(i, j) = -field.v(i + 1, j);
-      // field.v(i, j - 1) = -field.v(i + 1, j - 1);
+      field.v(i, j - 1) = -field.v(i + 1, j - 1);
       field.f(i, j) = field.u(i, j);
+      field.g(i, j) = field.v(i, j);
+      field.g(i, j - 1) = field.v(i, j - 1);
       if (energy_flag) {
         field.t(i, j) = (2.0) * (temp)-field.t(i + 1, j);
       }
@@ -129,8 +135,10 @@ void FixedWallBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::LEFT)) {
       field.u(i - 1, j) = 0.0;
       field.v(i, j) = -field.v(i - 1, j);
-      // field.v(i, j - 1) = -field.v(i - 1, j - 1);
+      field.v(i, j - 1) = -field.v(i - 1, j - 1);
       field.f(i - 1, j) = field.u(i - 1, j);
+      field.g(i, j) = field.v(i, j);
+      field.g(i, j - 1) = field.v(i, j - 1);
       if (energy_flag) {
         field.t(i, j) = (2.0) * (temp)-field.t(i - 1, j);
       }

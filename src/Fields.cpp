@@ -49,7 +49,8 @@ void Fields::calculate_fluxes(Grid &grid) {
     i = cell->i();
     j = cell->j();
     // std::cout << i << " " << j << '\n';
-    if (cell->neighbour(border_position::RIGHT)->type() == cell_type::FLUID) {
+    if (cell->neighbour(border_position::RIGHT)->type() == cell_type::FLUID ||
+        cell->neighbour(border_position::RIGHT)->type() == cell_type::SURFACE) {
       _F(i, j) =
           _U(i, j) + _dt * (_nu * Discretization::diffusion(_U, i, j) -
                             Discretization::convection_u(_U, _V, i, j) + _gx);
@@ -58,13 +59,11 @@ void Fields::calculate_fluxes(Grid &grid) {
             _F(i, j) - (_beta * _dt / 2) * (_T(i, j) + _T(i + 1, j)) * _gx;
       }
     }
-    if (cell->neighbour(border_position::TOP)->type() == cell_type::FLUID) {
+    if (cell->neighbour(border_position::TOP)->type() == cell_type::FLUID ||
+        cell->neighbour(border_position::TOP)->type() == cell_type::SURFACE) {
       _G(i, j) =
           _V(i, j) + _dt * (_nu * Discretization::diffusion(_V, i, j) -
                             Discretization::convection_v(_U, _V, i, j) + _gy);
-      if (i == 31 && j == 12) {
-        std::cout << _G(i, j) << "\n";
-      }
 
       if (_energy_eq) {
         _G(i, j) =
@@ -153,10 +152,12 @@ void Fields::calculate_velocities(Grid &grid) {
     i = cell->i();
     j = cell->j();
 
-    if (cell->neighbour(border_position::RIGHT)->type() == cell_type::FLUID) {
+    if (cell->neighbour(border_position::RIGHT)->type() == cell_type::FLUID ||
+        cell->neighbour(border_position::RIGHT)->type() == cell_type::SURFACE) {
       _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
     }
-    if (cell->neighbour(border_position::TOP)->type() == cell_type::FLUID) {
+    if (cell->neighbour(border_position::TOP)->type() == cell_type::FLUID ||
+        cell->neighbour(border_position::TOP)->type() == cell_type::SURFACE) {
       _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
     }
   }
@@ -179,15 +180,7 @@ void Fields::calculate_velocities(Grid &grid) {
                (cell->is_border(border_position::RIGHT)) ||
                (cell->is_border(border_position::EASTWESTSOUTH))) {
       _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
-
-      // } else if (cell->neighbour(border_position::NORTHWESTSOUTH)->type() ==
-      // cell_type::EMPTY) {
-      //     _U(i, j) = _F(i, j) - _dt * (_P(i + 1, j) - _P(i, j)) / grid.dx();
-
-    }  // } else if (cell->neighbour(border_position::EASTWESTSOUTH)->type() ==
-       // cell_type::EMPTY) {
-       //     _V(i, j) = _G(i, j) - _dt * (_P(i, j + 1) - _P(i, j)) / grid.dy();
-       // }
+    }
   }
 }
 
