@@ -41,6 +41,8 @@ namespace filesystem = std::experimental::filesystem;
 #include <vtkStructuredGrid.h>
 #include <vtkStructuredGridWriter.h>
 #include <vtkTuple.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkUnstructuredGridWriter.h>
 
 // Read input parameters.
 
@@ -382,16 +384,16 @@ void Case::simulate() {
     _field.calculate_fluxes(_grid);
     // std::cout << _field.g(31, 12) << "\n";
 
-    for (int j = _grid.jmax(); j >= 0; j--) {
-      for (int i = 0; i < _grid.imax(); i++) {
-        std::cout << _field.g(i, j) << " ";
-      }
-      std::cout << "\n";
-    }
-    std::cout
-        << t
-        << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-           "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
+    // for (int j = _grid.jmax(); j >= 0; j--) {
+    //   for (int i = 0; i < _grid.imax(); i++) {
+    //     std::cout << _field.g(i, j) << " ";
+    //   }
+    //   std::cout << "\n";
+    // }
+    // std::cout
+    //     << t
+    //     << "   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    //        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n";
 
     Communication::communicate(_field.f_matrix(), _grid.domain());
     Communication::communicate(_field.g_matrix(), _grid.domain());
@@ -458,10 +460,10 @@ void Case::simulate() {
         particle.calculate_velocities(dx, dy, _field.u_matrix(),
                                       _field.v_matrix());
         particle.advance_particle(dt);
-        //std::cout<<setw(8)<<particle.x_pos()<<setw(10)<<particle.y_pos()<<setw(8)<<particle.u()<<setw(12)<<particle.v()<<'\n';
+        // std::cout<<setw(8)<<particle.x_pos()<<setw(10)<<particle.y_pos()<<setw(8)<<particle.u()<<setw(12)<<particle.v()<<'\n';
       }
     }
-    //std::cout<<t<<"*******************************************\n";
+    // std::cout<<t<<"*******************************************\n";
 
     for (auto i = std::begin(_grid.particle());
          i != std::end(_grid.particle());) {
@@ -516,7 +518,19 @@ void Case::output_vtk(int timestep, int rank) {
   // Creating grid
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
-  auto pts = vtkPoints::New();
+  // vtkSmartPointer<vtkUnstructuredGrid> dataSet =
+  //     vtkSmartPointer<vtkUnstructuredGrid>::New();
+
+  // auto pts = vtkPoints::New();
+
+  // int num_pts = _grid.particle().size();
+  // pts->SetNumberOfPoints(num_pts);
+
+  std::ofstream particle_writer;
+  std::string ptcl_output_name = _dict_name + '/' + _case_name + "_" +
+                                 std::to_string(rank) + "_" +
+                                 std::to_string(timestep) + ".vtp";
+  particle_writer.open(ptcl_output_name.c_str());
 
   double dx = _grid.dx();
   double dy = _grid.dy();
@@ -613,6 +627,34 @@ void Case::output_vtk(int timestep, int rank) {
   // Add Velocity to Structured Grid
   structuredGrid->GetPointData()->AddArray(Velocity);
 
+  // auto ID = vtkDoubleArray::New();
+  // ID->SetNumberOfComponents(1);
+  // ID->SetNumberOfTuples(pts->GetNumberOfPoints());
+  // ID->SetName("ID");
+
+  // auto ptcl = vtkDoubleArray::New();
+  // ptcl->SetNumberOfComponents(3);
+  // // ptcl->SetNumberOfTuples(pts->GetNumberOfPoints());
+  // ptcl->SetName("Position");
+
+  double pos[4];
+  pos[2] = 0;
+  int id = 0;
+  for (auto &particle : _grid.particle()) {
+    pos[0] = particle.x_pos();
+    pos[1] = particle.y_pos();
+    pos[3] = particle.v();
+
+    particle_writer << pos[0] << "," << pos[1] << "," << pos[2] << "," << pos[3]
+                    << "\n";
+    // pts->SetPoint(id, pos);
+    // id++;
+  }
+  particle_writer.close();
+
+  // dataSet->GetPointData()->AddArray(ptcl);
+  // dataSet->SetPoints(pts);
+
   // Write Grid
   vtkSmartPointer<vtkStructuredGridWriter> writer =
       vtkSmartPointer<vtkStructuredGridWriter>::New();
@@ -625,6 +667,14 @@ void Case::output_vtk(int timestep, int rank) {
   writer->SetFileName(outputname.c_str());
   writer->SetInputData(structuredGrid);
   writer->Write();
+
+  // auto writer2 = vtkUnstructuredGridWriter::New();
+  // std::string output_ptcl = _dict_name + '/' + _case_name + "_" +
+  //                           std::to_string(rank) + "_" +
+  //                           std::to_string(timestep) + ".vtp";
+  // writer2->SetFileName(output_ptcl.c_str());
+  // writer2->SetInputData(dataSet);
+  // writer2->Write();
 }
 
 void Case::build_domain(Domain &domain, int imax_domain, int jmax_domain,
