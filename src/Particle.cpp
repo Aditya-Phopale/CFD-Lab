@@ -5,16 +5,8 @@
 Particle::Particle(double x, double y) : x{x}, y{y}, vel_u{0}, vel_v{0} {}
 
 void Particle::advance_particle(double &dt) {
-  // if (this->u() > 0.00000001) {
   this->x += this->vel_u * dt;
-  // } else {
-  //   this->u() = 0;
-  // }
-  // if (this->v() > 0.00000001) {
   this->y += this->vel_v * dt;
-  // } else {
-  //   this->v() = 0;
-  // }
 }
 
 void Particle::calculate_velocities(double &dx, double &dy, Matrix<double> &u,

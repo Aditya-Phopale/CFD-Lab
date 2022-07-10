@@ -17,6 +17,7 @@ const int outflow = 2;
 const int fixed_wall_3 = 3;
 const int fixed_wall_4 = 4;
 const int fixed_wall_5 = 5;
+const int free_slip = 6;
 const int empty = 7;
 }  // namespace cellID
 
@@ -52,6 +53,7 @@ enum class cell_type {
   FIXED_WALL3,
   FIXED_WALL4,
   MOVING_WALL,
+  FREE_SLIP,
   INLET,
   OUTLET,
   ADIABATIC_WALL,

@@ -8,8 +8,6 @@ class Particle {
   void calculate_velocities(double &dx, double &dy, Matrix<double> &u,
                             Matrix<double> &v);
 
-  // void set_particles(Grid &grid, Fields &field);
-
   double &x_pos();
 
   double &y_pos();
@@ -27,4 +25,3 @@ class Particle {
   double vel_v;
 };
 
-// std::vector<particle> initialize_particles(int ppc);

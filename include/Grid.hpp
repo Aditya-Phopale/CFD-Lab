@@ -73,6 +73,8 @@ class Grid {
    */
   const std::vector<Cell *> &fixed_wall_cells() const;
 
+  const std::vector<Cell *> &free_slip_cells() const;
+
   /**
    * @brief Access obstacle cells
    *
@@ -124,13 +126,11 @@ class Grid {
   std::vector<Cell *> _adiabatic_cells;
   std::vector<Cell *> _buffer;
   std::vector<Cell *> _surface_cells;
+  std::vector<Cell *> _free_slip_cells;
 
   std::vector<Particle> _particles;
 
   Domain _domain;
 
   std::vector<std::vector<int>> geometry_excluding_ghosts;
-
-  // double _dx;
-  // double _dy;
 };

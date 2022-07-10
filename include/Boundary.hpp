@@ -93,6 +93,20 @@ class OutletBoundary : public Boundary {
   std::map<int, double> _wall_temperature;
 };
 
+class FreeSlipBoundary : public Boundary {
+ public:
+  FreeSlipBoundary(std::vector<Cell *> cells);
+  FreeSlipBoundary(std::vector<Cell *> cells,
+                    std::map<int, double> wall_temperature);
+  virtual ~FreeSlipBoundary() = default;
+  virtual void apply(Fields &field);
+  virtual void apply_pressure(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+  std::map<int, double> _wall_temperature;
+};
+
 class AdiabaticBoundary : public Boundary {
  public:
   AdiabaticBoundary(std::vector<Cell *> cells);

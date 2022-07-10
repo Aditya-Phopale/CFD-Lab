@@ -14,12 +14,8 @@ date file is provided.
 int main(int argn, char **args) {
   auto start = std::chrono::steady_clock::now();
   Communication::init_parallel(argn, args);
-  // argn = 2;
   if (argn > 1) {
     std::string file_name{args[1]};
-    // std::string file_name{
-    //     "/home/gaurav/Desktop/CFDLAB/project/ws2-configs-and-geometries/"
-    //     "configs-and-geometries/ShearFlow/DamBreak.dat"};
     Case problem(file_name, argn, args);
     problem.simulate();
   } else {
