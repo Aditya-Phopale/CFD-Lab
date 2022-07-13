@@ -26,6 +26,8 @@ Fields::Fields(double nu, double Re, double alpha, double beta, double dt, doubl
     _G = Matrix<double>(imax + 2, jmax + 2,
                         0.0); // of the momentum equation for U and V respectively
     _RS = Matrix<double>(imax + 2, jmax + 2, 0.0);
+
+    _VOF = Matrix<double>(imax + 2, jmax + 2, 0.0);
 }
 
 // Calculating differential data for Explicit Euler Scheme
@@ -228,6 +230,7 @@ double &Fields::f(int i, int j) { return _F(i, j); }
 double &Fields::t(int i, int j) { return _T(i, j); }
 double &Fields::g(int i, int j) { return _G(i, j); }
 double &Fields::rs(int i, int j) { return _RS(i, j); }
+double &Fields::vof(int i, int j) { return _VOF(i, j); }
 bool Fields::energy_eq() { return _energy_eq; }
 
 Matrix<double> &Fields::p_matrix() { return _P; }
@@ -237,6 +240,7 @@ Matrix<double> &Fields::f_matrix() { return _F; }
 Matrix<double> &Fields::t_matrix() { return _T; }
 Matrix<double> &Fields::g_matrix() { return _G; }
 Matrix<double> &Fields::rs_matrix() { return _RS; }
+Matrix<double> &Fields::vof_matrix() { return _VOF; }
 
 double Fields::dt() const { return _dt; }
 

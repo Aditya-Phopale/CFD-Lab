@@ -193,6 +193,7 @@ Case::Case(std::string file_name, int argn, char **args) {
     if (ppc > 0) {
         _grid.set_particles(ppc);
     }
+
     for (auto &elem : _grid.surface_cells()) {
         _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(), _grid.fluid_cells().end(), elem),
                                   _grid.fluid_cells().end());
@@ -325,12 +326,13 @@ void Case::simulate() {
     int iter;
     double res;
     int total_iter = 1;
+    double vof_cutoff = 1e-6;
     std::ofstream logfile;
     // logfile.open("log.txt");
     for (int i = 0; i < _boundaries.size(); i++) {
         _boundaries[i]->apply(_field);
     }
-    output_vtk(0, 0);
+    output_vtk(0, Communication::rank);
 
     // for (auto &cells : _grid.fluid_cells()) {
     //   int i = cells->i();
@@ -343,8 +345,6 @@ void Case::simulate() {
 
     //   }
     // }
-
-    
 
     // Following is the actual loop that runs till the defined time limit.
 
@@ -410,6 +410,8 @@ void Case::simulate() {
             _boundaries[i]->apply(_field);
         }
 
+        _field.calculate_vof_flux(_grid);
+
         if (_grid.particle().size() > 0) {
             _surface_boundaries->apply_black(_field, _grid);
             _surface_boundaries->apply_pressure(_field, _grid);
@@ -431,7 +433,7 @@ void Case::simulate() {
                     i++;
                 }
             }
-        }       
+        }
 
         Communication::communicate(_field.u_matrix(), _grid.domain());
         Communication::communicate(_field.v_matrix(), _grid.domain());
