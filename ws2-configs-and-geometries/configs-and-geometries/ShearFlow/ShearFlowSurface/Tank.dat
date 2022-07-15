@@ -13,11 +13,11 @@ ylength      6.0
 #            number of cells
 #--------------------------------------------
 imax         40
-jmax         64
+jmax         30
 iproc 	     1
 jproc        1
-ppc          25
-Re           10
+ppc          16
+Re           40
 
 #--------------------------------------------
 #               time steps
@@ -26,14 +26,14 @@ Re           10
 # tau: safety factor for time step size control
 #--------------------------------------------
 dt           0.01
-t_end        100.0
+t_end        30.0
 tau          0.2
 
 #--------------------------------------------
 #               output
 # dt_value: time interval for writing files
 #--------------------------------------------
-dt_value     0.05
+dt_value     0.5
 
 #--------------------------------------------
 #               pressure
@@ -42,15 +42,15 @@ dt_value     0.05
 # omg: relaxation factor for SOR
 # gamma: upwind differencing factor
 #--------------------------------------------
-itermax      2000
-eps          0.0001
+itermax      500
+eps          0.001
 omg          1.7
 gamma        0.5
 
 #--------------------------------------------
 #     kinematic viscosity
 #--------------------------------------------
-nu           0.1
+nu           0.025
 
 #--------------------------------------------
 #        gravity / external forces

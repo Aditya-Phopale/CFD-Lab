@@ -363,6 +363,24 @@ void Case::simulate() {
     // Assign particle
     if (_grid.particle().size() > 0) {
       _grid.reset_fluid_cells();
+      if (_grid.particle().size() > 0) {
+      for (int j = 1; j < _grid.domain().size_y + 1; ++j) {
+        for (int i = 1; i < _grid.domain().size_x + 1; ++i) {
+          if (_grid.cell(i, j).type() != cell_type::FLUID ||
+              _grid.cell(i, j).type() != cell_type::SURFACE) {
+            _field.p(i, j) = 0;
+            if(_grid.cell(i,j).neighbour(border_position::TOP)->type() == cell_type::EMPTY){
+                _field.v(i, j) = 0;
+                _field.g(i, j) = 0;
+            }
+            if(_grid.cell(i,j).neighbour(border_position::RIGHT)->type() == cell_type::EMPTY){
+                _field.u(i, j) = 0;
+                _field.f(i, j) = 0;
+            }
+          }
+        }
+      }
+    }
       _surface_boundaries->update_cells(_grid.surface_cells());
       _surface_boundaries->apply_black(_field, _grid);
     }
@@ -480,21 +498,7 @@ void Case::simulate() {
       _output_freq = _output_freq + output_counter;
     }
 
-    if (_grid.particle().size() > 0) {
-      for (int j = 1; j < _grid.domain().size_y + 1; ++j) {
-        for (int i = 1; i < _grid.domain().size_x + 1; ++i) {
-          if (_grid.cell(i, j).type() != cell_type::FLUID ||
-              _grid.cell(i, j).type() != cell_type::SURFACE) {
-            _field.p(i, j) = 0;
-            // _field.rs(i, j) = 0;
-            // _field.u(i, j) = 0;
-            // _field.v(i, j) = 0;
-            // _field.f(i, j) = 0;
-            // _field.g(i, j) = 0;
-          }
-        }
-      }
-    }
+    
   }
   logfile.close();
 }
