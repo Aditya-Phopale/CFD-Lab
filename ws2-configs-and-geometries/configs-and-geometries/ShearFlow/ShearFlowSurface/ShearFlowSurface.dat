@@ -1,7 +1,7 @@
 #--------------------------------------------
 #           geometry file            
 #--------------------------------------------
-geo_file     ShearFlowSurface.pgm
+geo_file     ShearFlowSurface1.pgm
 
 #--------------------------------------------
 #            size of the domain             
