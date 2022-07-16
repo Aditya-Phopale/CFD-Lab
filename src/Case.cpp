@@ -189,16 +189,19 @@ Case::Case(std::string file_name, int argn, char **args) {
     domain.domain_neighbors.at(1) = rec_data.at(8);
     domain.domain_neighbors.at(3) = rec_data.at(9);
   }
+  // std::cout << Communication::rank << " " << domain.imin << " " <<
+  // domain.imax
+  //           << " " << domain.jmin << " " << domain.jmax << "\n";
 
   _grid = Grid(_geom_name, domain);
 
   if (ppc > 0) {
     _grid.set_particles(ppc);
-  }
-  for (auto &elem : _grid.surface_cells()) {
-    _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(),
-                                          _grid.fluid_cells().end(), elem),
-                              _grid.fluid_cells().end());
+    for (auto &elem : _grid.surface_cells()) {
+      _grid.fluid_cells().erase(std::remove(_grid.fluid_cells().begin(),
+                                            _grid.fluid_cells().end(), elem),
+                                _grid.fluid_cells().end());
+    }
   }
 
   _field = Fields(nu, Re, alpha, beta, dt, tau, _grid.domain().size_x,
@@ -337,12 +340,15 @@ void Case::simulate() {
   int total_iter = 1;
   std::ofstream logfile;
   // logfile.open("log.txt");
+  // std::cout << Communication::rank << " " << _grid.fixed_wall_cells().size()
+  //           << "\n";
 
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
-  std::cout << Communication::rank << " Hello\n";
-  output_vtk(0, 0);
+
+  // std::cout << Communication::rank << " Hello\n";
+  output_vtk(0, Communication::rank);
   while (t <= _t_end) {
     if (_grid.inlet_cells().size() > 0 && _grid.particle().size() > 0) {
       _grid.inject_particles(16);

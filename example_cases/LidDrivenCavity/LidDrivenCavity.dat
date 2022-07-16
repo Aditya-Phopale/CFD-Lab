@@ -11,7 +11,7 @@ imax         50
 jmax         50
 
 iproc        2
-jproc        1
+jproc        2
 #--------------------------------------------
 #               time steps
 # dt: time step size

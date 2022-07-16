@@ -15,8 +15,8 @@ ylength      2
 imax         100
 jmax         40
 
-iproc        1
-jproc        6
+iproc        2
+jproc        2
 
 
 #--------------------------------------------
