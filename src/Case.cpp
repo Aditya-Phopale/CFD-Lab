@@ -342,6 +342,7 @@ void Case::simulate() {
   }
   output_vtk(0, 0);
   while (t <= _t_end) {
+    _grid.inject_particles(16);
     if (t > 1.25) {
       _field.gx() = 0;
     }

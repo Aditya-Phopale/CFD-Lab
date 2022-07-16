@@ -847,6 +847,29 @@ void Grid::set_particles(int ppc) {
   }
 }
 
+void Grid::inject_particles(int ppc) {
+  int i, j;
+  int num_part = std::sqrt(ppc);
+  for (auto &cell : _inlet_cells) {
+    i = cell->i();
+    j = cell->j() - 1;
+
+    double startx = static_cast<double>(i) * dx() + 0.5 * dx() / num_part;
+    double starty = static_cast<double>(j) * dy() + 0.5 * dy() / num_part;
+    double x, y;
+    for (int k{0}; k < num_part; k++) {
+      for (int l{0}; l < num_part; l++) {
+        x = startx + k * dx() / num_part;
+        y = starty + l * dy() / num_part;
+
+        Particle p(x, y);
+
+        _particles.push_back(p);
+      }
+    }
+  }
+}
+
 void Grid::update_particles(Matrix<double> u, Matrix<double> v, double dt) {
   double dx = this->dx();
   double dy = this->dy();
