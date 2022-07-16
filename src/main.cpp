@@ -19,7 +19,7 @@ int main(int argn, char **args) {
     std::string file_name{args[1]};
     // std::string file_name{
     //     "/home/gaurav/Desktop/CFDLAB/project/ws2-configs-and-geometries/"
-    //     "configs-and-geometries/ShearFlow/obstacle/DamBreak.dat"};
+    //     "configs-and-geometries/ShearFlow/obstacle/trucktankwithobs.dat"};
     Case problem(file_name, argn, args);
     problem.simulate();
   } else {

@@ -211,6 +211,42 @@ void Fields::calculate_velocities(Grid &grid) {
   }
 }
 
+void Fields::reset_fields(Grid &grid) {
+  for (int j = 1; j < grid.domain().size_y + 1; ++j) {
+    for (int i = 1; i < grid.domain().size_x + 1; ++i) {
+      if (grid.cell(i, j).type() == cell_type::EMPTY) {
+        _P(i, j) = 0;
+        if (grid.cell(i, j).neighbour(border_position::TOP)->type() ==
+                cell_type::EMPTY &&
+            grid.cell(i, j)
+                    .neighbour(border_position::RIGHT)
+                    ->neighbour(border_position::TOP)
+                    ->type() == cell_type::EMPTY &&
+            grid.cell(i, j)
+                    .neighbour(border_position::LEFT)
+                    ->neighbour(border_position::TOP)
+                    ->type() == cell_type::EMPTY) {
+          _V(i, j) = 0;
+          _G(i, j) = 0;
+        }
+        if (grid.cell(i, j).neighbour(border_position::RIGHT)->type() ==
+                cell_type::EMPTY &&
+            grid.cell(i, j)
+                    .neighbour(border_position::TOP)
+                    ->neighbour(border_position::RIGHT)
+                    ->type() == cell_type::EMPTY &&
+            grid.cell(i, j)
+                    .neighbour(border_position::BOTTOM)
+                    ->neighbour(border_position::RIGHT)
+                    ->type() == cell_type::EMPTY) {
+          _U(i, j) = 0;
+          _F(i, j) = 0;
+        }
+      }
+    }
+  }
+}
+
 // Calculating dt based on CFL conditions
 
 double Fields::calculate_dt(Grid &grid) {
@@ -276,6 +312,6 @@ double Fields::dt() const { return _dt; }
 
 double Fields::Re() const { return _Re; }
 
-double Fields::gx() const { return _gx; };
+double &Fields::gx() { return _gx; };
 
 double Fields::gy() const { return _gy; };

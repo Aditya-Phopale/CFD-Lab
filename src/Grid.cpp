@@ -753,42 +753,6 @@ void Grid::reset_fluid_cells() {
         std::remove(_fluid_cells.begin(), _fluid_cells.end(), elem),
         _fluid_cells.end());
   }
-
-  //   for (auto &cells : _free_slip_cells) {
-  //     int i, j;
-  //     i = cells->i();
-  //     j = cells->j();
-  //     _cells(i, j).reset_border();
-
-  //     if (_cells(i, j).neighbour(border_position::LEFT)->type() ==
-  //             cell_type::FLUID ||
-  //         _cells(i, j).neighbour(border_position::LEFT)->type() ==
-  //             cell_type::SURFACE) {
-  //       _cells(i, j).add_border(border_position::LEFT);
-  //       continue;
-  //     }
-  //     if (_cells(i, j).neighbour(border_position::RIGHT)->type() ==
-  //             cell_type::FLUID ||
-  //         _cells(i, j).neighbour(border_position::LEFT)->type() ==
-  //             cell_type::SURFACE) {
-  //       _cells(i, j).add_border(border_position::RIGHT);
-  //       continue;
-  //     }
-  //     if (_cells(i, j).neighbour(border_position::BOTTOM)->type() ==
-  //             cell_type::FLUID ||
-  //         _cells(i, j).neighbour(border_position::LEFT)->type() ==
-  //             cell_type::SURFACE) {
-  //       _cells(i, j).add_border(border_position::BOTTOM);
-  //       continue;
-  //     }
-  //     if (_cells(i, j).neighbour(border_position::TOP)->type() ==
-  //             cell_type::FLUID ||
-  //         _cells(i, j).neighbour(border_position::LEFT)->type() ==
-  //             cell_type::SURFACE) {
-  //       _cells(i, j).add_border(border_position::TOP);
-  //       continue;
-  //     }
-  //   }
 }
 
 void Grid::parse_geometry_file(std::string filedoc,
@@ -879,6 +843,30 @@ void Grid::set_particles(int ppc) {
 
         _particles.push_back(p);
       }
+    }
+  }
+}
+
+void Grid::update_particles(Matrix<double> u, Matrix<double> v, double dt) {
+  double dx = this->dx();
+  double dy = this->dy();
+  for (auto &particle : _particles) {
+    particle.calculate_velocities(dx, dy, u, v);
+    particle.advance_particle(dt);
+  }
+
+  for (auto k = std::begin(_particles); k != std::end(_particles);) {
+    int i = (*k).x_pos() / _domain.dx;
+    int j = (*k).y_pos() / _domain.dy;
+    if ((*k).y_pos() < (_domain.jmin + 1) * _domain.dy ||
+        (*k).x_pos() < (_domain.imin + 1) * _domain.dx ||
+        (*k).y_pos() > (_domain.jmax - 1) * _domain.dy ||
+        (*k).x_pos() > (_domain.imax - 1) * _domain.dx) {
+      k = _particles.erase(k);
+    } else if (cell(i, j).type() == cell_type::FREE_SLIP) {
+      k = _particles.erase(k);
+    } else {
+      k++;
     }
   }
 }

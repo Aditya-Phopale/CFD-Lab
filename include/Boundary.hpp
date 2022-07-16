@@ -97,7 +97,7 @@ class FreeSlipBoundary : public Boundary {
  public:
   FreeSlipBoundary(std::vector<Cell *> cells);
   FreeSlipBoundary(std::vector<Cell *> cells,
-                    std::map<int, double> wall_temperature);
+                   std::map<int, double> wall_temperature);
   virtual ~FreeSlipBoundary() = default;
   virtual void apply(Fields &field);
   virtual void apply_pressure(Fields &field);
@@ -124,8 +124,7 @@ class FreeSurfaceBoundary {
   ~FreeSurfaceBoundary() = default;
   void apply_black(Fields &field, Grid &grid);
   void apply_pressure(Fields &field, Grid &grid);
-  void apply_grey(Fields &field, Grid &grid);
-  void update_cells(std::vector<Cell *> cells);
+  void update_cells(const std::vector<Cell *> &cells);
 
  private:
   std::vector<Cell *> _cells;

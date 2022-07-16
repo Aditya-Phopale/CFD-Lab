@@ -341,46 +341,17 @@ void Case::simulate() {
     _boundaries[i]->apply(_field);
   }
   output_vtk(0, 0);
-
-  // for (auto &cells : _grid.fluid_cells()) {
-  //   int i = cells->i();
-  //   int j = cells->j();
-  //   if(j>25){
-  //     _field.v(i,j) = -2.0;
-  //     _field.g(i,j) = _field.v(i,j);
-  //     _field.v(i,j-1) = -2.0;
-  //     _field.g(i,j-1) = _field.v(i,j-1);
-
-  //   }
-  // }
-
-  // Following is the actual loop that runs till the defined time limit.
-
   while (t <= _t_end) {
+    if (t > 1.25) {
+      _field.gx() = 0;
+    }
     // Calculating timestep for advancement to the next iteration.
     dt = _field.calculate_dt(_grid);
 
     // Assign particle
     if (_grid.particle().size() > 0) {
       _grid.reset_fluid_cells();
-      if (_grid.particle().size() > 0) {
-      for (int j = 1; j < _grid.domain().size_y + 1; ++j) {
-        for (int i = 1; i < _grid.domain().size_x + 1; ++i) {
-          if (_grid.cell(i, j).type() != cell_type::FLUID ||
-              _grid.cell(i, j).type() != cell_type::SURFACE) {
-            _field.p(i, j) = 0;
-            if(_grid.cell(i,j).neighbour(border_position::TOP)->type() == cell_type::EMPTY){
-                _field.v(i, j) = 0;
-                _field.g(i, j) = 0;
-            }
-            if(_grid.cell(i,j).neighbour(border_position::RIGHT)->type() == cell_type::EMPTY){
-                _field.u(i, j) = 0;
-                _field.f(i, j) = 0;
-            }
-          }
-        }
-      }
-    }
+      _field.reset_fields(_grid);
       _surface_boundaries->update_cells(_grid.surface_cells());
       _surface_boundaries->apply_black(_field, _grid);
     }
@@ -401,7 +372,7 @@ void Case::simulate() {
     //  Calculating RHS for pressure poisson equation
     _field.calculate_rs(_grid);
 
-    iter = 0;  // Pressure poisson solver iteration initialization
+    iter = 0;
     res = std::numeric_limits<double>::max();
 
     while (res > _tolerance) {
@@ -429,52 +400,18 @@ void Case::simulate() {
       // logfile << "Residual: " << res << " Iteration:" << total_iter <<
     }
 
-    // Calculating updated velocities using pressure calculated in the
-    // pressure poisson equation
     _field.calculate_velocities(_grid);
 
     if (_grid.particle().size() > 0) {
       _surface_boundaries->apply_black(_field, _grid);
       _surface_boundaries->apply_pressure(_field, _grid);
 
-      {
-        double dx = _grid.dx();
-        double dy = _grid.dy();
-        for (auto &particle : _grid.particle()) {
-          particle.calculate_velocities(dx, dy, _field.u_matrix(),
-                                        _field.v_matrix());
-          particle.advance_particle(dt);
-        }
-      }
-      for (auto i = std::begin(_grid.particle());
-           i != std::end(_grid.particle());) {
-        if ((*i).y_pos() < (_grid.domain().jmin + 1) * _grid.dy() ||
-            (*i).x_pos() < (_grid.domain().imin + 1) * _grid.dx() ||
-            (*i).y_pos() > (_grid.domain().jmax - 1) * _grid.dy() ||
-            (*i).x_pos() > (_grid.domain().imax - 1) * _grid.dx()) {
-          i = _grid.particle().erase(i);
-        } else {
-          i++;
-        }
-      }
-
-      for (auto k = std::begin(_grid.particle());
-           k != std::end(_grid.particle());) {
-        int i = (*k).x_pos() / _grid.dx();
-        int j = (*k).y_pos() / _grid.dy();
-
-        if (_grid.cell(i, j).type() == cell_type::FREE_SLIP) {
-          k = _grid.particle().erase(k);
-        } else {
-          k++;
-        }
-      }
+      _grid.update_particles(_field.u_matrix(), _field.v_matrix(), dt);
     }
-    // std::cout << _field.v(26, 4) << "\n";
+
     for (int i = 0; i < _boundaries.size(); i++) {
       _boundaries[i]->apply(_field);
     }
-    // std::cout << _field.v(26, 4) << "\n";
 
     Communication::communicate(_field.u_matrix(), _grid.domain());
     Communication::communicate(_field.v_matrix(), _grid.domain());
@@ -497,8 +434,6 @@ void Case::simulate() {
       output_vtk(timestep, Communication::rank);
       _output_freq = _output_freq + output_counter;
     }
-
-    
   }
   logfile.close();
 }

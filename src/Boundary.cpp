@@ -399,28 +399,36 @@ void FreeSlipBoundary::apply(Fields &field) {
     if (cells->is_border(border_position::LEFT)) {
       field.u(i - 1, j) = 0;
       field.v(i, j) = field.v(i - 1, j);
+      field.v(i, j - 1) = field.v(i - 1, j - 1);
       field.f(i - 1, j) = field.u(i - 1, j);
       field.g(i, j) = field.v(i, j);
+      field.g(i, j - 1) = field.v(i, j - 1);
       continue;
     }
     if (cells->is_border(border_position::RIGHT)) {
       field.u(i, j) = 0;
       field.v(i, j) = field.v(i + 1, j);
+      field.v(i, j - 1) = field.v(i + 1, j - 1);
       field.f(i, j) = field.u(i, j);
       field.g(i, j) = field.v(i, j);
+      field.g(i, j - 1) = field.v(i, j - 1);
       continue;
     }
     if (cells->is_border(border_position::TOP)) {
       field.u(i, j) = field.u(i, j + 1);
       field.v(i, j) = 0;
+      field.u(i - 1, j) = field.u(i - 1, j + 1);
       field.f(i, j) = field.u(i, j);
       field.g(i, j) = field.v(i, j);
+      field.f(i - 1, j) = field.u(i - 1, j);
       continue;
     }
     if (cells->is_border(border_position::BOTTOM)) {
       field.u(i, j) = field.u(i, j - 1);
-      field.v(i, j - 1) = 0;
+      field.v(i, j - 1) = field.v(i, j - 2);
+      field.u(i - 1, j) = field.u(i - 1, j - 1);
       field.f(i, j) = field.u(i, j);
+      field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
       field.g(i, j - 1) = field.v(i, j - 1);
       continue;
     }
@@ -784,6 +792,7 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
       field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
       continue;
     }
+
     if (cells->is_border(border_position::NORTHWEST)) {
       field.u(i - 1, j) = field.u(i, j);
       field.v(i, j) = field.v(i, j - 1);
@@ -826,6 +835,7 @@ void FreeSurfaceBoundary::apply_black(Fields &field, Grid &grid) {
       }
       continue;
     }
+
     if (cells->is_border(border_position::EASTWEST)) {
       field.u(i, j) = field.u(i, j) + field.gx() * field.dt();
       field.u(i - 1, j) = field.u(i - 1, j) + field.gx() * field.dt();
@@ -1114,364 +1124,7 @@ void FreeSurfaceBoundary::apply_pressure(Fields &field, Grid &grid) {
   }
 }
 
-void FreeSurfaceBoundary::apply_grey(Fields &field, Grid &grid) {
-  int i, j;
-  for (auto cells : _cells) {
-    i = cells->i();
-    j = cells->j();
-    if (cells->is_border(border_position::RIGHT)) {
-      if (cells->neighbour(border_position::RIGHT)
-              ->neighbour(border_position::BOTTOM)
-              ->type() == cell_type::EMPTY) {
-        field.v(i + 1, j - 1) =
-            field.v(i, j - 1) -
-            grid.dx() * (field.u(i, j) - field.u(i, j - 1)) / grid.dy();
-        field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      }
-
-      continue;
-    }
-    if (cells->is_border(border_position::TOP)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j + 1) =
-            field.u(i - 1, j) -
-            grid.dy() * (field.v(i, j) - field.v(i - 1, j)) / grid.dx();
-        field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-      }
-      continue;
-    }
-    if (cells->is_border(border_position::LEFT)) {
-      if (cells->neighbour(border_position::LEFT)
-              ->neighbour(border_position::BOTTOM)
-              ->type() == cell_type::EMPTY) {
-        field.v(i - 1, j - 1) =
-            field.v(i, j - 1) +
-            grid.dx() * (field.u(i - 1, j) - field.u(i - 1, j - 1)) / grid.dy();
-        field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-      }
-      continue;
-    }
-    if (cells->is_border(border_position::BOTTOM)) {
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j - 1) =
-            field.u(i - 1, j) +
-            grid.dy() * (field.v(i, j - 1) - field.v(i - 1, j - 1)) / grid.dx();
-        field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-      }
-      continue;
-    }
-
-    if (cells->is_border(border_position::SOUTHEAST)) {
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j - 1) =
-            field.u(i - 1, j) +
-            grid.dy() * (field.v(i, j - 1) - field.v(i - 1, j - 1)) / grid.dx();
-        field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-      }
-      if (cells->neighbour(border_position::RIGHT)
-              ->neighbour(border_position::TOP)
-              ->type() == cell_type::EMPTY) {
-        field.v(i + 1, j) =
-            field.v(i, j) -
-            grid.dx() * (field.u(i, j + 1) - field.u(i, j)) / grid.dy();
-        field.g(i + 1, j) = field.v(i + 1, j);
-      }
-
-      field.u(i, j - 1) = field.u(i, j);
-      field.v(i + 1, j - 1) = field.v(i, j - 1);
-      field.f(i, j - 1) = field.u(i, j - 1);
-      field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      continue;
-    }
-
-    if (cells->is_border(border_position::NORTHEAST)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j + 1) =
-            field.u(i - 1, j) -
-            grid.dy() * (field.v(i, j) - field.v(i - 1, j)) / grid.dx();
-        field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-      }
-      if (cells->neighbour(border_position::RIGHT)
-              ->neighbour(border_position::BOTTOM)
-              ->type() == cell_type::EMPTY) {
-        field.v(i + 1, j - 1) =
-            field.v(i, j - 1) -
-            grid.dx() * (field.u(i, j) - field.u(i, j - 1)) / grid.dy();
-        field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      }
-
-      field.u(i, j + 1) = field.u(i, j);
-      field.v(i + 1, j) = field.v(i, j);
-      field.f(i, j + 1) = field.u(i, j + 1);
-      field.g(i + 1, j) = field.v(i + 1, j);
-      continue;
-    }
-
-    if (cells->is_border(border_position::NORTHWEST)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j + 1) =
-            field.u(i, j) -
-            grid.dy() * (field.v(i + 1, j) - field.v(i, j)) / grid.dx();
-        field.f(i, j + 1) = field.u(i, j + 1);
-      }
-      if (cells->neighbour(border_position::LEFT)
-              ->neighbour(border_position::BOTTOM)
-              ->type() == cell_type::EMPTY) {
-        field.v(i - 1, j - 1) =
-            field.v(i, j - 1) +
-            grid.dx() * (field.u(i - 1, j) - field.u(i - 1, j - 1)) / grid.dy();
-        field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-      }
-
-      field.u(i - 1, j + 1) = field.u(i - 1, j);
-      field.v(i - 1, j) = field.v(i, j);
-      field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-      field.g(i - 1, j) = field.v(i - 1, j);
-      continue;
-    }
-
-    if (cells->is_border(border_position::SOUTHWEST)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.v(i - 1, j) =
-            field.v(i, j) +
-            grid.dx() * (field.u(i - 1, j + 1) - field.u(i - 1, j)) / grid.dy();
-        field.g(i - 1, j) = field.v(i - 1, j);
-      }
-      if (cells->neighbour(border_position::RIGHT)
-              ->neighbour(border_position::BOTTOM)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j - 1) =
-            field.u(i, j) +
-            grid.dy() * (field.v(i + 1, j - 1) - field.v(i, j - 1)) / grid.dx();
-        field.f(i, j - 1) = field.u(i, j - 1);
-      }
-
-      field.u(i - 1, j - 1) = field.u(i - 1, j);
-      field.v(i - 1, j - 1) = field.v(i, j - 1);
-      field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-      field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-      continue;
-    }
-
-    if (cells->is_border(border_position::EASTWEST)) {
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.v(i - 1, j - 1) =
-            field.v(i, j - 1) +
-            grid.dx() * (field.u(i - 1, j) - field.u(i - 1, j - 1)) / grid.dy();
-        field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-      }
-      if (cells->neighbour(border_position::RIGHT)
-              ->neighbour(border_position::BOTTOM)
-              ->type() == cell_type::EMPTY) {
-        field.v(i + 1, j - 1) =
-            field.v(i, j - 1) +
-            grid.dx() * (field.u(i, j) - field.u(i, j - 1)) / grid.dy();
-        field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      }
-      continue;
-    }
-
-    if (cells->is_border(border_position::NORTHSOUTH)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j + 1) =
-            field.u(i - 1, j) -
-            grid.dy() * (field.v(i, j) - field.v(i - 1, j)) / grid.dx();
-        field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-      }
-      if (cells->neighbour(border_position::LEFT)
-              ->neighbour(border_position::BOTTOM)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j - 1) =
-            field.u(i - 1, j) +
-            grid.dy() * (field.v(i, j - 1) - field.v(i - 1, j - 1)) / grid.dx();
-        field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-      }
-      continue;
-    }
-
-    if (cells->is_border(border_position::NORTHEASTWEST)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j + 1) = field.u(i - 1, j);
-        field.v(i - 1, j) = field.v(i, j);
-        field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-        field.g(i - 1, j) = field.v(i - 1, j);
-      }
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j + 1) = field.u(i, j);
-        field.v(i + 1, j) = field.v(i, j);
-        field.f(i, j + 1) = field.u(i, j + 1);
-        field.g(i + 1, j) = field.v(i + 1, j);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.v(i - 1, j - 1) = field.v(i, j - 1);
-        field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.v(i + 1, j - 1) = field.v(i, j - 1);
-        field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      }
-      continue;
-    }
-
-    if (cells->is_border(border_position::NORTHEASTSOUTH)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j + 1) = field.u(i, j);
-        field.v(i + 1, j) = field.v(i, j);
-        field.f(i, j + 1) = field.u(i, j + 1);
-        field.g(i + 1, j) = field.v(i + 1, j);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j - 1) = field.u(i, j);
-        field.v(i + 1, j - 1) = field.v(i, j - 1);
-        field.f(i, j - 1) = field.u(i, j - 1);
-        field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j - 1) = field.u(i - 1, j);
-        field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-      }
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j + 1) = field.u(i - 1, j);
-        field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-      }
-      continue;
-    }
-
-    if (cells->is_border(border_position::NORTHWESTSOUTH)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j + 1) = field.u(i - 1, j);
-        field.v(i - 1, j) = field.v(i, j);
-        field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-        field.g(i - 1, j) = field.v(i - 1, j);
-      }
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j + 1) = field.u(i, j);
-        field.f(i, j + 1) = field.u(i, j + 1);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j - 1) = field.u(i - 1, j);
-        field.v(i - 1, j - 1) = field.v(i, j - 1);
-        field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-        field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j - 1) = field.u(i, j);
-        field.f(i, j - 1) = field.u(i, j);
-      }
-      continue;
-    }
-
-    if (cells->is_border(border_position::EASTWESTSOUTH)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.v(i - 1, j) = field.v(i, j);
-        field.g(i - 1, j) = field.v(i - 1, j);
-      }
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.v(i + 1, j) = field.v(i, j);
-        field.g(i + 1, j) = field.v(i + 1, j);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j - 1) = field.u(i - 1, j);
-        field.v(i - 1, j - 1) = field.v(i, j - 1);
-        field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-        field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j - 1) = field.u(i, j);
-        field.v(i + 1, j - 1) = field.v(i, j - 1);
-        field.f(i, j - 1) = field.u(i, j - 1);
-        field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      }
-      continue;
-    }
-
-    if (cells->is_border(border_position::NORTHEASTWESTSOUTH)) {
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j + 1) = field.u(i - 1, j);
-        field.v(i - 1, j) = field.v(i, j);
-        field.f(i - 1, j + 1) = field.u(i - 1, j + 1);
-        field.g(i - 1, j) = field.v(i - 1, j);
-      }
-      if (cells->neighbour(border_position::TOP)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j + 1) = field.u(i, j);
-        field.v(i + 1, j) = field.v(i, j);
-        field.f(i, j + 1) = field.u(i, j + 1);
-        field.g(i + 1, j) = field.v(i + 1, j);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::LEFT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i - 1, j - 1) = field.u(i - 1, j);
-        field.v(i - 1, j - 1) = field.v(i, j - 1);
-        field.g(i - 1, j - 1) = field.v(i - 1, j - 1);
-        field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
-      }
-      if (cells->neighbour(border_position::BOTTOM)
-              ->neighbour(border_position::RIGHT)
-              ->type() == cell_type::EMPTY) {
-        field.u(i, j - 1) = field.u(i, j);
-        field.v(i + 1, j - 1) = field.v(i, j - 1);
-        field.f(i, j - 1) = field.u(i, j - 1);
-        field.g(i + 1, j - 1) = field.v(i + 1, j - 1);
-      }
-      continue;
-    }
-  }
-}
-
-void FreeSurfaceBoundary::update_cells(std::vector<Cell *> cells) {
+void FreeSurfaceBoundary::update_cells(const std::vector<Cell *> &cells) {
   _cells.clear();
   _cells.resize(cells.size());
 

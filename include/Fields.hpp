@@ -65,6 +65,8 @@ class Fields {
    */
   void calculate_velocities(Grid &grid);
 
+  void reset_fields(Grid &grid);
+
   /**
    * @brief Adaptive step size calculation using x-velocity condition,
    * y-velocity condition and CFL condition
@@ -102,7 +104,7 @@ class Fields {
 
   double Re() const;
 
-  double gx() const;
+  double &gx();
 
   double gy() const;
 

@@ -95,6 +95,8 @@ class Grid {
 
   void set_particles(int ppc);
 
+  void update_particles(Matrix<double> u, Matrix<double> v, double dt);
+
   const std::vector<std::vector<int>> &get_geometry_excluding_ghosts() const;
 
   void reset_fluid_cells();
