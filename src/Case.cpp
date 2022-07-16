@@ -337,12 +337,17 @@ void Case::simulate() {
   int total_iter = 1;
   std::ofstream logfile;
   // logfile.open("log.txt");
+
   for (int i = 0; i < _boundaries.size(); i++) {
     _boundaries[i]->apply(_field);
   }
+  std::cout << Communication::rank << " Hello\n";
   output_vtk(0, 0);
   while (t <= _t_end) {
-    _grid.inject_particles(16);
+    if (_grid.inlet_cells().size() > 0 && _grid.particle().size() > 0) {
+      _grid.inject_particles(16);
+    }
+
     if (t > 1.25) {
       _field.gx() = 0;
     }
@@ -449,12 +454,6 @@ void Case::output_vtk(int timestep, int rank) {
   // Creating grid
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
-  std::ofstream particle_writer;
-  std::string ptcl_output_name = _dict_name + '/' + _case_name + "_" +
-                                 std::to_string(rank) + "_" +
-                                 std::to_string(timestep) + ".vtp";
-  particle_writer.open(ptcl_output_name.c_str());
-
   double dx = _grid.dx();
   double dy = _grid.dy();
 
@@ -550,21 +549,27 @@ void Case::output_vtk(int timestep, int rank) {
 
   // Add Velocity to Structured Grid
   structuredGrid->GetPointData()->AddArray(Velocity);
+  if (_grid.particle().size() > 0) {
+    std::ofstream particle_writer;
+    std::string ptcl_output_name = _dict_name + '/' + _case_name + "_" +
+                                   std::to_string(rank) + "_" +
+                                   std::to_string(timestep) + ".vtp";
+    particle_writer.open(ptcl_output_name.c_str());
 
-  double pos[4];
-  pos[2] = 0;
-  int id = 0;
-  for (auto &particle : _grid.particle()) {
-    pos[0] = particle.x_pos();
-    pos[1] = particle.y_pos();
-    pos[3] =
-        std::sqrt(particle.u() * particle.u() + particle.v() * particle.v());
+    double pos[4];
+    pos[2] = 0;
+    int id = 0;
+    for (auto &particle : _grid.particle()) {
+      pos[0] = particle.x_pos();
+      pos[1] = particle.y_pos();
+      pos[3] =
+          std::sqrt(particle.u() * particle.u() + particle.v() * particle.v());
 
-    particle_writer << pos[0] << "," << pos[1] << "," << pos[2] << "," << pos[3]
-                    << "\n";
+      particle_writer << pos[0] << "," << pos[1] << "," << pos[2] << ","
+                      << pos[3] << "\n";
+    }
+    particle_writer.close();
   }
-  particle_writer.close();
-
   // Write Grid
   vtkSmartPointer<vtkStructuredGridWriter> writer =
       vtkSmartPointer<vtkStructuredGridWriter>::New();
