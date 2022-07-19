@@ -1,4 +1,6 @@
 #pragma once
+#include <cmath>
+
 #include "Datastructures.hpp"
 
 class Particle {
@@ -24,4 +26,3 @@ class Particle {
   double vel_u;
   double vel_v;
 };
-

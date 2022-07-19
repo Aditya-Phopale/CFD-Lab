@@ -243,6 +243,18 @@ void Fields::reset_fields(Grid &grid) {
           _F(i, j) = 0;
         }
       }
+
+      if (grid.cell(i, j).type() == cell_type::FLUID ||
+          grid.cell(i, j).type() == cell_type::SURFACE) {
+        if (fabs(_U(i, j)) < 1e-9) {
+          _U(i, j) = 0;
+          _F(i, j) = 0;
+        }
+        if (fabs(_V(i, j)) < 1e-9) {
+          _V(i, j) = 0;
+          _G(i, j) = 0;
+        }
+      }
     }
   }
 }

@@ -413,6 +413,15 @@ void Case::simulate() {
     }
 
     _field.calculate_velocities(_grid);
+    // for (int j = _grid.domain().jmax - 1; j >= 0; j--) {
+    //   for (int i = 0; i < _grid.domain().jmax; i++) {
+    //     std::cout << _field.v(i, j) << " ";
+    //   }
+    //   std::cout << "\n";
+    // }
+    // std::cout <<
+    // "*************************************************************"
+    //              "**********************\n";
 
     if (_grid.particle().size() > 0) {
       _surface_boundaries->apply_black(_field, _grid);

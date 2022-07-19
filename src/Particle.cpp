@@ -25,6 +25,10 @@ void Particle::calculate_velocities(double &dx, double &dy, Matrix<double> &u,
            (x2 - x) * (y - y1) * u(i - 1, j) + (x - x1) * (y - y1) * u(i, j)) /
           (dx * dy);
 
+  if (fabs(vel_u) < 1e-9) {
+    vel_u = 0;
+  }
+
   i = (x + dx / 2) / dx;
   j = y / dy;
 
@@ -37,6 +41,10 @@ void Particle::calculate_velocities(double &dx, double &dy, Matrix<double> &u,
            (x - x1) * (y2 - y) * v(i, j - 1) +
            (x2 - x) * (y - y1) * v(i - 1, j) + (x - x1) * (y - y1) * v(i, j)) /
           (dx * dy);
+
+  if (fabs(vel_v) < 1e-9) {
+    vel_v = 0;
+  }
 }
 
 double &Particle::x_pos() { return x; }

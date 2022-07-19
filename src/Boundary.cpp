@@ -417,7 +417,7 @@ void FreeSlipBoundary::apply(Fields &field) {
     }
     if (cells->is_border(border_position::BOTTOM)) {
       field.u(i, j) = field.u(i, j - 1);
-      field.v(i, j - 1) = field.v(i, j - 2);
+      field.v(i, j - 1) = -field.v(i, j - 1);
       field.u(i - 1, j) = field.u(i - 1, j - 1);
       field.f(i, j) = field.u(i, j);
       field.f(i - 1, j - 1) = field.u(i - 1, j - 1);
