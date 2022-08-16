@@ -1,5 +1,6 @@
 # Definition of the minimum required cmake Version
 cmake_minimum_required(VERSION 3.0)
+
 # Definition of the Project
 # Later you can access the project variable like ${CFDLAB_SOURCE_DIR}
 project(CFDLAB VERSION 1.0)
@@ -7,10 +8,12 @@ project(CFDLAB VERSION 1.0)
 # Define all configuration options
 option(gpp9 "compile with gpp9 filesystem" ON)
 
-# Definition of the C++ Standard 
+# Definition of the C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-#set(gpp9 True)
+set(CMAKE_CXX_FLAGS "-O3")
+
+# set(gpp9 True)
 
 # Creating the executable of our project and the required dependencies
 # the executable is called fluidchen
@@ -21,17 +24,17 @@ target_compile_definitions(fluidchen PUBLIC -Dsolution_liddriven)
 target_compile_definitions(fluidchen PUBLIC -Dsolution_energy)
 target_compile_definitions(fluidchen PUBLIC -Dsolution_parallelization)
 
-
 # You can find package likes
 # find_package(MPI)
 # Require a package
 find_package(MPI REQUIRED)
+
 # Find a package with different components e.g. BOOST
 # find_package(Boost COMPONENTS filesystem REQUIRED)
 
 # VTK Library
 find_package(VTK REQUIRED)
-message (STATUS "VTK_VERSION: ${VTK_VERSION}")
+message(STATUS "VTK_VERSION: ${VTK_VERSION}")
 include(${VTK_USE_FILE})
 
 # Filesystem library is only available since GCC 9
@@ -39,10 +42,11 @@ include(${VTK_USE_FILE})
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
     message("g++ Version is lower than Version 9")
-    if (NOT APPLE)  
+
+    if(NOT APPLE)
       target_link_libraries(fluidchen PUBLIC stdc++fs)
     endif()
-    else()
+  else()
     message("g++ Version is 9 or higher")
     target_compile_definitions(fluidchen PUBLIC gpp9)
     target_compile_definitions(fluidchen PUBLIC -DGCC_VERSION_9_OR_HIGHER)
@@ -61,5 +65,6 @@ target_link_libraries(fluidchen PRIVATE MPI::MPI_CXX)
 target_link_libraries(fluidchen PRIVATE ${VTK_LIBRARIES})
 
 install(TARGETS fluidchen DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
 # If you write tests, you can include your subdirectory (in this case tests) as done here
 # Testing

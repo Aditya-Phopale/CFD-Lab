@@ -4,6 +4,7 @@
 
 #include "Cell.hpp"
 #include "Fields.hpp"
+#include "Grid.hpp"
 
 /**
  * @brief Abstact of boundary conditions.
@@ -19,6 +20,7 @@ class Boundary {
    * @param[in] Field to be applied
    */
   virtual void apply(Fields &field) = 0;
+  virtual void apply_pressure(Fields &field) = 0;
   virtual ~Boundary() = default;
 };
 
@@ -33,6 +35,7 @@ class FixedWallBoundary : public Boundary {
                     std::map<int, double> wall_temperature);
   virtual ~FixedWallBoundary() = default;
   virtual void apply(Fields &field);
+  virtual void apply_pressure(Fields &field);
 
  private:
   std::vector<Cell *> _cells;
@@ -52,9 +55,77 @@ class MovingWallBoundary : public Boundary {
                      std::map<int, double> wall_temperature);
   virtual ~MovingWallBoundary() = default;
   virtual void apply(Fields &field);
+  virtual void apply_pressure(Fields &field);
 
  private:
   std::vector<Cell *> _cells;
   std::map<int, double> _wall_velocity;
   std::map<int, double> _wall_temperature;
+};
+
+class InletBoundary : public Boundary {
+ public:
+  InletBoundary(std::vector<Cell *> cells, double uin, double vin);
+  InletBoundary(std::vector<Cell *> cells, double uin, double vin,
+                std::map<int, double> wall_temperature);
+  virtual ~InletBoundary() = default;
+  virtual void apply(Fields &field);
+  virtual void apply_pressure(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+  double _uin;
+  double _vin;
+  std::map<int, double> _wall_temperature;
+};
+
+class OutletBoundary : public Boundary {
+ public:
+  OutletBoundary(std::vector<Cell *> cells);
+  OutletBoundary(std::vector<Cell *> cells,
+                 std::map<int, double> wall_temperature);
+  virtual ~OutletBoundary() = default;
+  virtual void apply(Fields &field);
+  virtual void apply_pressure(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+  std::map<int, double> _wall_temperature;
+};
+
+class FreeSlipBoundary : public Boundary {
+ public:
+  FreeSlipBoundary(std::vector<Cell *> cells);
+  FreeSlipBoundary(std::vector<Cell *> cells,
+                   std::map<int, double> wall_temperature);
+  virtual ~FreeSlipBoundary() = default;
+  virtual void apply(Fields &field);
+  virtual void apply_pressure(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+  std::map<int, double> _wall_temperature;
+};
+
+class AdiabaticBoundary : public Boundary {
+ public:
+  AdiabaticBoundary(std::vector<Cell *> cells);
+  virtual ~AdiabaticBoundary() = default;
+  virtual void apply(Fields &field);
+  virtual void apply_pressure(Fields &field);
+
+ private:
+  std::vector<Cell *> _cells;
+};
+
+class FreeSurfaceBoundary {
+ public:
+  FreeSurfaceBoundary(std::vector<Cell *> cells);
+  ~FreeSurfaceBoundary() = default;
+  void apply_black(Fields &field, Grid &grid);
+  void apply_pressure(Fields &field, Grid &grid);
+  void update_cells(const std::vector<Cell *> &cells);
+
+ private:
+  std::vector<Cell *> _cells;
 };
